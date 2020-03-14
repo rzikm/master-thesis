@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace OpenSSLSandbox
@@ -10,10 +9,7 @@ namespace OpenSSLSandbox
     {
         private readonly string _cert;
         private readonly string _privateKey;
-
-        public Ssl Ssl { get; }
-
-        public List<(SslEncryptionLevel, byte[])> ToSend { get; }
+        private readonly Ssl _ssl;
 
         public Handshake(SslContext ctx, string address = null, string cert = null, string privateKey = null)
         {
@@ -21,28 +17,44 @@ namespace OpenSSLSandbox
             _privateKey = privateKey;
 
             var gcHandle = GCHandle.Alloc(this);
-            Ssl = OpenSsl.SSL_new(ctx);
             ToSend = new List<(SslEncryptionLevel, byte[])>();
 
-            OpenSsl.SetCallbackInterface(Ssl, GCHandle.ToIntPtr(gcHandle));
-            OpenSsl.SSL_set_min_proto_version(Ssl, TlsVersion.Tls13);
-            OpenSsl.SSL_set_max_proto_version(Ssl, TlsVersion.Tls13);
-            OpenSsl.SSL_set_quic_method(Ssl, ref QuicMethods.Instance);
+            _ssl = Ssl.New(ctx);
+
+            _ssl.SetCallbackInterface(GCHandle.ToIntPtr(gcHandle));
+            _ssl.MinProtoVersion = TlsVersion.Tls13;
+            _ssl.MaxProtoVersion = TlsVersion.Tls13;
+
+            _ssl.SetQuicMethod(ref QuicMethods.Instance);
 
             if (cert != null)
-                OpenSsl.SSL_use_certificate_file(Ssl, cert, SslFiletype.Pem);
+                Ssl.UseCertificateFile(cert, SslFiletype.Pem);
             if (privateKey != null)
-                OpenSsl.SSL_use_PrivateKey_file(Ssl, privateKey, SslFiletype.Pem);
+                Ssl.UsePrivateKeyFile(privateKey, SslFiletype.Pem);
 
             if (address == null)
             {
-                OpenSsl.SSL_set_accept_state(Ssl);
+                _ssl.SetAcceptState();
             }
             else
             {
-                OpenSsl.SSL_set_connect_state(Ssl);
-                OpenSsl.SSL_set_tlsext_host_name(Ssl, address);
+                _ssl.SetConnectState();
+                _ssl.SetTlsexHostName(address);
             }
+        }
+
+        public Ssl Ssl => _ssl;
+
+        public List<(SslEncryptionLevel, byte[])> ToSend { get; }
+
+        public void Dispose()
+        {
+            var ptr = Ssl.GetCallbackInterface();
+            var gcHandle = GCHandle.FromIntPtr(ptr);
+
+            gcHandle.Free();
+
+            Ssl.Free(Ssl);
         }
 
         public int SetEncryptionSecrets(SslEncryptionLevel level, byte[] readSecret, byte[] writeSecret)
@@ -68,29 +80,19 @@ namespace OpenSSLSandbox
 
         public int SendAlert(SslEncryptionLevel level, TlsAlert alert)
         {
-            Console.WriteLine($"SendAlert({level}): {(byte)alert} (0x{(byte)alert:x2}) - {alert}");
+            Console.WriteLine($"SendAlert({level}): {(byte) alert} (0x{(byte) alert:x2}) - {alert}");
 
             return 1;
         }
 
-        public int DoHandshake() => OpenSsl.SSL_do_handshake(Ssl);
-
-        public unsafe int OnDataReceived(SslEncryptionLevel level, byte[] data)
+        public int DoHandshake()
         {
-            fixed (byte* pData = data)
-            {
-                return OpenSsl.SSL_provide_quic_data(Ssl, level, pData, new IntPtr(data.Length));
-            }
+            return Ssl.DoHandshake();
         }
 
-        public void Dispose()
+        public int OnDataReceived(SslEncryptionLevel level, byte[] data)
         {
-            var ptr = OpenSsl.GetCallbackInterface(Ssl);
-            var gcHandle = GCHandle.FromIntPtr(ptr);
-
-            gcHandle.Free();
-
-            OpenSsl.SSL_free(Ssl);
+            return Ssl.ProvideQuicData(level, data);
         }
     }
 }

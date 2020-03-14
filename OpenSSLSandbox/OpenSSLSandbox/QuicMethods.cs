@@ -8,7 +8,8 @@ namespace OpenSSLSandbox
     {
         private static QuicMethods instance = new QuicMethods
         {
-            setEncryptionSecrets = Marshal.GetFunctionPointerForDelegate(new SetEncryptionSecretsFunc(SetEncryptionSecretsImpl)),
+            setEncryptionSecrets =
+                Marshal.GetFunctionPointerForDelegate(new SetEncryptionSecretsFunc(SetEncryptionSecretsImpl)),
             addHandshakeData = Marshal.GetFunctionPointerForDelegate(new AddHandshakeDataFunc(AddHandshakeDataImpl)),
             flushFlight = Marshal.GetFunctionPointerForDelegate(new FlushFlightFunc(FlushFlightImpl)),
             sendAlert = Marshal.GetFunctionPointerForDelegate(new SendAlertFunc(SendAlertImpl))
@@ -18,7 +19,8 @@ namespace OpenSSLSandbox
 
         // these delegates need to match the ssl_quic_method_st struct in openssl/ssl.h
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate int SetEncryptionSecretsFunc(Ssl ssl, SslEncryptionLevel level, byte* readSecret, byte* writeSecret, UIntPtr secretLen);
+        public delegate int SetEncryptionSecretsFunc(Ssl ssl, SslEncryptionLevel level, byte* readSecret,
+            byte* writeSecret, UIntPtr secretLen);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int AddHandshakeDataFunc(Ssl ssl, SslEncryptionLevel level, byte* data, UIntPtr len);
@@ -37,7 +39,7 @@ namespace OpenSSLSandbox
 
         private static IQuicCallback GetCallbackInterface(Ssl ssl)
         {
-            var addr = OpenSsl.GetCallbackInterface(ssl);
+            var addr = ssl.GetCallbackInterface();
             var callback = (IQuicCallback) GCHandle.FromIntPtr(addr).Target;
 
             return callback;

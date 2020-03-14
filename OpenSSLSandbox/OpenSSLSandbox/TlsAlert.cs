@@ -31,6 +31,6 @@
         BadCertificateStatusResponse = 113,
         UnknownPskIdentity = 115,
         CertificateRequired = 116,
-        NoApplicationProtocol = 120,
+        NoApplicationProtocol = 120
     }
 }

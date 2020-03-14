@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
 
 namespace OpenSSLSandbox
 {
-    class Program
+    internal class Program
     {
-        static string SslErrorToString(int code)
+        private static string SslErrorToString(int code)
         {
             switch (code)
             {
@@ -39,18 +37,15 @@ namespace OpenSSLSandbox
             }
         }
 
-        static void CheckSslError(Ssl ssl, int code)
+        private static void CheckSslError(Ssl ssl, int code)
         {
-            var e = OpenSsl.SSL_get_error(ssl, code);
-            if (e != 0)
-            {
-                Console.WriteLine(SslErrorToString(e));
-            }
+            var e = ssl.GetError(code);
+            if (e != 0) Console.WriteLine(SslErrorToString(e));
         }
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            int res = 0;
+            var res = 0;
             var context = OpenSsl.SSL_CTX_new(OpenSsl.TLS_method());
 
             var client = new Handshake(context, "localhost:4000");
@@ -63,23 +58,16 @@ namespace OpenSSLSandbox
                 Console.WriteLine("Client:");
                 res = client.DoHandshake();
                 CheckSslError(client.Ssl, res);
-                foreach ((SslEncryptionLevel level, byte[] data) in client.ToSend)
-                {
-                    server.OnDataReceived(level, data);
-                }
+                foreach ((var level, var data) in client.ToSend) server.OnDataReceived(level, data);
                 Console.WriteLine();
 
                 Console.WriteLine("Server:");
                 res = server.DoHandshake();
                 CheckSslError(server.Ssl, res);
-                foreach ((SslEncryptionLevel level, byte[] data) in server.ToSend)
-                {
-                    client.OnDataReceived(level, data);
-                }
+                foreach ((var level, var data) in server.ToSend) client.OnDataReceived(level, data);
 
                 Console.Read();
             }
         }
-
     }
 }

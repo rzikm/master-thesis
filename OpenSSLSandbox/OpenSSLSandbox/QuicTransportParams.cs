@@ -17,9 +17,4 @@
         DisableActiveMigration = 0x0c,
         PreferredAddress = 0x0d
     }
-
-    public class QuicTransportParams
-    {
-
-    }
 }
