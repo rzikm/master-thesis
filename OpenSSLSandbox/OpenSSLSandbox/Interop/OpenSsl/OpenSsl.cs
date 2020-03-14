@@ -19,15 +19,6 @@ namespace OpenSSLSandbox
         [DllImport("kernel32.dll")]
         private static extern IntPtr LoadLibrary(string dllToLoad);
 
-        [DllImport(Libraries.Ssl)]
-        public static extern SslContext SSL_CTX_new(SslMethod method);
-
-        [DllImport(Libraries.Ssl)]
-        public static extern void SSL_CTX_free(SslContext ctx);
-
-        [DllImport(Libraries.Ssl)]
-        public static extern SslMethod TLS_method();
-
         [DllImport(Libraries.Crypto)]
         internal static extern int CRYPTO_get_ex_new_index(int classIndex, long argl, IntPtr argp, IntPtr newFunc,
             IntPtr dupFunc, IntPtr freeFunc);

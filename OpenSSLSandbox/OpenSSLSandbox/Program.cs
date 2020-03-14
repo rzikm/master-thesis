@@ -46,7 +46,7 @@ namespace OpenSSLSandbox
         private static void Main(string[] args)
         {
             var res = 0;
-            var context = OpenSsl.SSL_CTX_new(OpenSsl.TLS_method());
+            var context = SslContext.New(SslMethod.Tls);
 
             var client = new Handshake(context, "localhost:4000");
             var server = new Handshake(context,
@@ -58,13 +58,13 @@ namespace OpenSSLSandbox
                 Console.WriteLine("Client:");
                 res = client.DoHandshake();
                 CheckSslError(client.Ssl, res);
-                foreach ((var level, var data) in client.ToSend) server.OnDataReceived(level, data);
+                foreach (var (level, data) in client.ToSend) server.OnDataReceived(level, data);
                 Console.WriteLine();
 
                 Console.WriteLine("Server:");
                 res = server.DoHandshake();
                 CheckSslError(server.Ssl, res);
-                foreach ((var level, var data) in server.ToSend) client.OnDataReceived(level, data);
+                foreach (var (level, data) in server.ToSend) client.OnDataReceived(level, data);
 
                 Console.Read();
             }

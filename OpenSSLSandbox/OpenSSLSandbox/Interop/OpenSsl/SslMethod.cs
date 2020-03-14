@@ -1,20 +1,19 @@
 ﻿using System;
+using System.Runtime.InteropServices;
+using OpenSSLSandbox.Interop;
 
 namespace OpenSSLSandbox
 {
     public struct SslMethod
     {
+        public SslMethod Null => new SslMethod();
+
+        [DllImport(Libraries.Ssl)]
+        private static extern SslMethod TLS_method();
+
+        public static SslMethod Tls => TLS_method();
+
         private readonly IntPtr handle;
-
-        public SslMethod(IntPtr handle)
-        {
-            this.handle = handle;
-        }
-
-        public static implicit operator SslMethod(IntPtr ptr)
-        {
-            return new SslMethod(ptr);
-        }
 
         public override string ToString()
         {
