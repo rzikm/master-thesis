@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.29905.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSSLSandbox", "OpenSSLSandbox\OpenSSLSandbox.csproj", "{A5E1B5CE-7F2F-433C-859C-4998C88EA5FA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{CA36679D-C247-426C-AC78-F2870B6B797B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{A5E1B5CE-7F2F-433C-859C-4998C88EA5FA}.Release|x64.Build.0 = Release|x64
 		{A5E1B5CE-7F2F-433C-859C-4998C88EA5FA}.Release|x86.ActiveCfg = Release|x86
 		{A5E1B5CE-7F2F-433C-859C-4998C88EA5FA}.Release|x86.Build.0 = Release|x86
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|x64.Build.0 = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug|x86.Build.0 = Debug|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|x64.ActiveCfg = Release|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|x64.Build.0 = Release|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|x86.ActiveCfg = Release|Any CPU
+		{CA36679D-C247-426C-AC78-F2870B6B797B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
