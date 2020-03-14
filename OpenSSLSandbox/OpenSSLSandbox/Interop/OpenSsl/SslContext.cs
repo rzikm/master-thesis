@@ -36,6 +36,9 @@ namespace OpenSSLSandbox.Interop.OpenSsl
 
             [DllImport(Libraries.Ssl)]
             public static extern IntPtr SSL_CTX_new(SslMethod method);
+
+            [DllImport(Libraries.Ssl)]
+            public static extern IntPtr SSL_CTX_set_client_cert_cb(SslMethod method);
         }
     }
 }
