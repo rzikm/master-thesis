@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using OpenSSLSandbox.Interop.OpenSsl;
 
 namespace OpenSSLSandbox
 {

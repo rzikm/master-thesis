@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using OpenSSLSandbox.Interop;
 
-namespace OpenSSLSandbox
+namespace OpenSSLSandbox.Interop.OpenSsl
 {
     public struct SslContext
     {
@@ -15,25 +14,28 @@ namespace OpenSSLSandbox
             this.handle = handle;
         }
 
-        [DllImport(Libraries.Ssl)]
-        public static extern IntPtr SSL_CTX_new(SslMethod method);
-
         public static SslContext New(SslMethod method)
         {
-            return new SslContext(SSL_CTX_new(method));
+            return new SslContext(Native.SSL_CTX_new(method));
         }
-
-        [DllImport(Libraries.Ssl)]
-        public static extern void SSL_CTX_free(IntPtr ctx);
 
         public static void Free(SslContext ctx)
         {
-            SSL_CTX_free(ctx.handle);
+            Native.SSL_CTX_free(ctx.handle);
         }
 
         public override string ToString()
         {
             return handle.ToString("x");
+        }
+
+        private static class Native
+        {
+            [DllImport(Libraries.Ssl)]
+            public static extern void SSL_CTX_free(IntPtr ctx);
+
+            [DllImport(Libraries.Ssl)]
+            public static extern IntPtr SSL_CTX_new(SslMethod method);
         }
     }
 }

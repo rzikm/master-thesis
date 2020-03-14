@@ -1,4 +1,4 @@
-﻿namespace OpenSSLSandbox
+﻿namespace OpenSSLSandbox.Interop.OpenSsl
 {
     public enum TlsVersion : short
     {

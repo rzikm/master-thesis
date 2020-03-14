@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using OpenSSLSandbox.Interop;
 
-namespace OpenSSLSandbox
+namespace OpenSSLSandbox.Interop.OpenSsl
 {
     public static unsafe class OpenSsl
     {
