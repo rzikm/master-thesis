@@ -77,5 +77,17 @@ namespace Tests
             var hp = KeyDerivation.DeriveHp(initial);
             Assert.Equal("a8ed82e6664f865aedf6106943f95fb8", HexHelpers.ToHexString(hp));
         }
+
+        [Fact]
+        public void TestCreateHeaderProtectionMask()
+        {
+            var sample = HexHelpers.FromHexString("535064a4268a0d9d7b1c9d250ae35516");
+            var expected = "833b343aaa";
+            var hpKey = HexHelpers.FromHexString("a980b8b4fb7d9fbc13e814c23164253d");
+
+            var actual = Encryption.GetHeaderProtectionMask(Algorithm.AEAD_AES_128_GCM, hpKey, sample);
+            
+            Assert.Equal(expected, HexHelpers.ToHexString(actual));
+        }
     }
 }
