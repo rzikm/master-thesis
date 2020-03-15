@@ -17,8 +17,8 @@ namespace OpenSSLSandbox
 
             var client = new Handshake(context, "localhost:4000");
             var server = new Handshake(context,
-                cert: @"Certs\cert.crt",
-                privateKey: @"Certs\cert.key");
+                cert: @"Certs/cert.crt",
+                privateKey: @"Certs/cert.key");
 
             while (true)
             {

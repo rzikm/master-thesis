@@ -3,14 +3,20 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <Platforms>AnyCPU;x64;x86</Platforms>
+        <Platforms>AnyCPU</Platforms>
+        <Configurations>Release;Debug-Linux;Debug-win32</Configurations>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug-win32' ">
+      <DebugSymbols Condition=" '$(DebugSymbols)' == '' ">true</DebugSymbols>
+      <Optimize Condition=" '$(Optimize)' == '' ">false</Optimize>
+      <DefineConstants>TRACE; WINDOWS</DefineConstants>
+      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+      <Prefer32bit>true</Prefer32bit>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug-Linux' ">
+      <DefineConstants>TRACE; LINUX</DefineConstants>
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
