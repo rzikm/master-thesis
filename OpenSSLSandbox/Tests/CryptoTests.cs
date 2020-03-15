@@ -7,19 +7,6 @@ namespace Tests
 {
     public class CryptoTests
     {
-        private static string ToHexString(byte[] data)
-        {
-            return BitConverter.ToString(data).ToLower().Replace("-", "");
-        }
-
-        private static byte[] FromHexString(string hex)
-        {
-            var buf = new byte[hex.Length / 2];
-            for (var i = 0; i < buf.Length; i++) buf[i] = byte.Parse(hex.AsSpan(i * 2, 2), NumberStyles.HexNumber);
-
-            return buf;
-        }
-
         private static readonly string dcid = "8394c8f03e515708";
 
         private static readonly string initialSecret =
@@ -35,7 +22,7 @@ namespace Tests
         public void TestLabelGeneration(string label, ushort len, string expectedHex)
         {
             var actual = KeyDerivation.CreateHkdfLabel(label, len);
-            var actualHex = ToHexString(actual);
+            var actualHex = HexHelpers.ToHexString(actual);
 
             Assert.Equal(expectedHex, actualHex);
         }
@@ -43,8 +30,8 @@ namespace Tests
         [Fact]
         public void TestInitialSecret()
         {
-            var actual = KeyDerivation.DeriveInitialSecret(FromHexString(dcid));
-            var actualHex = ToHexString(actual);
+            var actual = KeyDerivation.DeriveInitialSecret(HexHelpers.FromHexString(dcid));
+            var actualHex = HexHelpers.ToHexString(actual);
 
             Assert.Equal(initialSecret, actualHex);
         }
@@ -52,43 +39,43 @@ namespace Tests
         [Fact]
         public void TestInitialClientKeyingMaterial()
         {
-            var initial = KeyDerivation.DeriveClientInitialSecret(FromHexString(initialSecret));
+            var initial = KeyDerivation.DeriveClientInitialSecret(HexHelpers.FromHexString(initialSecret));
 
             var clientInitial =
                 "fda3953aecc040e48b34e27ef87de3a6" +
                 "098ecf0e38b7e032c5c57bcbd5975b84";
 
-            Assert.Equal(clientInitial, ToHexString(initial));
+            Assert.Equal(clientInitial, HexHelpers.ToHexString(initial));
 
             var key = KeyDerivation.DeriveKey(initial);
-            Assert.Equal("af7fd7efebd21878ff66811248983694", ToHexString(key));
+            Assert.Equal("af7fd7efebd21878ff66811248983694", HexHelpers.ToHexString(key));
 
             var iv = KeyDerivation.DeriveIv(initial);
-            Assert.Equal("8681359410a70bb9c92f0420", ToHexString(iv));
+            Assert.Equal("8681359410a70bb9c92f0420", HexHelpers.ToHexString(iv));
 
             var hp = KeyDerivation.DeriveHp(initial);
-            Assert.Equal("a980b8b4fb7d9fbc13e814c23164253d", ToHexString(hp));
+            Assert.Equal("a980b8b4fb7d9fbc13e814c23164253d", HexHelpers.ToHexString(hp));
         }
 
         [Fact]
         public void TestInitialServerKeyingMaterial()
         {
-            var initial = KeyDerivation.DeriveServerInitialSecret(FromHexString(initialSecret));
+            var initial = KeyDerivation.DeriveServerInitialSecret(HexHelpers.FromHexString(initialSecret));
 
             var serverInitial =
                 "554366b81912ff90be41f17e80222130" +
                 "90ab17d8149179bcadf222f29ff2ddd5";
 
-            Assert.Equal(serverInitial, ToHexString(initial));
+            Assert.Equal(serverInitial, HexHelpers.ToHexString(initial));
 
             var key = KeyDerivation.DeriveKey(initial);
-            Assert.Equal("5d51da9ee897a21b2659ccc7e5bfa577", ToHexString(key));
+            Assert.Equal("5d51da9ee897a21b2659ccc7e5bfa577", HexHelpers.ToHexString(key));
 
             var iv = KeyDerivation.DeriveIv(initial);
-            Assert.Equal("5e5ae651fd1e8495af13508b", ToHexString(iv));
+            Assert.Equal("5e5ae651fd1e8495af13508b", HexHelpers.ToHexString(iv));
 
             var hp = KeyDerivation.DeriveHp(initial);
-            Assert.Equal("a8ed82e6664f865aedf6106943f95fb8", ToHexString(hp));
+            Assert.Equal("a8ed82e6664f865aedf6106943f95fb8", HexHelpers.ToHexString(hp));
         }
     }
 }
