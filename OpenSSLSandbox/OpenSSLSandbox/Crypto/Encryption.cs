@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 
@@ -33,6 +34,27 @@ namespace OpenSSLSandbox.Crypto
             };
 
             return aead.CreateEncryptor().TransformFinalBlock(sample, 0, sample.Length).Take(5).ToArray();
+        }
+
+        public static void ProtectHeader(Span<byte> header, Span<byte> mask, int startOffset)
+        {
+            Debug.Assert(mask.Length == 5);
+            Debug.Assert((uint) startOffset < header.Length);
+
+            if ((header[0] & 0x80) != 0)
+            {
+                header[0] ^= (byte) (mask[0] & 0x1f);
+
+                int ii = 1;
+                for (int i = startOffset; i < header.Length; i++)
+                {
+                    header[i] ^= mask[ii++ % mask.Length];
+                }
+            }
+            else
+            {
+                throw new NotImplementedException("Short header not implemented");
+            }
         }
     }
 }

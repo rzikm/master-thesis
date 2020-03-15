@@ -79,15 +79,23 @@ namespace Tests
         }
 
         [Fact]
-        public void TestCreateHeaderProtectionMask()
+        public void TestHeaderProtection()
         {
-            var sample = HexHelpers.FromHexString("535064a4268a0d9d7b1c9d250ae35516");
-            var expected = "833b343aaa";
-            var hpKey = HexHelpers.FromHexString("a980b8b4fb7d9fbc13e814c23164253d");
+            var payloadSample = HexHelpers.FromHexString("535064a4268a0d9d7b1c9d250ae35516");
+            var expectedMask = "833b343aaa";
+            var headerKey = HexHelpers.FromHexString("a980b8b4fb7d9fbc13e814c23164253d");
+            var header = HexHelpers.FromHexString("c3ff00001b088394c8f03e5157080000449e00000002");
+            var expectedProtectedHeader = "c0ff00001b088394c8f03e5157080000449e3b343aa8";
 
-            var actual = Encryption.GetHeaderProtectionMask(Algorithm.AEAD_AES_128_GCM, hpKey, sample);
+            var protectionMask = Encryption.GetHeaderProtectionMask(Algorithm.AEAD_AES_128_GCM, headerKey, payloadSample);
+            Assert.Equal(expectedMask, HexHelpers.ToHexString(protectionMask));
+
+            var actual = (byte[])header.Clone();
             
-            Assert.Equal(expected, HexHelpers.ToHexString(actual));
+            // hardcoded for purpose of this test
+            var startOffset = 18;
+            Encryption.ProtectHeader(actual, protectionMask, startOffset);
+            Assert.Equal(expectedProtectedHeader, HexHelpers.ToHexString(actual));
         }
     }
 }
