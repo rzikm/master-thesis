@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -8,7 +7,6 @@ namespace OpenSSLSandbox.Crypto
     public static class KeyDerivation
     {
         private static readonly HashAlgorithmName hashAlgorithm = HashAlgorithmName.SHA256;
-        private static TlsCipherSuite keyCipher = TlsCipherSuite.TLS_AES_128_GCM_SHA256;
 
         public static readonly byte[] initialSalt =
         {
