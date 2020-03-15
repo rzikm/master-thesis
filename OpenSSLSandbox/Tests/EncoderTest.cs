@@ -23,5 +23,20 @@ namespace Tests
             Assert.Equal(bytes, decodedBytes);
             Assert.Equal(value, decoded);
         }
+
+        [Fact]
+        public void TestPacketNumberEncoding()
+        {
+            ulong packetNumber = 0xa82f9b32;
+            ulong lastAcked = 0xa82f30ea;
+            ulong truncated = 0x9b32;
+
+            int bytes = Encoder.GetPacketNumberByteCount(lastAcked, packetNumber);
+            Assert.Equal(2, bytes);
+            
+            var actual = Encoder.DecodePacketNumber(lastAcked, truncated, 2);
+
+            Assert.Equal(packetNumber, actual);
+        }
     }
 }
