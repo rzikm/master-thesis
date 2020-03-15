@@ -27,6 +27,7 @@ namespace OpenSSLSandbox.Crypto
             var hkdfLabel = new byte[sizeof(short) + 1 + prefix.Length + label.Length + 1];
             hkdfLabel[0] = (byte) (length >> 8);
             hkdfLabel[1] = (byte) length;
+            
             hkdfLabel[2] = (byte) (label.Length + prefix.Length);
 
             Encoding.ASCII.GetBytes(prefix, hkdfLabel.AsSpan(3));
