@@ -5,6 +5,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <Platforms>AnyCPU</Platforms>
         <Configurations>Release;Debug-Linux;Debug-win32</Configurations>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug-win32' ">

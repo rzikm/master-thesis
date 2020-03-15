@@ -11,6 +11,11 @@ namespace OpenSSLSandbox.Interop.OpenSsl
 
         private readonly IntPtr handle;
 
+        private SslMethod(IntPtr handle)
+        {
+            this.handle = handle;
+        }
+
         public override string ToString()
         {
             return handle.ToString("x");

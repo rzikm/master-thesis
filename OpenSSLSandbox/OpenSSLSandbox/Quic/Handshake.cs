@@ -8,15 +8,10 @@ namespace OpenSSLSandbox
     [StructLayout(LayoutKind.Sequential)]
     public class Handshake : IQuicCallback, IDisposable
     {
-        private readonly string _cert;
-        private readonly string _privateKey;
         private readonly Ssl _ssl;
 
-        public Handshake(SslContext ctx, string address = null, string cert = null, string privateKey = null)
+        public Handshake(SslContext ctx, string? address = null, string? cert = null, string? privateKey = null)
         {
-            _cert = cert;
-            _privateKey = privateKey;
-
             var gcHandle = GCHandle.Alloc(this);
             ToSend = new List<(SslEncryptionLevel, byte[])>();
 

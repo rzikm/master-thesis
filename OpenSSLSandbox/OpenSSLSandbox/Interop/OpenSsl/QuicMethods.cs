@@ -41,7 +41,7 @@ namespace OpenSSLSandbox
         private static IQuicCallback GetCallbackInterface(Ssl ssl)
         {
             var addr = ssl.GetCallbackInterface();
-            var callback = (IQuicCallback) GCHandle.FromIntPtr(addr).Target;
+            var callback = (IQuicCallback) GCHandle.FromIntPtr(addr).Target!;
 
             return callback;
         }

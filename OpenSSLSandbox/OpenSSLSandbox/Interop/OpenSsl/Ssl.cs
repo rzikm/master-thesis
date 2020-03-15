@@ -14,7 +14,7 @@ namespace OpenSSLSandbox.Interop.OpenSsl
         private readonly IntPtr handle;
 
         public string Version =>
-            Marshal.PtrToStringUTF8(new IntPtr(Native.SSL_get_version(handle)));
+            Marshal.PtrToStringUTF8(new IntPtr(Native.SSL_get_version(handle)))!;
 
         public TlsVersion MinProtoVersion
         {
