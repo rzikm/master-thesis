@@ -17,9 +17,4 @@
     <ProjectReference Include="..\..\src\System.Net.Quic\System.Net.Quic.csproj" />
   </ItemGroup>
   
-  <ItemGroup>
-    <Compile Include="$(SysNetHttpPath)/tests/FunctionalTests/**/*Quic*.cs"> 
-      <link>%(RecursiveDir)%(Filename)%(Extension)</link>
-    </Compile>
-</ItemGroup>
 </Project>
