@@ -3,6 +3,8 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
 
         <IsPackable>false</IsPackable>
+
+        <RootNamespace>System.Net.Quic.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -10,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="$(SysNetHttpPath)/tests/FunctionalTests/**/*Quic*.cs">
+        <Compile Include="$(SysNetHttpPath)\tests\FunctionalTests\**\*Quic*.cs">
             <link>%(RecursiveDir)%(Filename)%(Extension)</link>
         </Compile>
     </ItemGroup>
