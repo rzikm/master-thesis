@@ -22,24 +22,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <None Update="Certs\cert.crt">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Certs\cert.key">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Lib\win-x86\libcrypto-1_1.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Lib\win-x86\libcrypto-1_1.pdb">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Lib\win-x86\libssl-1_1.dll">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-        <None Update="Lib\win-x86\libssl-1_1.pdb">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
+        <Compile Include="../OpenSSLSandbox/**/*.cs">
+            <link>project_folder\%(RecursiveDir)%(Filename)%(Extension)</link>
+            <copytooutputdirectory>PreserveNewest</copytooutputdirectory>
+        </Compile>
+        <Compile Remove="..\OpenSSLSandbox\obj\**" />
     </ItemGroup>
-
 </Project>

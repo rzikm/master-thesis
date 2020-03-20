@@ -1,0 +1,11 @@
+<Project>
+  <Import Project="..\Directory.Build.props" />
+  <Import Project="$(RepositoryEngineeringDir)/Versions.props" />
+  <Import Project="$(RepositoryEngineeringDir)/testing/xunit/xunit.props" />
+
+  <ItemGroup>
+    <Compile Include="$(CommonTestPath)System\Threading\Tasks\TaskTimeoutExtensions.cs">
+      <Link>Common\System\Threading\Tasks\TaskTimeoutExtensions.cs</Link>
+    </Compile>
+  </ItemGroup>
+</Project>

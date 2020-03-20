@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenSSLSandbox", "OpenSSLSa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{CA36679D-C247-426C-AC78-F2870B6B797B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenSSLSandbox-standalone", "OpenSSLSandbox-standalone\OpenSSLSandbox-standalone.csproj", "{AB3EB87E-6D86-4B02-8406-7047AB802708}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Any CPU = Release|Any CPU
@@ -26,6 +28,12 @@ Global
 		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug-Linux|Any CPU.Build.0 = Debug-Linux|Any CPU
 		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug-win32|Any CPU.ActiveCfg = Debug-win32|Any CPU
 		{CA36679D-C247-426C-AC78-F2870B6B797B}.Debug-win32|Any CPU.Build.0 = Debug-win32|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Debug-Linux|Any CPU.ActiveCfg = Debug-Linux|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Debug-Linux|Any CPU.Build.0 = Debug-Linux|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Debug-win32|Any CPU.ActiveCfg = Debug-win32|Any CPU
+		{AB3EB87E-6D86-4B02-8406-7047AB802708}.Debug-win32|Any CPU.Build.0 = Debug-win32|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

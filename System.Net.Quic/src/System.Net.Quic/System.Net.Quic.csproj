@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+<!--    <TargetFrameworks>$(NetCoreAppCurrent)-Windows_NT;$(NetCoreAppCurrent)-Linux;$(NetCoreAppCurrent)-OSX;$(NetCoreAppCurrent)-iOS</TargetFrameworks>-->
+    <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Include="$(CommonPath)/System/Net/Http/aspnetcore/Quic/**/*.cs">
+      <link>%(RecursiveDir)%(Filename)%(Extension)</link>
+    </Compile>
+    
+    <Compile Include="$(CommonPath)/System/Threading/Tasks/TaskToApm.cs">
+      <link>System/Threading/Tasks/TaskToApm.cs</link>
+    </Compile>
+    
+    <Compile Include="$(CommonPath)/System/Net/Logging/NetEventSource.Common.cs">
+      <link>System/Net/Logging/NetEventSource.Common.cs</link>
+    </Compile>
+  </ItemGroup>
+
+  <!-- Sort out interop libraries -->
+  <ItemGroup Condition=" '$(TargetsWindows)' == 'true'">
+    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
+      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsLinux)' == 'true'">
+    <Compile Include="$(CommonPath)\Interop\Linux\Interop.Libraries.cs">
+      <Link>Common\Interop\Linux\Interop.Libraries.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetsOSX)' == 'true' or '$(TargetsiOS)' == 'true'">
+    <Compile Include="$(CommonPath)\Interop\OSX\Interop.Libraries.cs">
+      <Link>Common\Interop\OSX\Interop.Libraries.cs</Link>
+    </Compile>
+  </ItemGroup>
+  
+  <!-- Include string resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="$(SysNetHttpPath)/src/Resources/Strings.resx">
+      <Visible>true</Visible>
+      <GenerateSource>true</GenerateSource>
+      <ClassName>System.SR</ClassName>
+      <Link>Resources/Strings.resx</Link>
+    </EmbeddedResource>
+      
+    <Compile Include="$(SysNetHttpPath)/src/Resources/Strings.Designer.cs" />
+    
+    <Compile Include="$(CommonPath)/System/SR.cs">
+      <Visible>true</Visible>
+      <Link>Resources/Common/SR.cs</Link>
+    </Compile>
+      
+    <None Include="$(SysNetHttpPath)/src/Resources/SR.resx">
+      <Link>Resources/SR.resx</Link>
+    </None>
+  </ItemGroup>
+
+</Project>
