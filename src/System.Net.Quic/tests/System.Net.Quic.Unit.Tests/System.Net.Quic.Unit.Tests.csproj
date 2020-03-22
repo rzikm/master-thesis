@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(SysNetHttpPath)/tests/UnitTests/**/*Quic*.cs">
+    <Compile Include="$(SysNetHttpPath)/tests/UnitTests/*Quic*.cs">
       <link>%(RecursiveDir)%(Filename)%(Extension)</link>
     </Compile>
   </ItemGroup>
