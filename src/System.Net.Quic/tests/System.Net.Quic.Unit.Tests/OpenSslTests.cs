@@ -15,22 +15,17 @@ namespace System.Net.Quic.Tests
 
         public OpenSslTests(ITestOutputHelper output)
         {
-            buffer = new byte[2048];
+            buffer = new byte[16 * 1024];
             this.output = output;
             // this is safe as tests within the same class will not run parallel to each other.
             Console.SetOut(new XUnitTextWriter(output));
         }
 
-        private void PipeData(ManagedQuicConnection from, ManagedQuicConnection to)
-        {
-            var written = from.SendData(buffer, out _);
-            Assert.Equal(PacketType.Initial, HeaderHelpers.GetPacketType(buffer[0]));
-            to.ReceiveData(buffer, written, new IPEndPoint(IPAddress.Any, 1010));
-        }
-
         [Fact]
         public void TestTrivialConnection()
         {
+            var ipEndPoint = new IPEndPoint(IPAddress.Any, 1010);
+            
             QuicClientConnectionOptions clientOpts = new QuicClientConnectionOptions();
             QuicListenerOptions serverOpts = new QuicListenerOptions()
             {
@@ -43,19 +38,24 @@ namespace System.Net.Quic.Tests
 
             output.WriteLine("Client:");
             Assert.Equal(SslError.WantRead, client.DoHandshake());
+            var written = client.SendData(buffer, out _);
             
             output.WriteLine("\nServer:");
-            PipeData(client, server);
+            server.ReceiveData(buffer, written, ipEndPoint);
             Assert.Equal(SslError.WantRead, server.DoHandshake());
+            written = server.SendData(buffer, out _);
             
             output.WriteLine("\nClient:");
-            foreach (var (level, data) in server.ToSend) client.OnDataReceived(level, data);
+            client.ReceiveData(buffer, written, ipEndPoint);
             Assert.Equal(SslError.None, client.DoHandshake());
+            written = client.SendData(buffer, out _);
             
             output.WriteLine("\nServer:");
-            foreach (var (level, data) in client.ToSend) server.OnDataReceived(level, data);
+            server.ReceiveData(buffer, written, ipEndPoint);
             Assert.Equal(SslError.None, server.DoHandshake());
 
+            Assert.True(server.Connected);
+            Assert.True(client.Connected);
             var serverParams2 = client.GetPeerTransportParameters();
         }
     }
