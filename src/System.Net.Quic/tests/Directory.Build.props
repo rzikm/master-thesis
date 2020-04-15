@@ -1,7 +1,7 @@
 <Project>
   <Import Project="..\Directory.Build.props" />
   <Import Project="$(RepositoryEngineeringDir)/Versions.props" />
-  <Import Project="$(RepositoryEngineeringDir)/testing/xunit/xunit.props" />
+  <!--<Import Project="$(RepositoryEngineeringDir)/testing/xunit/xunit.props" />-->
 
   <PropertyGroup>
     <TestDir>$(InstallerProjectRoot)test\</TestDir>
