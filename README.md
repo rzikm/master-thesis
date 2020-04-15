@@ -3,16 +3,27 @@
 This repository contains all necessary code changes needed for managed (C#)
 implementation of the QUIC protocol for .NET.
 
-## Building
+## Quickstart
 
-First, build OpenSSL version with added necessary interface for QUIC. See
-extern/akamai-openssl-quic/INSTALL for building instructions.
+To build the source code, run first the `setup.sh` or `setup.ps1` scripts (TODO: provide ps1 script). These will:
+- Build the custom openssl branch with QUIC support, leaving the binaries in artifacts/openssl, they
+  will be copied from here during library build.
+- Restore nuget packages inside the dotnet runtime repository.
 
-TODO: built libcrypto.so and libssl.so need to be renamed to libcrypto-quic.so and libssl-quic.so and included in the built sources of System.Net.Http/System.Net.Quic
+After that, you should be able to build and run the managed QUIC library using
+`src/System.Net.Quic/System.Net.Quic.sln` solution.
 
-For building the dotnet runtime, see src/dotnet-runtime/docs/workflow/README.md. 
+## Note on repository organisation
 
-You can also build the managed QUIC implementation as System.Net.Quic.dll using
-the solution in src/System.Net.Quic/System.Net.Quic.sln.
+The actual source files are located deep inside the dotnet-runtime fork submodule. You can find them
+in `src/dotnet-runtime/src/libraries/Common/System/Net/aspnetcore/Quic/Implementations/Managed`, and
+the tests in `src/dotnet-runtime/src/libraries/System.Net.Http/tests/UnitTests/Quic/`.
 
-TODO: provide build scripts that do the above steps
+This particular source organization allows building the QUIC as a standalone library (using the
+System.Net.Quic.sln), while being versioned in a fork of dotnet runtime. In future the code will be
+hopefully fully integrated into dotnet runtime.
+
+## Building as part of dotnet runtime
+
+TODO: The integration is not fully complete yet, build of dotnet runtime will crash. Use
+System.Net.Quic.sln for now.

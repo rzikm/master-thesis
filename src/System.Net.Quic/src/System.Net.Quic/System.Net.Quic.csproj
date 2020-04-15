@@ -6,6 +6,7 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OpensslLibsDir>..\..\..\..\artifacts\openssl\lib\</OpensslLibsDir>
   </PropertyGroup>
   
   <ItemGroup>
@@ -23,21 +24,30 @@
   </ItemGroup>
 
   <!-- Sort out interop libraries -->
-  <ItemGroup Condition=" '$(TargetsWindows)' == 'true'">
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetsLinux)' == 'true'">
-    <Compile Include="$(CommonPath)\Interop\Linux\Interop.Libraries.cs">
-      <Link>Common\Interop\Linux\Interop.Libraries.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetsOSX)' == 'true' or '$(TargetsiOS)' == 'true'">
-    <Compile Include="$(CommonPath)\Interop\OSX\Interop.Libraries.cs">
-      <Link>Common\Interop\OSX\Interop.Libraries.cs</Link>
-    </Compile>
-  </ItemGroup>
+  <Choose>
+    <When Condition="'$(OS)' == 'Windows_NT'">
+      <ItemGroup>
+        <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
+          <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
+        </Compile>
+      </ItemGroup>
+      <PropertyGroup>
+        <NativeLibPrefix></NativeLibPrefix>
+        <NativeLibExtension>.dll</NativeLibExtension>
+      </PropertyGroup>
+    </When>
+    <When Condition="'$(OS)' == 'Unix'">
+      <ItemGroup>
+        <Compile Include="$(CommonPath)\Interop\Linux\Interop.Libraries.cs">
+          <Link>Common\Interop\Linux\Interop.Libraries.cs</Link>
+        </Compile>
+      </ItemGroup>
+      <PropertyGroup>
+        <NativeLibPrefix>lib</NativeLibPrefix>
+        <NativeLibExtension>.so</NativeLibExtension>
+      </PropertyGroup>
+    </When>
+  </Choose>
   
   <!-- Include string resources -->
   <ItemGroup>
@@ -58,6 +68,14 @@
     <None Include="$(SysNetHttpPath)/src/Resources/SR.resx">
       <Link>Resources/SR.resx</Link>
     </None>
+  </ItemGroup>
+  
+  <!-- Include custom native openssl libs -->
+  <ItemGroup>
+    <ContentWithTargetPath Include="$(OpensslLibsDir)\$(NativeLibPrefix)*$(NativeLibExtension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>%(Filename)%(Extension)</TargetPath>
+    </ContentWithTargetPath>
   </ItemGroup>
 
 </Project>
