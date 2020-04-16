@@ -6,7 +6,8 @@
     <LangVersion>8</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OpensslLibsDir>..\..\..\..\artifacts\openssl\lib\</OpensslLibsDir>
+    <OpensslLibsDir>..\..\..\..\artifacts\openssl\</OpensslLibsDir>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
   
   <ItemGroup>
@@ -32,8 +33,8 @@
         </Compile>
       </ItemGroup>
       <PropertyGroup>
-        <NativeLibPrefix></NativeLibPrefix>
-        <NativeLibExtension>.dll</NativeLibExtension>
+        <NativeLibPrefix>bin\lib</NativeLibPrefix>
+        <NativeLibExtension>-1_1.dll</NativeLibExtension>
       </PropertyGroup>
     </When>
     <When Condition="'$(OS)' == 'Unix'">
@@ -43,7 +44,7 @@
         </Compile>
       </ItemGroup>
       <PropertyGroup>
-        <NativeLibPrefix>lib</NativeLibPrefix>
+        <NativeLibPrefix>lib\lib</NativeLibPrefix>
         <NativeLibExtension>.so</NativeLibExtension>
       </PropertyGroup>
     </When>
