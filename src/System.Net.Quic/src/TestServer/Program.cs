@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Net;
 using System.Net.Quic.Public;
-using System.Net.Security;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace TestServer
 {
     class Program
     {
-        private const int WindowSize = 4 * 1024;
-        private const int WindowCount = 10;
         private const int DataSize = 128 * 1024 * 1024;
 
         static IPEndPoint GetEndpoint(string host, int port)
@@ -44,8 +39,7 @@ namespace TestServer
             var stream = connection.OpenBidirectionalStream();
 
             Console.WriteLine($"Writing {DataSize} bytes of data");
-            byte[] buffer = new byte[1024];
-            byte[] discard = new byte[1024];
+            byte[] buffer = new byte[1024 * 16];
 
             // write known data so that we can assert it on the other size
             for (int i = 0; i < buffer.Length; i++)
@@ -53,20 +47,12 @@ namespace TestServer
                 buffer[i] = (byte) i;
             }
 
-            int maxWrite = WindowSize;
             int written = 0;
-            int windows = 1;
 
             while (written < DataSize)
             {
-                while (written < maxWrite)
-                {
-                    stream.Write(buffer);
-                    written += buffer.Length;
-                }
-
-                windows += await stream.ReadAsync(discard);
-                maxWrite = windows * WindowSize;
+                stream.Write(buffer);
+                written += buffer.Length;
             }
 
             Console.WriteLine("Data written");
@@ -86,10 +72,9 @@ namespace TestServer
             var stream = await client.AcceptStreamAsync();
 
             Console.WriteLine("Stream received, pulling data");
-            byte[] buffer = new byte[1024 * 4];
+            byte[] buffer = new byte[1024 * 16];
 
             int received = 0;
-            int nextWindow = WindowSize;
             while (received < DataSize)
             {
                 int recv = await stream.ReadAsync(buffer);
@@ -103,12 +88,6 @@ namespace TestServer
                 }
 
                 received += recv;
-                nextWindow -= recv;
-                if (nextWindow <= 10 * WindowSize)
-                {
-                    stream.Write(buffer, 0, 1);
-                    nextWindow += WindowSize;
-                }
             }
 
             Console.WriteLine($"Received all bytes");
