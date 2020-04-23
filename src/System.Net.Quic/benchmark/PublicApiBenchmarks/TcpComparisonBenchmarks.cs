@@ -2,7 +2,10 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Quic.Public;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -13,10 +16,15 @@ using BenchmarkDotNet.Engines;
 namespace PublicApiBenchmarks
 {
     [MemoryDiagnoser]
-    [SimpleJob(RunStrategy.Monitoring, targetCount: 5)]
+    [SimpleJob(RunStrategy.Monitoring, targetCount: 20)]
     [Config(typeof(Config))]
+    // [InProcess]
     public class TcpComparisonBenchmarks
     {
+        private const string CertFilePath = "Certs/cert.crt";
+        private const string CertPrivateKeyPath = "Certs/cert.key";
+        private const string CertPfx = "Certs/cert.pfx";
+        
         class Config : ManualConfig
         {
             public Config()
@@ -25,10 +33,14 @@ namespace PublicApiBenchmarks
             }
         }
         
-        [Params(1024 * 1024, 32 * 1024 * 1024/*, 128 * 1024 * 1024*/)]
+        // [Params(1024 * 1024, 32 * 1024 * 1024, 128 * 1024 * 1024)]
+        [Params(1024 * 1024 * 32)]
         public int DataLength { get; set; }
 
+        // [Params(1024, 8 * 1024)]
         public int SendBufferSize { get; set; } = 16 * 1024;
+        
+        // [Params(1024, 8 * 1024)]
         public int RecvBufferSize { get; set; } = 16 * 1024;
 
         private QuicListener _quicListener;
@@ -36,6 +48,7 @@ namespace PublicApiBenchmarks
 
         private TcpListener _tcpListener;
         private TcpClient _tcpClient;
+        private SslStream _sslStream;
         
         private Task _serverTask;
         private Channel<int> _connectionSignalChannel;
@@ -65,7 +78,10 @@ namespace PublicApiBenchmarks
             {
                 await reader.ReadAsync();
                 using var client = await _tcpListener.AcceptTcpClientAsync();
-                await using var stream = client.GetStream();
+                await using var stream = new SslStream(client.GetStream(), false);
+
+                var cert = new X509Certificate2(CertPfx);
+                await stream.AuthenticateAsServerAsync(cert);
                 await SendData(stream);
             }
         }
@@ -130,14 +146,14 @@ namespace PublicApiBenchmarks
             _connectionSignalChannel.Writer.TryWrite(0);
             _tcpClient = new TcpClient();
             _tcpClient.Connect((IPEndPoint) _tcpListener.LocalEndpoint);
+            _sslStream = new SslStream(_tcpClient.GetStream(), false, (sender, certificate, chain, errors) => true);
+            _sslStream.AuthenticateAsClient("localhost");
         }
 
         [Benchmark(Baseline = true)]
         public async Task Tcp()
         {
-            await using var stream = _tcpClient.GetStream();
-
-            await RecvData(stream);
+            await RecvData(_sslStream);
             
             _tcpClient.Close();
         }
