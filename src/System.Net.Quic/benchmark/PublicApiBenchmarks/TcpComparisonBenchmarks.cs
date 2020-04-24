@@ -16,14 +16,14 @@ using BenchmarkDotNet.Engines;
 namespace PublicApiBenchmarks
 {
     [MemoryDiagnoser]
-    [SimpleJob(RunStrategy.Monitoring, targetCount: 20)]
+    // [SimpleJob(RunStrategy.Monitoring, targetCount: 20)]
     [Config(typeof(Config))]
-    // [InProcess]
+    [InProcess]
     public class TcpComparisonBenchmarks
     {
         private const string CertFilePath = "Certs/cert.crt";
         private const string CertPrivateKeyPath = "Certs/cert.key";
-        private const string CertPfx = "Certs/cert.pfx";
+        private const string CertPfx = "Certs/cert-combined.pfx";
         
         class Config : ManualConfig
         {
