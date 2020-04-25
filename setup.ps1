@@ -3,7 +3,7 @@ $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
 
 if(!(Get-Command nmake -ErrorAction SilentlyContinue))
 {
-    echo "Cannot find nmake, are you running from developer PowerShell instance?"
+    echo "Cannot find nmake, are you running from developer shell instance?"
     exit 1;
 }
 
@@ -36,7 +36,7 @@ foreach ($command in "perl", "nasm")
     }
 }
 
-perl "Configure" VC-WIN32 "--prefix=$opensslArtifactRoot"
+perl "Configure" VC-WIN64A "--prefix=$opensslArtifactRoot"
 nmake install_sw
 popd
 

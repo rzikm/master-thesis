@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OpensslLibsDir>..\..\..\..\artifacts\openssl\</OpensslLibsDir>
-    <Platforms>AnyCPU;x86</Platforms>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   
   <ItemGroup>
@@ -34,7 +34,7 @@
       </ItemGroup>
       <PropertyGroup>
         <NativeLibPrefix>bin\lib</NativeLibPrefix>
-        <NativeLibExtension>-1_1.dll</NativeLibExtension>
+        <NativeLibExtension>-1_1-x64.dll</NativeLibExtension>
       </PropertyGroup>
     </When>
     <When Condition="'$(OS)' == 'Unix'">

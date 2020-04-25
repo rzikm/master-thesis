@@ -5,8 +5,8 @@ implementation of the QUIC protocol for .NET.
 
 ## Quickstart
 
-To setup development environment, run first the `setup.sh` or `setup.ps1` scripts.
-Note that on windows, you need to run the script from developer powershell prompt, so that `nmake`
+To setup development environment, run first the `setup.sh` or `setup.cmd` scripts.
+Note that on windows, you need to run the script from developer shell prompt (x64), so that `nmake`
 used to compile OpenSSL is in path. The scripts will:
 - Build the custom openssl branch with QUIC support, leaving the binaries in artifacts/openssl, they
   will be copied from here during the library build.
@@ -16,7 +16,7 @@ used to compile OpenSSL is in path. The scripts will:
 After that, you should be able to build and run the managed QUIC library using
 `src/System.Net.Quic/System.Net.Quic.sln` solution.
 
-TODO: For technical reasons, only x86 platform is supported on windows.
+TODO: For technical reasons, only 64-bit runtime supported on windows.
 
 ## Note on repository organisation
 
