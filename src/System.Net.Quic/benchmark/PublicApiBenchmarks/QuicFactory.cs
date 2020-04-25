@@ -12,7 +12,7 @@ namespace PublicApiBenchmarks
             {
                 CertificateFilePath = "Certs/cert.crt",
                 PrivateKeyFilePath = "Certs/cert.key",
-                ListenEndPoint = endpoint
+                ListenEndPoint = endpoint ?? new IPEndPoint(IPAddress.Loopback, 0)
             });
         }
 
