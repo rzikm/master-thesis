@@ -11,8 +11,17 @@ namespace PublicApiBenchmarks
 {
     [MemoryDiagnoser]
     [InProcess]
+    [Config(typeof(Config))]
     public class Benchmarks
     {
+        class Config : ManualConfig
+        {
+            public Config()
+            {
+                Options |= ConfigOptions.DisableOptimizationsValidator;
+            }
+        }
+        
         private QuicListener _listener;
         private QuicConnection _client;
 

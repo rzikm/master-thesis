@@ -7,6 +7,7 @@ namespace PublicApiBenchmarks
         public static void Main(string[] args)
         {
             var summary = BenchmarkRunner.Run<TcpComparisonBenchmarks>();
+            // var summary = BenchmarkRunner.Run<Benchmarks>();
         }
     }
 }

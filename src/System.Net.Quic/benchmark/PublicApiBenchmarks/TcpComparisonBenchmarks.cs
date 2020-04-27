@@ -21,10 +21,15 @@ namespace PublicApiBenchmarks
     [InProcess]
     public class TcpComparisonBenchmarks
     {
+        private static void Log(string message)
+        {
+            // Console.WriteLine(message);
+        }
+
         private const string CertFilePath = "Certs/cert.crt";
         private const string CertPrivateKeyPath = "Certs/cert.key";
         private const string CertPfx = "Certs/cert-combined.pfx";
-        
+
         class Config : ManualConfig
         {
             public Config()
@@ -32,14 +37,16 @@ namespace PublicApiBenchmarks
                 Options |= ConfigOptions.DisableOptimizationsValidator;
             }
         }
-        
-        // [Params(1024 * 1024, 32 * 1024 * 1024, 128 * 1024 * 1024)]
-        [Params(1024 * 1024 * 32)]
+
+        // [Params(8 * 1024 * 1024, 32 * 1024 * 1024, 128 * 1024 * 1024)]
+        // [Params(1024 * 1024, 32 * 1024 * 1024)]
+        [Params(16 * 1024 * 1024)]
+        // [Params(32 * 1024)] 
         public int DataLength { get; set; }
 
         // [Params(1024, 8 * 1024)]
         public int SendBufferSize { get; set; } = 16 * 1024;
-        
+
         // [Params(1024, 8 * 1024)]
         public int RecvBufferSize { get; set; } = 16 * 1024;
 
@@ -49,28 +56,33 @@ namespace PublicApiBenchmarks
         private TcpListener _tcpListener;
         private TcpClient _tcpClient;
         private SslStream _sslStream;
-        
+
         private Task _serverTask;
         private Channel<int> _connectionSignalChannel;
-        
+
         private byte[] _recvBuffer;
         private byte[] _sendBuffer;
 
         private async Task QuicServer()
         {
-            var reader = _connectionSignalChannel.Reader;
-            while (await reader.WaitToReadAsync())
+            await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
             {
-                await reader.ReadAsync();
-                using var connection = await _quicListener.AcceptConnectionAsync();
+                Log("Server: waiting for connection.");
+
+                var connection = await _quicListener.AcceptConnectionAsync();
+                Log("Server: opening stream.");
                 await using var stream = connection.OpenUnidirectionalStream();
-                
                 await SendData(stream);
-                
+                Log("Server: data sent.");
+
                 await stream.ShutdownWriteCompleted();
+                Log("Server: data confirmed delivered.");
+
+                connection.Dispose();
+                Log("Server: connection closed");
             }
         }
-        
+
         private async Task TcpServer()
         {
             var reader = _connectionSignalChannel.Reader;
@@ -94,17 +106,21 @@ namespace PublicApiBenchmarks
                 await stream.WriteAsync(_sendBuffer);
                 written += _sendBuffer.Length;
             }
-            
+
             await stream.FlushAsync();
         }
 
-        private async Task RecvData(Stream stream)
+        private async Task<int> RecvData(Stream stream)
         {
-            int received = 0;
-            while (received < DataLength)
+            int recv;
+            int total = 0;
+            do
             {
-                received += await stream.ReadAsync(_recvBuffer);
-            }
+                recv = await stream.ReadAsync(_recvBuffer);
+                total += recv;
+            } while (recv > 0);
+
+            return total;
         }
 
         private void GlobalSetupShared()
@@ -117,11 +133,47 @@ namespace PublicApiBenchmarks
         [GlobalSetup(Target = nameof(Quic))]
         public void GlobalSetupQuic()
         {
+            Log("Global setup");
             GlobalSetupShared();
             _quicListener = QuicFactory.CreateListener();
             _quicListener.Start();
             _serverTask = Task.Run(QuicServer);
         }
+
+        [IterationSetup(Target = nameof(Quic))]
+        public void IterationSetupQuic()
+        {
+            Log("iteration setup");
+            _connectionSignalChannel.Writer.TryWrite(0);
+            _quicClient = QuicFactory.CreateClient(_quicListener.ListenEndPoint);
+            _quicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
+        }
+
+        [Benchmark]
+        public async Task Quic()
+        {
+            Log("Benchmark method");
+            await using var stream = await _quicClient.AcceptStreamAsync();
+
+            await RecvData(stream);
+        }
+
+        [IterationCleanup(Target = nameof(Quic))]
+        public void IterationCleanupQuic()
+        {
+            Log("Iteration cleanup");
+            _quicClient.Dispose();
+        }
+
+        [GlobalCleanup(Target = nameof(Quic))]
+        public void GlobalCleanupQuic()
+        {
+            Log("Global cleanup");
+            _connectionSignalChannel.Writer.Complete();
+            _serverTask.Wait();
+            _quicListener.Dispose();
+        }
+
 
         [GlobalSetup(Target = nameof(Tcp))]
         public void GlobalSetupTcp()
@@ -130,14 +182,6 @@ namespace PublicApiBenchmarks
             _tcpListener = new TcpListener(IPAddress.Any, 0);
             _tcpListener.Start();
             _serverTask = Task.Run(TcpServer);
-        }
-
-        [IterationSetup(Target = nameof(Quic))]
-        public void IterationSetupQuic()
-        {
-            _connectionSignalChannel.Writer.TryWrite(0);
-            _quicClient = QuicFactory.CreateClient(_quicListener.ListenEndPoint);
-            _quicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
         }
 
         [IterationSetup(Target = nameof(Tcp))]
@@ -150,45 +194,21 @@ namespace PublicApiBenchmarks
             _sslStream.AuthenticateAsClient("localhost");
         }
 
-        [Benchmark(Baseline = true)]
+
+        // [Benchmark(Baseline = true)]
         public async Task Tcp()
         {
             await RecvData(_sslStream);
-            
+
             _tcpClient.Close();
         }
 
-        [Benchmark]
-        public async Task Quic()
-        {
-            await using var stream = await _quicClient.AcceptStreamAsync();
-
-            await RecvData(stream);
-
-            // issue one more read which should block until we are sure there are no more data.
-            await stream.ReadAsync(_recvBuffer);
-        }
-
-        [IterationCleanup(Target = nameof(Quic))]
-        public void IterationCleanupQuic()
-        {
-            _quicClient.Dispose();
-        }
-        
         [IterationCleanup(Target = nameof(Tcp))]
         public void IterationCleanupTcp()
         {
             _tcpClient.Dispose();
         }
 
-        [GlobalCleanup(Target = nameof(Quic))]
-        public void GlobalCleanupQuic()
-        {
-            _connectionSignalChannel.Writer.Complete();
-            _serverTask.Wait();
-            _quicListener.Dispose();
-        }
-        
         [GlobalCleanup(Target = nameof(Tcp))]
         public void GlobalCleanupTcp()
         {
