@@ -19,7 +19,7 @@ namespace PublicApiBenchmarks
     // [SimpleJob(RunStrategy.Monitoring, targetCount: 20)]
     [Config(typeof(Config))]
     [InProcess]
-    public class TcpComparisonBenchmarks
+    public class SslStreamComparisonBenchmarks
     {
         private static void Log(string message)
         {
@@ -83,7 +83,7 @@ namespace PublicApiBenchmarks
             }
         }
 
-        private async Task TcpServer()
+        private async Task SslStreamServer()
         {
             var reader = _connectionSignalChannel.Reader;
             while (await reader.WaitToReadAsync())
@@ -175,17 +175,17 @@ namespace PublicApiBenchmarks
         }
 
 
-        [GlobalSetup(Target = nameof(Tcp))]
-        public void GlobalSetupTcp()
+        [GlobalSetup(Target = nameof(SslStream))]
+        public void GlobalSetupSslStream()
         {
             GlobalSetupShared();
             _tcpListener = new TcpListener(IPAddress.Any, 0);
             _tcpListener.Start();
-            _serverTask = Task.Run(TcpServer);
+            _serverTask = Task.Run(SslStreamServer);
         }
 
-        [IterationSetup(Target = nameof(Tcp))]
-        public void IterationSetupTcp()
+        [IterationSetup(Target = nameof(SslStream))]
+        public void IterationSetupSslStream()
         {
             _connectionSignalChannel.Writer.TryWrite(0);
             _tcpClient = new TcpClient();
@@ -195,22 +195,22 @@ namespace PublicApiBenchmarks
         }
 
 
-        // [Benchmark(Baseline = true)]
-        public async Task Tcp()
+        [Benchmark(Baseline = true)]
+        public async Task SslStream()
         {
             await RecvData(_sslStream);
 
             _tcpClient.Close();
         }
 
-        [IterationCleanup(Target = nameof(Tcp))]
-        public void IterationCleanupTcp()
+        [IterationCleanup(Target = nameof(SslStream))]
+        public void IterationCleanupSslStream()
         {
             _tcpClient.Dispose();
         }
 
-        [GlobalCleanup(Target = nameof(Tcp))]
-        public void GlobalCleanupTcp()
+        [GlobalCleanup(Target = nameof(SslStream))]
+        public void GlobalCleanupSslStream()
         {
             _connectionSignalChannel.Writer.Complete();
             _serverTask.Wait();
