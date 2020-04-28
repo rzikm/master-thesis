@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Quic.Public;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
@@ -26,33 +27,16 @@ namespace PublicApiBenchmarks
         private byte[] _recvBuffer;
         private byte[] _sendBuffer;
 
-        protected override async Task QuicStreamServer()
+        protected override async Task QuicStreamServer(QuicConnection connection)
         {
-            await foreach (var _ in ConnectionSignalChannel.Reader.ReadAllAsync())
-            {
-                var connection = await QuicListener.AcceptConnectionAsync();
-                await using var stream = connection.OpenUnidirectionalStream();
-                await SendData(stream);
-
-                await stream.ShutdownWriteCompleted();
-
-                connection.Dispose();
-            }
+            await using var stream = connection.OpenUnidirectionalStream();
+            await SendData(stream);
+            await stream.ShutdownWriteCompleted();
         }
 
-        protected override async Task SslStreamServer()
+        protected override async Task SslStreamServer(SslStream stream)
         {
-            var reader = ConnectionSignalChannel.Reader;
-            while (await reader.WaitToReadAsync())
-            {
-                await reader.ReadAsync();
-                using var client = await TcpListener.AcceptTcpClientAsync();
-                await using var stream = new SslStream(client.GetStream(), false);
-
-                var cert = new X509Certificate2(CertPfx);
-                await stream.AuthenticateAsServerAsync(cert);
-                await SendData(stream);
-            }
+            await SendData(stream);
         }
 
         private async Task SendData(Stream stream)
@@ -111,10 +95,10 @@ namespace PublicApiBenchmarks
         {
             TcpClient = new TcpClient();
             TcpClient.Connect((IPEndPoint) TcpListener.LocalEndpoint);
-            ClientSslStream = new SslStream(TcpClient.GetStream(), false, (sender, certificate, chain, errors) => true);
+            ClientSslStream = CreateSslStream(TcpClient.GetStream());
             ClientSslStream.AuthenticateAsClient("localhost");
         }
-        
+
         [Benchmark(Baseline = true)]
         public async Task SslStream()
         {

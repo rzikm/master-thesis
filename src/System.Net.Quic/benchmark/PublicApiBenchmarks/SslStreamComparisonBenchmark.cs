@@ -1,7 +1,9 @@
+using System.IO;
 using System.Net;
 using System.Net.Quic.Public;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
@@ -19,12 +21,12 @@ namespace PublicApiBenchmarks
         protected TcpListener TcpListener;
         protected TcpClient TcpClient;
         protected SslStream ClientSslStream;
-        protected Channel<int> ConnectionSignalChannel;
         
+        private Channel<int> _connectionSignalChannel;
         private Task _serverTask;
         private const string CertFilePath = "Certs/cert.crt";
         private const string CertPrivateKeyPath = "Certs/cert.key";
-        protected const string CertPfx = "Certs/cert-combined.pfx";
+        private const string CertPfx = "Certs/cert-combined.pfx";
 
         private class Config : ManualConfig
         {
@@ -41,7 +43,7 @@ namespace PublicApiBenchmarks
 
         protected void DoGlobalSetupShared()
         {
-            ConnectionSignalChannel = Channel.CreateUnbounded<int>();
+            _connectionSignalChannel = Channel.CreateUnbounded<int>();
             GlobalSetupShared();
         }
         
@@ -57,8 +59,18 @@ namespace PublicApiBenchmarks
             _serverTask = Task.Run(QuicStreamServer);
             GlobalSetupQuicStream();
         }
-        
-        protected abstract Task QuicStreamServer();
+
+        private async Task QuicStreamServer()
+        {
+            await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+            {
+                var connection = await QuicListener.AcceptConnectionAsync();
+                await QuicStreamServer(connection);
+                connection.Dispose();
+            }
+        }
+
+        protected abstract Task QuicStreamServer(QuicConnection connection);
         
         protected virtual void GlobalSetupQuicStream() {}
 
@@ -74,12 +86,24 @@ namespace PublicApiBenchmarks
         
         protected virtual void GlobalSetupSslStream() {}
 
-        protected abstract Task SslStreamServer();
+        private async Task SslStreamServer()
+        {
+            await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+            {
+                using var client = await TcpListener.AcceptTcpClientAsync();
+                await using var stream = new SslStream(client.GetStream(), false);
+                var cert = new X509Certificate2(CertPfx);
+                await stream.AuthenticateAsServerAsync(cert);
+                await SslStreamServer(stream);
+            }
+        }
 
+        protected abstract Task SslStreamServer(SslStream stream);
+        
         [IterationSetup(Target = nameof(QuicStream))]
         public void DoIterationSetupQuicStream()
         {
-            ConnectionSignalChannel.Writer.TryWrite(0);
+            _connectionSignalChannel.Writer.TryWrite(0);
             IterationSetupQuicStream();
         }
         
@@ -88,7 +112,7 @@ namespace PublicApiBenchmarks
         [IterationSetup(Target = nameof(SslStream))]
         public void DoIterationSetupSslStream()
         {
-            ConnectionSignalChannel.Writer.TryWrite(0);
+            _connectionSignalChannel.Writer.TryWrite(0);
             IterationSetupSslStream();
         }
         
@@ -112,7 +136,7 @@ namespace PublicApiBenchmarks
 
         protected void StopServer()
         {
-            ConnectionSignalChannel.Writer.Complete();
+            _connectionSignalChannel.Writer.Complete();
             _serverTask.Wait();
         }
         
@@ -136,5 +160,9 @@ namespace PublicApiBenchmarks
 
         protected virtual void GlobalCleanupSslStream() { }
         
+        protected static SslStream CreateSslStream(Stream innerStream)
+        {
+            return new SslStream(innerStream, false, (sender, certificate, chain, errors) => true);
+        }
     }
 }

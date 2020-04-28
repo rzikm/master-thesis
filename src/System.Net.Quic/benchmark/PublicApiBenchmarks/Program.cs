@@ -6,7 +6,8 @@ namespace PublicApiBenchmarks
     {
         public static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<StreamPerformanceComparisonBenchmarks>();
+            var summary = BenchmarkRunner.Run<ConnectionEstablishmentComparisonBenchmarks>();
+            // var summary = BenchmarkRunner.Run<StreamPerformanceComparisonBenchmarks>();
             // var summary = BenchmarkRunner.Run<Benchmarks>();
         }
     }
