@@ -7,7 +7,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace PublicApiBenchmarks
 {
-    public class ConnectionEstablishmentComparisonBenchmarks : SslStreamComparisonBenchmark
+    public class ConnectionCloseComparisonBenchmarks : SslStreamComparisonBenchmark
     {
         protected sealed override Task QuicStreamServer(QuicConnection connection)
         {
@@ -22,17 +22,13 @@ namespace PublicApiBenchmarks
         protected sealed override void IterationSetupSslStream()
         {
             TcpClient = new TcpClient();
-        }
-
-        [Benchmark(Baseline = true)]
-        public void SslStream()
-        {
             TcpClient.Connect((IPEndPoint) TcpListener.LocalEndpoint);
             ClientSslStream = CreateSslStream(TcpClient.GetStream());
             ClientSslStream.AuthenticateAsClient("localhost");
         }
 
-        protected sealed override void IterationCleanupSslStream()
+        [Benchmark(Baseline = true)]
+        public void SslStream()
         {
             ClientSslStream.Dispose();
             TcpClient.Dispose();
@@ -41,15 +37,11 @@ namespace PublicApiBenchmarks
         protected sealed override void IterationSetupQuicStream()
         {
             QuicClient = QuicFactory.CreateClient(QuicListener.ListenEndPoint);
+            QuicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
         }
 
         [Benchmark(Description = nameof(QuicConnection))]
         public void QuicStream()
-        {
-            QuicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
-        }
-
-        protected sealed override void IterationCleanupQuicStream()
         {
             QuicClient.Dispose();
         }
