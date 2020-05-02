@@ -28,7 +28,7 @@ namespace PublicApiBenchmarks
         private const string CertPrivateKeyPath = "Certs/cert.key";
         private const string CertPfx = "Certs/cert-combined.pfx";
 
-        private class Config : ManualConfig
+        protected class Config : ManualConfig
         {
             public Config()
             {
@@ -37,7 +37,8 @@ namespace PublicApiBenchmarks
                 // Add(Job.InProcess);
                 
                 Add(MemoryDiagnoser.Default);
-                Add(Job.Default);
+                // Add(Job.Default);
+                Add(Job.InProcess.WithIterationCount(10));
             }
         }
 

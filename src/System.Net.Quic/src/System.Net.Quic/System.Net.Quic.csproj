@@ -22,6 +22,20 @@
     <Compile Include="$(CommonPath)/System/Net/Logging/NetEventSource.Common.cs">
       <link>System/Net/Logging/NetEventSource.Common.cs</link>
     </Compile>
+    
+    <Compile Update="..\..\..\dotnet-runtime\src\libraries\Common\src\System\Net\Http\aspnetcore\Quic\Implementations\Managed\ManagedQuicConnection.Recovery.cs">
+      <link>%(RecursiveDir)%(Filename)%(Extension)</link>
+      <Link>Quic\Implementations\Managed\ManagedQuicConnection.Recovery.cs</Link>
+    </Compile>
+    
+    <Compile Update="..\..\..\dotnet-runtime\src\libraries\Common\src\System\Net\Http\aspnetcore\Quic\Implementations\Managed\ManagedQuicConnection.Packets.cs">
+      <link>%(RecursiveDir)%(Filename)%(Extension)</link>
+      <Link>Quic\Implementations\Managed\ManagedQuicConnection.Packets.cs</Link>
+    </Compile>
+    
+    <Compile Update="..\..\..\dotnet-runtime\src\libraries\Common\src\System\Net\Http\aspnetcore\Quic\Implementations\Managed\Internal\QuicConnectionState.cs">
+      <Link>Quic\Implementations\Managed\Internal\QuicConnectionState.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- Sort out interop libraries -->
