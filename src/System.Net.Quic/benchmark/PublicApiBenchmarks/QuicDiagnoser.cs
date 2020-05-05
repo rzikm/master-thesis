@@ -23,7 +23,7 @@ namespace PublicApiBenchmarks
         private EventSource _quicEventSource;
 
         // event ids, need to be synchronized with ones used in NetEventSource.Quic
-        private const int PacketSentId = 17;
+        private const int PacketSentId = 19;
         private const int PacketLostId = PacketSentId + 1;
 
         private struct EventData
@@ -97,11 +97,11 @@ namespace PublicApiBenchmarks
                 {
                     case PacketSentId:
                         Interlocked.Increment(ref _data.PacketsSent);
-                        Interlocked.Add(ref _data.BytesSent, (int) eventData.Payload[0]);
+                        Interlocked.Add(ref _data.BytesSent, (int) eventData.Payload[1]);
                         break;
                     case PacketLostId:
                         Interlocked.Increment(ref _data.PacketsLost);
-                        Interlocked.Add(ref _data.BytesLost, (int) eventData.Payload[0]);
+                        Interlocked.Add(ref _data.BytesLost, (int) eventData.Payload[1]);
                         break;
                 }
             }
