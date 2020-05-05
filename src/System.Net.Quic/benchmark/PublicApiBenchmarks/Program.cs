@@ -8,8 +8,8 @@ namespace PublicApiBenchmarks
         {
             // var summary = BenchmarkRunner.Run<ConnectionEstablishmentComparisonBenchmarks>();
             // var summary = BenchmarkRunner.Run<ConnectionCloseComparisonBenchmarks>();
-            // var summary = BenchmarkRunner.Run<StreamPerformanceComparisonBenchmarks>();
-            var summary = BenchmarkRunner.Run<WorkbenchBenchmark>();
+            var summary = BenchmarkRunner.Run<StreamPerformanceComparisonBenchmarks>();
+            // var summary = BenchmarkRunner.Run<WorkbenchBenchmark>();
             // var summary = BenchmarkRunner.Run<Benchmarks>();
         }
     }

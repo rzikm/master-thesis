@@ -37,6 +37,7 @@ namespace PublicApiBenchmarks
                 // Add(Job.InProcess);
                 
                 Add(MemoryDiagnoser.Default);
+                Add(QuicDiagnoser.Default);
                 // Add(Job.Default);
                 Add(Job.InProcess.WithIterationCount(10));
             }

@@ -17,15 +17,15 @@ namespace PublicApiBenchmarks
     public class QuicDiagnoser : EventListener, IDiagnoser
     {
         private static readonly string DiagnoserId = nameof(QuicDiagnoser);
-        
+
         public static readonly QuicDiagnoser Default = new QuicDiagnoser();
-        
+
         private EventSource _quicEventSource;
 
         // event ids, need to be synchronized with ones used in NetEventSource.Quic
         private const int PacketSentId = 17;
         private const int PacketLostId = PacketSentId + 1;
-        
+
         private struct EventData
         {
             public int PacketsSent;
@@ -33,11 +33,15 @@ namespace PublicApiBenchmarks
             public int PacketsLost;
             public int BytesLost;
         }
-        
+
         private EventData _data;
-        private bool _collect;
-        
-        public RunMode GetRunMode(BenchmarkCase benchmarkCase) => RunMode.NoOverhead;
+
+        public RunMode GetRunMode(BenchmarkCase benchmarkCase)
+        {
+            return benchmarkCase.Descriptor.WorkloadMethodDisplayInfo.Contains("Quic")
+                ? RunMode.ExtraRun
+                : RunMode.None;
+        }
 
         public void Handle(HostSignal signal, DiagnoserActionParameters parameters)
         {
@@ -45,12 +49,12 @@ namespace PublicApiBenchmarks
             {
                 // reset counters
                 _data = new EventData();
-                _collect = true;
+                EnableEvents(_quicEventSource, EventLevel.Verbose);
             }
 
             if (signal == HostSignal.AfterActualRun)
             {
-                _collect = false;
+                DisableEvents(_quicEventSource);
             }
         }
 
@@ -63,7 +67,9 @@ namespace PublicApiBenchmarks
             yield return new Metric(DataSentMetric.BytesLost, _data.BytesLost / ops);
         }
 
-        public void DisplayResults(ILogger logger) { }
+        public void DisplayResults(ILogger logger)
+        {
+        }
 
         public IEnumerable<ValidationError> Validate(ValidationParameters validationParameters) =>
             Array.Empty<ValidationError>();
@@ -71,22 +77,21 @@ namespace PublicApiBenchmarks
         public IEnumerable<string> Ids => new[] {DiagnoserId};
         public IEnumerable<IExporter> Exporters => Array.Empty<IExporter>();
         public IEnumerable<IAnalyser> Analysers => Array.Empty<IAnalyser>();
-        
-        
+
+
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             base.OnEventSourceCreated(eventSource);
-            
+
             if (eventSource.Name == "Microsoft-System-Net-Quic")
             {
                 _quicEventSource = eventSource;
-                EnableEvents(eventSource, EventLevel.Verbose);
             }
         }
 
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (_collect && eventData.EventSource == _quicEventSource)
+            if (eventData.EventSource == _quicEventSource)
             {
                 switch (eventData.EventId)
                 {
@@ -101,12 +106,12 @@ namespace PublicApiBenchmarks
                 }
             }
         }
-        
+
         private class PacketCountMetric : IMetricDescriptor
         {
             public static readonly IMetricDescriptor PacketsSent = new PacketCountMetric("Packets sent");
             public static readonly IMetricDescriptor PacketsLost = new PacketCountMetric("Packets lost");
-            
+
             public PacketCountMetric(string displayName)
             {
                 DisplayName = displayName;
@@ -120,17 +125,17 @@ namespace PublicApiBenchmarks
             public string Unit => "Count";
             public bool TheGreaterTheBetter => false;
         }
-        
+
         private class DataSentMetric : IMetricDescriptor
         {
             public static readonly IMetricDescriptor BytesSent = new DataSentMetric("Bytes sent");
             public static readonly IMetricDescriptor BytesLost = new DataSentMetric("Bytes lost");
-            
+
             public DataSentMetric(string displayName)
             {
                 DisplayName = displayName;
             }
-            
+
             public string Id => $"{nameof(QuicDiagnoser)}.{DisplayName}";
             public string DisplayName { get; }
             public string Legend => "";

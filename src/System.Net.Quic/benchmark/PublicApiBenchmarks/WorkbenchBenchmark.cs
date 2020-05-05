@@ -19,7 +19,7 @@ namespace PublicApiBenchmarks
         {
             public Config()
             {
-                Add(QuicDiagnoser.Default);
+                // Add(QuicDiagnoser.Default);
             }
         }
         
