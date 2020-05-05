@@ -11,6 +11,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\tests\System.Net.Quic.Unit.Tests\System.Net.Quic.Unit.Tests.csproj" />
       <ProjectReference Include="..\System.Net.Quic\System.Net.Quic.csproj" />
     </ItemGroup>
 

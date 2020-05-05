@@ -36,6 +36,10 @@
     <Compile Update="..\..\..\dotnet-runtime\src\libraries\Common\src\System\Net\Http\aspnetcore\Quic\Implementations\Managed\Internal\QuicConnectionState.cs">
       <Link>Quic\Implementations\Managed\Internal\QuicConnectionState.cs</Link>
     </Compile>
+    
+    <Compile Update="..\..\..\dotnet-runtime\src\libraries\Common\src\System\Net\Http\aspnetcore\Quic\Implementations\Managed\Internal\StatelessResetToken.cs">
+      <Link>Quic\Implementations\Managed\Internal\StatelessResetToken.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <!-- Sort out interop libraries -->
