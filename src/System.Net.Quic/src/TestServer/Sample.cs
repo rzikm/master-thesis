@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
-using System.Net.Quic.Public;
+using System.Net.Quic;
+using System.Net.Security;
 using System.Threading.Tasks;
 
 namespace TestServer
@@ -24,7 +26,14 @@ namespace TestServer
             {
                 CertificateFilePath = "Certs/cert.crt",
                 PrivateKeyFilePath = "Certs/cert.key",
-                ListenEndPoint = serverEndpoint
+                ListenEndPoint = serverEndpoint,
+                ServerAuthenticationOptions = new SslServerAuthenticationOptions()
+                {
+                    ApplicationProtocols = new List<SslApplicationProtocol>()
+                    {
+                        new SslApplicationProtocol("sample")
+                    }
+                }
             };
 
             Console.WriteLine($@"Starting listener");
@@ -78,7 +87,13 @@ namespace TestServer
             var serverTask = StartServer();
 
             Console.WriteLine("Creating client connection");
-            var client = new QuicConnection(serverEndpoint, null);
+            var client = new QuicConnection(serverEndpoint, new SslClientAuthenticationOptions()
+            {
+                ApplicationProtocols = new List<SslApplicationProtocol>()
+                {
+                    new SslApplicationProtocol("sample")
+                }
+            });
             
             Console.WriteLine("Connecting to the server");
             await client.ConnectAsync();

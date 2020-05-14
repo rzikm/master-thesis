@@ -1,5 +1,5 @@
 using System.Net;
-using System.Net.Quic.Public;
+using System.Net.Quic;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Threading.Tasks;

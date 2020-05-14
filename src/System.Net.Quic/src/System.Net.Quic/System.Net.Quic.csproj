@@ -9,6 +9,14 @@
     <OpensslLibsDir>..\..\..\..\artifacts\openssl\</OpensslLibsDir>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DefineConstants>TRACE;WANT_QUIC_PUBLIC</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DefineConstants>TRACE;WANT_QUIC_PUBLIC</DefineConstants>
+  </PropertyGroup>
   
   <ItemGroup>
     <Compile Include="$(CommonPath)/System/Net/Http/aspnetcore/Quic/**/*.cs">

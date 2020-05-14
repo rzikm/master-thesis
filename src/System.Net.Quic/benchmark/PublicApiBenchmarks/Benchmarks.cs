@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Net.Quic.Public;
+using System.Net.Quic;
 using System.Threading.Tasks;
 using BenchmarkDotNet;
 using BenchmarkDotNet.Attributes;

@@ -1,6 +1,6 @@
 using System.IO;
 using System.Net;
-using System.Net.Quic.Public;
+using System.Net.Quic;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -78,7 +78,8 @@ namespace PublicApiBenchmarks
             QuicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
         }
 
-        [Benchmark(Description = "ManagedQuicStream")]
+        // [Benchmark(Description = "ManagedQuicStream")]
+        [Benchmark]
         public async Task QuicStream()
         {
             await using var stream = await QuicClient.AcceptStreamAsync();
@@ -109,7 +110,7 @@ namespace PublicApiBenchmarks
             TcpClient.Dispose();
         }
 
-        [Benchmark(Description = "MsQuicStream")]
+        // [Benchmark(Description = "MsQuicStream")]
         public async Task MsQuic()
         {
             await using var stream = await QuicClient.AcceptStreamAsync();

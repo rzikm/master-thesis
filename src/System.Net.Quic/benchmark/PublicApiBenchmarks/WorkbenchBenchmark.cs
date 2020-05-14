@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.IO;
-using System.Net.Quic.Public;
+using System.Net.Quic;
 using System.Net.Security;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;

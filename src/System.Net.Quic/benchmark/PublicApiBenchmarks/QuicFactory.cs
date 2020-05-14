@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Net;
-using System.Net.Quic.Public;
+using System.Net.Quic;
 using System.Net.Security;
 
 namespace PublicApiBenchmarks
