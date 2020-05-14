@@ -1,11 +1,8 @@
-using System;
 using System.IO;
 using System.Net;
 using System.Net.Quic.Public;
 using System.Net.Security;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.Channels;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -15,7 +12,8 @@ namespace PublicApiBenchmarks
     {
         [Params(64 * 1024, 1024 * 1024, 32 * 1024 * 1024)]
         // [Params(1024 * 1024, 32 * 1024 * 1024)]
-        // [Params(32 * 1024)]
+        // [Params(16 * 1024 * 1024)]
+        // [Params(1024 * 1024)]
         public int DataLength { get; set; }
 
         // [Params(1024, 8 * 1024)]
@@ -29,8 +27,9 @@ namespace PublicApiBenchmarks
 
         protected override async Task QuicStreamServer(QuicConnection connection)
         {
-            await using var stream = connection.OpenUnidirectionalStream();
+            await using QuicStream stream = connection.OpenUnidirectionalStream();
             await SendData(stream);
+            stream.Shutdown();
             await stream.ShutdownWriteCompleted();
         }
 
@@ -63,7 +62,7 @@ namespace PublicApiBenchmarks
 
             if (total != DataLength)
             {
-                throw new InvalidOperationException("Received data size does not match send size");
+                // throw new InvalidOperationException("Received data size does not match send size");
             }
         }
 
@@ -79,7 +78,7 @@ namespace PublicApiBenchmarks
             QuicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
         }
 
-        [Benchmark]
+        [Benchmark(Description = "ManagedQuicStream")]
         public async Task QuicStream()
         {
             await using var stream = await QuicClient.AcceptStreamAsync();
@@ -108,6 +107,13 @@ namespace PublicApiBenchmarks
         protected override void IterationCleanupSslStream()
         {
             TcpClient.Dispose();
+        }
+
+        [Benchmark(Description = "MsQuicStream")]
+        public async Task MsQuic()
+        {
+            await using var stream = await QuicClient.AcceptStreamAsync();
+            await RecvData(stream);
         }
     }
 }

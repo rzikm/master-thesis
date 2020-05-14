@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Quic.Public;
@@ -34,12 +35,13 @@ namespace PublicApiBenchmarks
             {
                 // for debug purposes
                 Options |= ConfigOptions.DisableOptimizationsValidator;
-                // Add(Job.InProcess);
                 
                 Add(MemoryDiagnoser.Default);
-                Add(QuicDiagnoser.Default);
+                
+                // Add(QuicDiagnoser.Default);
+                Add(Job.InProcess.WithIterationCount(30));
+                
                 // Add(Job.Default);
-                Add(Job.InProcess.WithIterationCount(10));
             }
         }
 
@@ -165,6 +167,32 @@ namespace PublicApiBenchmarks
         protected static SslStream CreateSslStream(Stream innerStream)
         {
             return new SslStream(innerStream, false, (sender, certificate, chain, errors) => true);
+        }
+        
+        [GlobalSetup(Target = "MsQuic")]
+        public void GlobalSetupMsQuic()
+        {
+            Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
+            DoGlobalSetupQuicStream();
+        }
+        
+        [IterationSetup(Target = "MsQuic")]
+        public void IterationSetupMsQuic()
+        {
+            DoIterationSetupQuicStream();
+        }
+
+        [IterationCleanup(Target = "MsQuic")]
+        public void IterationCleanupMsQuic()
+        {
+            DoIterationCleanupQuicStream();
+        }
+
+        [GlobalCleanup(Target = "MsQuic")]
+        public void GlobalCleanupMsQuic()
+        {
+            Environment.SetEnvironmentVariable("USE_MSQUIC", null);
+            DoGlobalCleanupQuicStream();
         }
     }
 }

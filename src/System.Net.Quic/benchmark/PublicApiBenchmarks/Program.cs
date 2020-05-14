@@ -1,3 +1,4 @@
+using System;
 using BenchmarkDotNet.Running;
 
 namespace PublicApiBenchmarks
@@ -6,6 +7,7 @@ namespace PublicApiBenchmarks
     {
         public static void Main(string[] args)
         {
+            // Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
             // var summary = BenchmarkRunner.Run<ConnectionEstablishmentComparisonBenchmarks>();
             // var summary = BenchmarkRunner.Run<ConnectionCloseComparisonBenchmarks>();
             var summary = BenchmarkRunner.Run<StreamPerformanceComparisonBenchmarks>();
