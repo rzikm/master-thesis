@@ -82,7 +82,7 @@ namespace PublicApiBenchmarks
         public void DoGlobalSetupSslStream()
         {
             DoGlobalSetupShared();
-            TcpListener = new TcpListener(IPAddress.Any, 0);
+            TcpListener = new TcpListener(IPAddress.IPv6Loopback, 0);
             TcpListener.Start();
             _serverTask = Task.Run(SslStreamServer);
             GlobalSetupSslStream();
