@@ -5,3 +5,6 @@
 [submodule "extern/akamai-openssl-quic"]
 	path = extern/akamai-openssl-quic
 	url = git@github.com:akamai/openssl.git
+[submodule "extern/msquic"]
+	path = extern/msquic
+	url = https://github.com/microsoft/msquic.git
