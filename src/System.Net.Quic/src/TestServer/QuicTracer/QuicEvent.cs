@@ -6,6 +6,7 @@ namespace TestServer.QuicTracer
 {
     internal abstract class QuicEvent
     {
+        [DataMember] public string Connection { get; set; }
         [DataMember] public DateTime Timestamp { get; set; }
     }
 

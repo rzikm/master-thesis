@@ -10,10 +10,15 @@ namespace TestServer
 {
     internal static class Program
     {
-        public static Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
-            return Sample.Run();
+            var eventListener = new QuicEventListener();
+            var logger = new QuicPacketLogger(eventListener.EventReader);
+            var logTask = Task.Run(logger.Start);
+            // Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
+            await Sample.Run();
+            eventListener.Stop();
+            await logTask;
         }
 
         private static async Task MsQuicSample()

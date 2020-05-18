@@ -44,6 +44,7 @@ namespace TestServer.QuicTracer
                     case ConnectClientStart:
                         e = new NewConnectionEvent()
                         {
+                            Connection = (string) eventData.Payload[0],
                             SourceConnectionId = (byte[]) eventData.Payload[1],
                             DestinationConnectionId = (byte[]) eventData.Payload[2],
                         };
@@ -51,6 +52,7 @@ namespace TestServer.QuicTracer
                     case SetEncryptionSecretsId:
                         e = new SetEncryptionSecretsEvent()
                         {
+                            Connection = (string) eventData.Payload[0],
                             Level = Enum.Parse<SetEncryptionSecretsEvent.EncryptionLevel>(eventData.Payload[1]
                                 .ToString()),
                             CipherSuite = (TlsCipherSuite) eventData.Payload[2],
@@ -61,12 +63,14 @@ namespace TestServer.QuicTracer
                     case DatagramSentId:
                         e = new DatagramSentEvent()
                         {
+                            Connection = (string) eventData.Payload[0],
                             Datagram = (byte[]) eventData.Payload[1]
                         };
                         break;
                     case DatagramRecvId:
                         e = new DatagramRecvEvent()
                         {
+                            Connection = (string) eventData.Payload[0],
                             Datagram = (byte[]) eventData.Payload[1]
                         };
                         break;
@@ -78,6 +82,11 @@ namespace TestServer.QuicTracer
                     _eventChannel.Writer.TryWrite(e);
                 }
             }
+        }
+
+        public void Stop()
+        {
+            _eventChannel.Writer.Complete();
         }
     }
 }

@@ -9,7 +9,7 @@ namespace TestServer
 {
     internal class Sample
     {
-        private const int DataSize = 16 * 1024 * 1024;
+        private const int DataSize = 32 * 1024 * 1024;
 
         static IPEndPoint GetEndpoint(string host, int port)
         {
@@ -46,7 +46,7 @@ namespace TestServer
             var connection = await listener.AcceptConnectionAsync();
 
             Console.WriteLine("Connection accepted, opening stream");
-            var stream = connection.OpenBidirectionalStream();
+            var stream = connection.OpenUnidirectionalStream();
 
             Console.WriteLine($"Writing {DataSize} bytes of data");
             byte[] buffer = new byte[1024 * 16];

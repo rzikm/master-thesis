@@ -10,6 +10,11 @@
       <Prefer32Bit>true</Prefer32Bit>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+      <DebugType>full</DebugType>
+      <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\..\tests\System.Net.Quic.Unit.Tests\System.Net.Quic.Unit.Tests.csproj" />
       <ProjectReference Include="..\System.Net.Quic\System.Net.Quic.csproj" />

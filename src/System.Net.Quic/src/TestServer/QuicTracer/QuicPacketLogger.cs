@@ -11,59 +11,135 @@ namespace TestServer.QuicTracer
     internal class QuicPacketLogger
     {
         private readonly ChannelReader<QuicEvent> _eventReader;
-        
-        private void ProcessQuicEvent(QuicEvent e)
-        {
-            switch (e)
-            {
-                case DatagramRecvEvent datagramRecvEvent:
-                    OnDatagramRecv(datagramRecvEvent);
-                    break;
-                case DatagramSentEvent datagramSentEvent:
-                    OnDatagramSent(datagramSentEvent);
-                    break;
-                case NewConnectionEvent newConnectionEvent:
-                    OnNewConnection(newConnectionEvent);
-                    break;
-                case SetEncryptionSecretsEvent setEncryptionSecretsEvent:
-                    OnSetEncryptionSecrets(setEncryptionSecretsEvent);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(e));
-            }
-        }
-        
-        private readonly EventHarnessCtx _serverCtx = new EventHarnessCtx();
-        private readonly EventHarnessCtx _clientCtx = new EventHarnessCtx();
-        
-        public QuicPacketLogger(ChannelReader<QuicEvent> eventReader)
-        {
-            _eventReader = eventReader;
-        }
 
-        public async void Start()
+        private class ConnectionContext
         {
-            await Task.Yield();
-            List<QuicEvent> delayedEvents = new List<QuicEvent>();
-            int secretsCount = 0;
-            
-            await foreach (var e in _eventReader.ReadAllAsync())
+            public string Connection { get; }
+            public bool _isServer = true;
+
+            public readonly EventHarnessCtx _localCtx = new EventHarnessCtx();
+            public readonly EventHarnessCtx _remoteCtx = new EventHarnessCtx();
+            public readonly List<QuicEvent> _delayedEvents = new List<QuicEvent>();
+            public int _secretsCount;
+
+            public ConnectionContext(string connection)
+            {
+                Connection = connection;
+            }
+
+            private void ProcessQuicEvent(QuicEvent e)
+            {
+                switch (e)
+                {
+                    case DatagramRecvEvent datagramRecvEvent:
+                        OnDatagramRecv(datagramRecvEvent);
+                        break;
+                    case DatagramSentEvent datagramSentEvent:
+                        OnDatagramSent(datagramSentEvent);
+                        break;
+                    case NewConnectionEvent newConnectionEvent:
+                        OnNewConnection(newConnectionEvent);
+                        break;
+                    case SetEncryptionSecretsEvent setEncryptionSecretsEvent:
+                        OnSetEncryptionSecrets(setEncryptionSecretsEvent);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(e));
+                }
+            }
+
+            private void OnSetEncryptionSecrets(SetEncryptionSecretsEvent e)
+            {
+                var readSeal = CryptoSeal.Create(e.CipherSuite, e.ReadSecret);
+                var writeSeal = CryptoSeal.Create(e.CipherSuite, e.WriteSecret);
+
+                _localCtx.AddEncryptionSecrets(readSeal, writeSeal);
+                _remoteCtx.AddEncryptionSecrets(writeSeal, readSeal);
+            }
+
+            private void OnDatagramRecv(DatagramRecvEvent e)
+            {
+                var packets = PacketBase.ParseMany(e.Datagram, _localCtx);
+
+                Console.WriteLine($"[{e.Timestamp:ss.ffff}] {Connection} Recv: ");
+                foreach (PacketBase packet in packets)
+                {
+                    int i = packet.PacketType switch
+                    {
+                        PacketType.Initial => 0,
+                        PacketType.Handshake => 1,
+                        PacketType.OneRtt => 2,
+                        PacketType.ZeroRtt => 2,
+                    };
+                    _localCtx._packetNumbers[i] = Math.Max(_localCtx._packetNumbers[i], packet.PacketNumber);
+
+                    if (!_isServer &&
+                        packet.PacketType == PacketType.Initial && 
+                        _remoteCtx.ConnectionIdCollection.Find(((InitialPacket)packet).SourceConnectionId) == null)
+                    {
+                        _remoteCtx.ConnectionIdCollection.Add(
+                            new ConnectionId(((InitialPacket)packet).SourceConnectionId, 1,
+                                StatelessResetToken.Random()));
+                    }
+
+                    if (_isServer && packet.PacketType == PacketType.Initial &&
+                        _localCtx.ConnectionIdCollection.FindBySequenceNumber(0) == null)
+                    {
+                        _localCtx.ConnectionIdCollection.Add(new ConnectionId(packet.DestinationConnectionId, 0, StatelessResetToken.Random()));
+                        _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(((InitialPacket)packet).SourceConnectionId, 0, StatelessResetToken.Random()));
+                    }
+                    Console.WriteLine(packet);
+                }
+
+                Console.WriteLine();
+            }
+
+            private void OnDatagramSent(DatagramSentEvent e)
+            {
+                var packets = PacketBase.ParseMany(e.Datagram, _remoteCtx);
+
+                Console.WriteLine($"[{e.Timestamp:ss.ffff}] {Connection} Sent: ");
+                foreach (PacketBase packet in packets)
+                {
+                    int i = packet.PacketType switch
+                    {
+                        PacketType.Initial => 0,
+                        PacketType.Handshake => 1,
+                        PacketType.OneRtt => 2,
+                        PacketType.ZeroRtt => 2,
+                    };
+                    _remoteCtx._packetNumbers[i] = Math.Max(_remoteCtx._packetNumbers[i], packet.PacketNumber);
+
+                    Console.WriteLine(packet);
+                }
+
+                Console.WriteLine();
+            }
+
+            private void OnNewConnection(NewConnectionEvent e)
+            {
+                _isServer = false;
+                _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(e.DestinationConnectionId, 0, StatelessResetToken.Random()));
+                _localCtx.ConnectionIdCollection.Add(new ConnectionId(e.SourceConnectionId, 0, StatelessResetToken.Random()));
+            }
+
+            public void OnEvent(QuicEvent e)
             {
                 if (e is SetEncryptionSecretsEvent)
                 {
                     ProcessQuicEvent(e);
-                    secretsCount++;
-                    
-                    foreach (var delayedEvent in delayedEvents)
+                    _secretsCount++;
+
+                    foreach (var delayedEvent in _delayedEvents)
                     {
                         ProcessQuicEvent(delayedEvent);
                     }
-                    
-                    delayedEvents.Clear();
+
+                    _delayedEvents.Clear();
                 }
-                else if (secretsCount < 3)
+                else if (_secretsCount < 3)
                 {
-                    delayedEvents.Add(e);
+                    _delayedEvents.Add(e);
                 }
                 else
                 {
@@ -72,16 +148,39 @@ namespace TestServer.QuicTracer
             }
         }
 
+        private Dictionary<string, ConnectionContext> _connections = new Dictionary<string, ConnectionContext>();
+
+        public QuicPacketLogger(ChannelReader<QuicEvent> eventReader)
+        {
+            _eventReader = eventReader;
+        }
+
+        public async Task Start()
+        {
+            List<QuicEvent> delayedEvents = new List<QuicEvent>();
+            int secretsCount = 0;
+
+            await foreach (var e in _eventReader.ReadAllAsync().ConfigureAwait(false))
+            {
+                if (!_connections.TryGetValue(e.Connection, out var connection))
+                {
+                    _connections[e.Connection] = connection = new ConnectionContext(e.Connection);
+                }
+
+                connection.OnEvent(e);
+            }
+        }
+
         private class EventHarnessCtx : ITestHarnessContext
         {
             List<(CryptoSeal read, CryptoSeal write)> _seals = new List<(CryptoSeal read, CryptoSeal write)>();
-            private int[] _packetNumbers = new[] {0, 0, 0};
+            public readonly long[] _packetNumbers = { 0, 0, 0 };
 
             public void AddEncryptionSecrets(CryptoSeal read, CryptoSeal write)
             {
                 _seals.Add((read, write));
             }
-            
+
             public CryptoSeal GetRecvSeal(PacketType packetType)
             {
                 return _seals[GetPacketSpaceIndex(packetType)].read;
@@ -108,53 +207,6 @@ namespace TestServer.QuicTracer
             {
                 return _packetNumbers[GetPacketSpaceIndex(packetType)];
             }
-        }
-
-        private void OnSetEncryptionSecrets(SetEncryptionSecretsEvent e)
-        {
-            var readSeal = CryptoSeal.Create(e.CipherSuite, e.ReadSecret);
-            var writeSeal = CryptoSeal.Create(e.CipherSuite, e.WriteSecret);
-            
-            _clientCtx.AddEncryptionSecrets(readSeal, writeSeal);
-            _serverCtx.AddEncryptionSecrets(writeSeal, readSeal);
-        }
-
-        private void OnDatagramRecv(DatagramRecvEvent e)
-        {
-            var packets = PacketBase.ParseMany(e.Datagram, _clientCtx);
-
-            Console.WriteLine($"[{e.Timestamp:ss.ffff}] Recv: ");
-            foreach (PacketBase packet in packets)
-            {
-                if (packet.PacketType == PacketType.Handshake && _serverCtx.ConnectionIdCollection.FindBySequenceNumber(1) == null)
-                {
-                    _serverCtx.ConnectionIdCollection.Add(
-                        new ConnectionId(((HandShakePacket) packet).SourceConnectionId, 1,
-                            StatelessResetToken.Random()));
-                }
-                Console.WriteLine(packet);
-            }
-            
-            Console.WriteLine();
-        }
-
-        private void OnDatagramSent(DatagramSentEvent e)
-        {
-            var packets = PacketBase.ParseMany(e.Datagram, _serverCtx);
-            
-            Console.WriteLine($"[{e.Timestamp:ss.ffff}] Sent: ");
-            foreach (PacketBase packet in packets)
-            {
-                Console.WriteLine(packet);
-            }
-            
-            Console.WriteLine();
-        }
-
-        private void OnNewConnection(NewConnectionEvent e)
-        {
-            _serverCtx.ConnectionIdCollection.Add(new ConnectionId(e.DestinationConnectionId, 0, StatelessResetToken.Random()));
-            _clientCtx.ConnectionIdCollection.Add(new ConnectionId(e.SourceConnectionId, 0, StatelessResetToken.Random()));
         }
     }
 }
