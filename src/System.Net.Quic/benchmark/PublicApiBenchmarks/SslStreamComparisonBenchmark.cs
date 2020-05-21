@@ -36,12 +36,13 @@ namespace PublicApiBenchmarks
                 // for debug purposes
                 Options |= ConfigOptions.DisableOptimizationsValidator;
                 
-                Add(MemoryDiagnoser.Default);
+                AddDiagnoser(MemoryDiagnoser.Default);
+                // AddDiagnoser(ThreadingDiagnoser.Default);
                 
-                // Add(QuicDiagnoser.Default);
-                Add(Job.InProcess.WithIterationCount(30));
+                // AddDiagnoser(QuicDiagnoser.Default);
+                // AddJob(Job.InProcess.WithIterationCount(30));
                 
-                // Add(Job.Default);
+                AddJob(Job.Default);
             }
         }
 

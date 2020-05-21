@@ -11,6 +11,7 @@ namespace PublicApiBenchmarks
     public class StreamPerformanceComparisonBenchmarks : SslStreamComparisonBenchmark
     {
         [Params(64 * 1024, 1024 * 1024, 32 * 1024 * 1024)]
+        // [Params(64 * 1024, 1024 * 1024)]
         // [Params(1024 * 1024, 32 * 1024 * 1024)]
         // [Params(16 * 1024 * 1024)]
         // [Params(1024 * 1024)]
@@ -110,6 +111,7 @@ namespace PublicApiBenchmarks
             TcpClient.Dispose();
         }
 
+        // MsQuic is not present in the platform by default
         // [Benchmark(Description = "MsQuicStream")]
         public async Task MsQuic()
         {
