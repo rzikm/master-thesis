@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 
 namespace Samples
 {
+    /// <summary>
+    ///     Runs a simple and verbose sample of sending fixed amount of data from server to client.
+    /// </summary>
     internal class SimpleClientAndServer
     {
-        private const int DataSize = 1024 * 1024;
+        private const int DataSizeBytes = 1024 * 1024;
 
         static IPEndPoint GetEndpoint(string host, int port)
         {
@@ -20,7 +23,7 @@ namespace Samples
 
         static IPEndPoint serverEndpoint = GetEndpoint("localhost", 5000);
 
-        static async Task StartServer()
+        static async Task Server()
         {
             QuicListenerOptions options = new QuicListenerOptions()
             {
@@ -48,7 +51,7 @@ namespace Samples
             Console.WriteLine("Connection accepted, opening stream");
             var stream = connection.OpenUnidirectionalStream();
 
-            Console.WriteLine($"Writing {DataSize} bytes of data");
+            Console.WriteLine($"Writing {DataSizeBytes} bytes of data");
             byte[] buffer = new byte[1024 * 16];
 
             // write known data so that we can assert it on the other size
@@ -59,7 +62,7 @@ namespace Samples
 
             int written = 0;
 
-            while (written < DataSize)
+            while (written < DataSizeBytes)
             {
                 await stream.WriteAsync(buffer);
                 written += buffer.Length;
@@ -82,10 +85,8 @@ namespace Samples
             Console.WriteLine("Listener disposed");
         }
 
-        public static async Task Run()
+        public static async Task Client()
         {
-            var serverTask = StartServer();
-
             Console.WriteLine("Creating client connection");
             var client = new QuicConnection(serverEndpoint, new SslClientAuthenticationOptions()
             {
@@ -122,7 +123,7 @@ namespace Samples
                 total += recv;
             } while (recv > 0);
 
-            if (total > DataSize)
+            if (total > DataSizeBytes)
             {
                 throw new InvalidOperationException("Received unexpectedly more data");
             }
@@ -134,8 +135,13 @@ namespace Samples
 
             client.Dispose();
             Console.WriteLine($"Client connection disposed");
+        }
 
-            await serverTask;
+        public static async Task Run()
+        {
+            var serverTask = Server();
+            var clientTask = Client();
+            await Task.WhenAll(serverTask, clientTask);
             Console.WriteLine("Gracefully finished");
         }
     }

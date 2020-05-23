@@ -66,7 +66,7 @@ namespace DevSandbox
 
             SslStream clientStream = new SslStream(client.GetStream());
 
-            X509Certificate2 cert = new X509Certificate2(CertFile);
+            X509Certificate2 cert = new X509Certificate2(CertFile, "", X509KeyStorageFlags.Exportable);
             SslClientAuthenticationOptions options = new SslClientAuthenticationOptions()
             {
                 AllowRenegotiation = false,

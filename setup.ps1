@@ -1,13 +1,20 @@
-$opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
+param(
+    [switch]$msquic = $false
+)
+
 $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
+
+$opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
+$opensslArtifactRoot = "$PSScriptRoot\artifacts\openssl"
+
+$msquicRoot = "$PSScriptRoot\extern\msquic"
+$msquicArtifactRoot = "$PSScriptRoot\artifacts\msquic"
 
 if(!(Get-Command nmake -ErrorAction SilentlyContinue))
 {
     echo "Cannot find nmake, are you running from developer shell instance?"
     exit 1;
 }
-
-$opensslArtifactRoot = "$PSScriptRoot\artifacts\openssl"
 
 if (! [System.IO.File]::Exists("$opensslRoot\Configure"))
 {
@@ -21,6 +28,26 @@ if (! [System.IO.File]::Exists("$dotnetRuntimeRoot\build.cmd"))
     exit 1
 }
 
+if ($msquic)
+{
+
+	echo "Building msquic"
+	$null = New-Item -ItemType Directory "$msquicArtifactRoot" -Force
+	pushd $msquicRoot
+
+# msquic references many submodules during build
+	git submodule update --init
+
+	pwsh .\scripts\build.ps1 -Tls Schannel -Config Release
+
+# artifacts directory for msquic build script is not customizable, so we just manually copy the results
+# this command expects there to be a single build in the artifacts directory, otherwise the copy needs
+# to be done manually for the selected build
+
+	cp .\artifacts\*\*\* $msquicArtifactRoot
+
+	popd
+}
 
 echo "Building custom OpenSSL"
 $null = New-Item -ItemType Directory "$opensslArtifactRoot" -Force
@@ -36,7 +63,7 @@ foreach ($command in "perl", "nasm")
     }
 }
 
-perl "Configure" VC-WIN64A "--prefix=$opensslArtifactRoot"
+perl "Configure" VC-WIN64A "--prefix=$opensslArtifactRoot" --debug
 nmake install_sw
 popd
 

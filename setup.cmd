@@ -2,4 +2,4 @@
 
 SET ROOT=%~dp0
 
-powershell %ROOT%\setup.ps1
+powershell %ROOT%\setup.ps1 %*

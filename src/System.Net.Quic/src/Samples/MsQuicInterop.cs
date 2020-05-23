@@ -9,9 +9,12 @@ namespace TestServer
 {
     internal class MsQuicInterop
     {
+        /// <summary>
+        ///     Runs a client against a `msquicsample -server ...` server from the msquic repo
+        /// </summary>
         private static async Task MsQuicSampleClient()
         {
-            // port 4567 is hardcoded in msquic sample 
+            // port 4567 is hardcoded in msquicsample executable
             var serverAddress = IPEndPoint.Parse("127.0.0.1:4567");
 
             using QuicConnection connection = new QuicConnection(serverAddress,
@@ -19,6 +22,7 @@ namespace TestServer
                 {
                     ApplicationProtocols = new List<SslApplicationProtocol>()
                     {
+                        // make sure we report the same protocol
                         new SslApplicationProtocol("sample")
                     }
                 });
