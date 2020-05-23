@@ -1,1 +1,1 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("TestServer")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("DevSandbox")]

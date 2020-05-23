@@ -2,7 +2,7 @@ using System;
 using System.Net.Security;
 using System.Runtime.Serialization;
 
-namespace TestServer.QuicTracer
+namespace DevSandbox.QuicTracer
 {
     internal abstract class QuicEvent
     {

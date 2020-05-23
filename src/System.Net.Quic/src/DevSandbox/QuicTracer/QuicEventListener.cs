@@ -3,7 +3,7 @@ using System.Diagnostics.Tracing;
 using System.Net.Security;
 using System.Threading.Channels;
 
-namespace TestServer.QuicTracer
+namespace DevSandbox.QuicTracer
 {
     internal class QuicEventListener : EventListener
     {

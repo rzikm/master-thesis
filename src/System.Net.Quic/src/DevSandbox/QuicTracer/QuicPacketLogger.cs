@@ -6,7 +6,7 @@ using System.Net.Quic.Tests.Harness;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace TestServer.QuicTracer
+namespace DevSandbox.QuicTracer
 {
     internal class QuicPacketLogger
     {
