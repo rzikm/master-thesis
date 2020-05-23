@@ -3,6 +3,7 @@
         <OutputType>Exe</OutputType>
         <Platforms>AnyCPU</Platforms>
         <TargetFramework>netcoreapp3.1</TargetFramework>
+        <MsQuicPath>..\..\..\..\artifacts\msquic\</MsQuicPath>
     </PropertyGroup>
     <PropertyGroup>
         <PlatformTarget>AnyCPU</PlatformTarget>
@@ -16,9 +17,9 @@
         <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
         <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.12.0" Condition="'$(OS)' == 'Windows_NT'" />
     </ItemGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\..\src\System.Net.Quic\System.Net.Quic.csproj" />
+        <ProjectReference Include="..\..\src\System.Net.Quic\System.Net.Quic.csproj" />
     </ItemGroup>
 
 
@@ -34,6 +35,21 @@
         <Content Include="..\..\..\..\certs\cert.pfx">
             <Link>Certs\cert-combined.pfx</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="$(MsQuicPath)msquic.dll" Condition="Exists('$(MsQuicPath)msquic.dll')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(MsQuicPath)libmsquic.so" Condition="Exists('$(MsQuicPath)libmsquic.so')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(MsQuicPath)msquic.pdb" Condition="Exists('$(MsQuicPath)msquic.pdb')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
     </ItemGroup>
 </Project>
