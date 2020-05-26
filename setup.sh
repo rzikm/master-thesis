@@ -2,8 +2,8 @@
 
 ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-OPENSSL_ARTIFACT_ROOT=$ROOT/artifacts/openssl
 MSQUIC_ARTIFACT_ROOT=$ROOT/artifacts/msquic
+NATIVE_ARTIFACT_ROOT=$ROOT/artifacts/native
 
 # parse args
 while [[ $# > 0 ]]; do
@@ -16,12 +16,12 @@ while [[ $# > 0 ]]; do
 
   firstArgumentChecked=1
 
-	case "$opt" in
+  case "$opt" in
      -msquic)
-			 msquic=1
-			 shift 1
+       msquic=1
+       shift 1
       ;;
-	esac
+  esac
 done
 
 if [ ! -e "$ROOT/extern/akamai-openssl-quic/config" ]; then
@@ -35,30 +35,30 @@ if [ ! -e "$ROOT/src/dotnet-runtime/build.sh" ]; then
 fi
 
 if [ ! -z "$msquic" ]; then
-	echo "building msquic"
+  echo "building msquic"
 
-	mkdir -p "$MSQUIC_ARTIFACT_ROOT"
+  mkdir -p "$MSQUIC_ARTIFACT_ROOT"
 
-	cd "$ROOT/extern/msquic"
-	git submodule update --init
+  cd "$ROOT/extern/msquic"
+  git submodule update --init
 
-	pwsh scripts/build.ps1 -Tls openssl -Config Release
+  pwsh scripts/build.ps1 -Tls openssl -Config Release
 
-	# the script above is expected to create a single release in the /extern/msquic/artfiacts
-	# directory, so we just copy the contents to our artifacts dir
-	cp `find artifacts -type f` "$MSQUIC_ARTIFACT_ROOT"
+  # the script above is expected to create a single release in the /extern/msquic/artfiacts
+  # directory, so we just copy the contents to our artifacts dir
+  cp `find artifacts -type f` "$MSQUIC_ARTIFACT_ROOT"
 
-	cd -
+  cd -
 fi
 
-exit 0;
+echo "Building native lib"
+mkdir -p "$NATIVE_ARTIFACT_ROOT"
+cd "$ROOT/src/System.Net.Quic.Native"
 
-echo "Building custom OpenSSL"
-mkdir -p "$OPENSSL_ARTIFACT_ROOT"
-
-cd "$ROOT/extern/akamai-openssl-quic"
-./config "--prefix=$OPENSSL_ARTIFACT_ROOT"
-make install_sw
+mkdir -p build
+cd build
+cmake .. -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT
+cmake --build .
 
 cd -
 

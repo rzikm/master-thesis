@@ -1,0 +1,9 @@
+.DS_Store
+.idea
+*.log
+tmp/
+
+# ignore CMAKE build folders
+build/
+build32/
+build64/

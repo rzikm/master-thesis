@@ -5,7 +5,9 @@ param(
 $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
 
 $opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
-$opensslArtifactRoot = "$PSScriptRoot\artifacts\openssl"
+
+$nativeRoot = "$PSScriptRoot\src\System.Net.Quic.Native"
+$nativeArtifactRoot = "$PSScriptRoot\artifacts\native"
 
 $msquicRoot = "$PSScriptRoot\extern\msquic"
 $msquicArtifactRoot = "$PSScriptRoot\artifacts\msquic"
@@ -30,28 +32,23 @@ if (! [System.IO.File]::Exists("$dotnetRuntimeRoot\build.cmd"))
 
 if ($msquic)
 {
+    echo "Building msquic"
+    $null = New-Item -ItemType Directory "$msquicArtifactRoot" -Force
+    pushd $msquicRoot
 
-	echo "Building msquic"
-	$null = New-Item -ItemType Directory "$msquicArtifactRoot" -Force
-	pushd $msquicRoot
+    # msquic references many submodules during build
+    git submodule update --init
 
-# msquic references many submodules during build
-	git submodule update --init
+    pwsh .\scripts\build.ps1 -Tls Schannel -Config Release
 
-	pwsh .\scripts\build.ps1 -Tls Schannel -Config Release
+    # artifacts directory for msquic build script is not customizable, so we just manually copy the results
+    # this command expects there to be a single build in the artifacts directory, otherwise the copy needs
+    # to be done manually for the selected build
 
-# artifacts directory for msquic build script is not customizable, so we just manually copy the results
-# this command expects there to be a single build in the artifacts directory, otherwise the copy needs
-# to be done manually for the selected build
+    cp .\artifacts\*\*\* $msquicArtifactRoot
 
-	cp .\artifacts\*\*\* $msquicArtifactRoot
-
-	popd
+    popd
 }
-
-echo "Building custom OpenSSL"
-$null = New-Item -ItemType Directory "$opensslArtifactRoot" -Force
-pushd $opensslRoot
 
 echo "Checking build prerequisities";
 foreach ($command in "perl", "nasm")
@@ -63,14 +60,27 @@ foreach ($command in "perl", "nasm")
     }
 }
 
-perl "Configure" VC-WIN64A "--prefix=$opensslArtifactRoot" --debug
-nmake install_sw
+echo "Building native libs"
+pushd $nativeRoot
+
+echo "Building 32-bit System.Net.Quic.Native.dll"
+mkdir build32
+cd build32
+cmake .. -A"Win32" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot"
+cmake --build .
+
+echo "Building 64-bit System.Net.Quic.Native.dll"
+mkdir build64
+cd build64
+cmake .. -A"x64" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot"
+cmake --build .
+
 popd
 
 echo "Restoring dotnet-runtime NuGet packages"
 
 pushd $dotnetRuntimeRoot
 
-.\build.cmd -restore
+.\eng\build.ps1 -restore
 
 popd
