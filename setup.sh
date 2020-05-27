@@ -57,8 +57,8 @@ cd "$ROOT/src/System.Net.Quic.Native"
 
 mkdir -p build
 cd build
-cmake .. -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT
-cmake --build .
+cmake .. "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT"
+cmake --build . --parallel 3 --config Release
 
 cd -
 

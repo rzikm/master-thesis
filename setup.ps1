@@ -64,16 +64,19 @@ echo "Building native libs"
 pushd $nativeRoot
 
 echo "Building 32-bit System.Net.Quic.Native.dll"
-mkdir build32
-cd build32
-cmake .. -A"Win32" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot"
-cmake --build .
+$null = New-Item -ItemType Directory "build32" -Force
+pushd build32
+cmake .. -A"Win32" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$nativeArtifactRoot"
+
+cmake --build . --parallel 3 --config Release
+popd
 
 echo "Building 64-bit System.Net.Quic.Native.dll"
-mkdir build64
-cd build64
-cmake .. -A"x64" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot"
-cmake --build .
+$null = New-Item -ItemType Directory "build64" -Force
+pushd build64
+cmake .. -A"x64" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$nativeArtifactRoot"
+cmake --build . --parallel 3 --config Release
+popd
 
 popd
 
