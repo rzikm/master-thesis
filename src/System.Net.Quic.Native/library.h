@@ -9,7 +9,12 @@
 #include <stddef.h>
 #include <openssl/ssl.h>
 
+#ifdef _MSVC_VER
 #define QUIC_NATIVE_API __declspec(dllexport)
+#else
+// linux does not require explicit dllexport annotations
+#define QUIC_NATIVE_API
+#endif
 
 QUIC_NATIVE_API const void* QuicNative_TLS_method();
 QUIC_NATIVE_API int QuicNative_CRYPTO_get_ex_new_index(int classIndex, long argl, void* argp, void* new_func, void* dup_func, void* free_func);
@@ -21,7 +26,7 @@ QUIC_NATIVE_API int QuicNative_SSL_use_certificate_file(void* ssl, const char* f
 QUIC_NATIVE_API int QuicNative_SSL_use_PrivateKey_file(void* ssl, const char* file, int fileType);
 QUIC_NATIVE_API int QuicNative_SSL_use_cert_and_key(void* ssl, void* x509, void* privateKey, void* caChain, int override);
 QUIC_NATIVE_API int QuicNative_SSL_use_certificate(void* ssl, void* x509);
-QUIC_NATIVE_API int QuicNative_SSL_set_quic_method(void* ssl, void* method);
+QUIC_NATIVE_API int QuicNative_SSL_set_quic_method(void* ssl, const void* method);
 QUIC_NATIVE_API void QuicNative_SSL_set_accept_state(void* ssl);
 QUIC_NATIVE_API void QuicNative_SSL_set_connect_state(void* ssl);
 QUIC_NATIVE_API int QuicNative_SSL_do_handshake(void* ssl);
