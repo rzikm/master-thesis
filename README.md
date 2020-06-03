@@ -32,11 +32,11 @@ Make sure you cloned all git submodules of this repository
     git submodule update --init
 
 Then run the setup script, which will build the native parts. Use `setup.sh` or `setup.cmd` depending
-on your platform. Note that on windows, you need to run the script from developer shell prompt
-(x64), so that `nmake` used to compile OpenSSL is in path. The scripts will:
+on your platform. The scripts will:
 
-- Build the custom openssl branch with QUIC support, leaving the binaries in artifacts/openssl, they
-	will be copied from here during OpenSSL build. Refer to OpenSSL's
+- Build the native `System.Net.Quic.Native` library using the custom openssl branch with QUIC
+	support, leaving the binaries in artifacts/native, they will be copied from here during managed
+	library build. Refer to OpenSSL's
 	[INSTALL.md](https://github.com/openssl/openssl/blob/master/INSTALL.md) for build prerequisites.
 - Restore nuget packages inside the dotnet runtime repository, these are needed to run unit tests
   properly, but not for the actual library build.
@@ -47,8 +47,6 @@ on your platform. Note that on windows, you need to run the script from develope
 
 After that, you should be able to build and run the managed QUIC library using the
 `src/System.Net.Quic/System.Net.Quic.sln` solution.
-
-TODO: For technical reasons, only 64-bit runtime is currently supported on windows.
 
 ## Usage and API
 

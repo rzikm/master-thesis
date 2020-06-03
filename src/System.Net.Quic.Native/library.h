@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <openssl/ssl.h>
 
-#ifdef _MSVC_VER
+#ifdef _MSC_VER
 #define QUIC_NATIVE_API __declspec(dllexport)
 #else
 // linux does not require explicit dllexport annotations
