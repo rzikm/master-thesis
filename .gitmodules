@@ -2,9 +2,6 @@
 	path = src/dotnet-runtime
 	url = https://github.com/rzikm/dotnet-runtime.git
 	branch = master-managed-quic
-[submodule "extern/akamai-openssl-quic"]
-	path = extern/akamai-openssl-quic
-	url = https://github.com/akamai/openssl.git
 [submodule "extern/msquic"]
 	path = extern/msquic
 	url = https://github.com/microsoft/msquic.git

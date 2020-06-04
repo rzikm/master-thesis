@@ -6,7 +6,7 @@ $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
 
 $opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
 
-$nativeRoot = "$PSScriptRoot\src\System.Net.Quic.Native"
+$nativeRoot = "$PSScriptRoot\src\dotnet-runtime\src\libraries\Native\AnyOS\System.Net.Quic.Native"
 $nativeArtifactRoot = "$PSScriptRoot\artifacts\native"
 
 $msquicRoot = "$PSScriptRoot\extern\msquic"
@@ -60,26 +60,6 @@ foreach ($command in "perl", "nasm")
     }
 }
 
-echo "Building native libs"
-pushd $nativeRoot
-
-echo "Building 32-bit System.Net.Quic.Native.dll"
-$null = New-Item -ItemType Directory "build32" -Force
-pushd build32
-cmake .. -A"Win32" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$nativeArtifactRoot"
-
-cmake --build . --parallel 3 --config Release
-popd
-
-echo "Building 64-bit System.Net.Quic.Native.dll"
-$null = New-Item -ItemType Directory "build64" -Force
-pushd build64
-cmake .. -A"x64" "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$nativeArtifactRoot" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$nativeArtifactRoot"
-cmake --build . --parallel 3 --config Release
-popd
-
-popd
-
 echo "Restoring dotnet-runtime NuGet packages"
 
 pushd $dotnetRuntimeRoot
@@ -87,3 +67,25 @@ pushd $dotnetRuntimeRoot
 .\eng\build.ps1 -restore
 
 popd
+
+echo "Building native libs"
+$null = New-Item -ItemType Directory "$PSScriptRoot\obj\System.Net.Quic.Native\" -Force
+pushd "$PSScriptRoot\obj\System.Net.Quic.Native\"
+
+echo "Building 32-bit System.Net.Quic.Native.dll"
+$null = New-Item -ItemType Directory "build32" -Force
+pushd build32
+cmake .. -A"Win32" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
+
+cmake --build . --parallel 3 --config Release
+popd
+
+echo "Building 64-bit System.Net.Quic.Native.dll"
+$null = New-Item -ItemType Directory "build64" -Force
+pushd build64
+cmake .. -A"x64" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
+cmake --build . --parallel 3 --config Release
+popd
+
+popd
+

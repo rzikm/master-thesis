@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-
 ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 MSQUIC_ARTIFACT_ROOT=$ROOT/artifacts/msquic
 NATIVE_ARTIFACT_ROOT=$ROOT/artifacts/native
+QUIC_NATIVE_SOURCE=$ROOT/src/dotnet-runtime/src/libraries/Native/AnyOS/System.Net.Quic.Native/
 
 # parse args
 while [[ $# > 0 ]]; do
@@ -51,20 +51,17 @@ if [ ! -z "$msquic" ]; then
   cd -
 fi
 
-echo "Building native lib"
-mkdir -p "$NATIVE_ARTIFACT_ROOT"
-cd "$ROOT/src/System.Net.Quic.Native"
-
-mkdir -p build
-cd build
-cmake .. "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT" "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$NATIVE_ARTIFACT_ROOT"
-cmake --build . --parallel 3 --config Release
-
-cd -
-
 echo "Restoring NuGet packages for dotnet runtime"
-cd "$ROOT/src/dotnet-runtime"
+pushd "$ROOT/src/dotnet-runtime"
 ./build.sh --restore
+popd
 
-cd -
+echo "Building System.Net.Quic.Native"
+QUIC_NATIVE_BUILD_DIR="$ROOT/obj/System.Net.Quic.Native/"
+mkdir -p "$QUIC_NATIVE_BUILD_DIR"
+pushd "$QUIC_NATIVE_BUILD_DIR"
 
+cmake "$QUIC_NATIVE_SOURCE" "-DCMAKE_INSTALL_PREFIX=$NATIVE_ARTIFACT_ROOT/linux86_64"
+cmake --build . --parallel 3 --config Release --target install
+
+popd
