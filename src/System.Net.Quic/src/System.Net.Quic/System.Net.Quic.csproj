@@ -73,11 +73,6 @@
     </EmbeddedResource>
       
     <Compile Include="$(SysNetHttpPath)/src/Resources/Strings.Designer.cs" />
-    
-    <Compile Include="$(CommonPath)/System/SR.cs">
-      <Visible>true</Visible>
-      <Link>Resources/Common/SR.cs</Link>
-    </Compile>
       
     <None Include="$(SysNetHttpPath)/src/Resources/SR.resx">
       <Link>Resources/SR.resx</Link>

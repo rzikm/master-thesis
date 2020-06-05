@@ -6,7 +6,7 @@ $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
 
 $opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
 
-$nativeRoot = "$PSScriptRoot\src\dotnet-runtime\src\libraries\Native\AnyOS\System.Net.Quic.Native"
+$nativeRoot = "$PSScriptRoot\src\dotnet-runtime\src\libraries\Native\AnyOS\QuicNative"
 $nativeArtifactRoot = "$PSScriptRoot\artifacts\native"
 
 $msquicRoot = "$PSScriptRoot\extern\msquic"
@@ -69,22 +69,21 @@ pushd $dotnetRuntimeRoot
 popd
 
 echo "Building native libs"
-$null = New-Item -ItemType Directory "$PSScriptRoot\obj\System.Net.Quic.Native\" -Force
-pushd "$PSScriptRoot\obj\System.Net.Quic.Native\"
+$null = New-Item -ItemType Directory "$PSScriptRoot\obj\QuicNative" -Force
+pushd "$PSScriptRoot\obj\QuicNative\"
 
-echo "Building 32-bit System.Net.Quic.Native.dll"
+echo "Building 32-bit QuicNative.dll"
 $null = New-Item -ItemType Directory "build32" -Force
 pushd build32
-cmake .. -A"Win32" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
-
-cmake --build . --parallel 3 --config Release
+cmake "$nativeRoot" -A"Win32" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
+cmake --build . --parallel 3 --config Release --target install
 popd
 
-echo "Building 64-bit System.Net.Quic.Native.dll"
+echo "Building 64-bit QuicNative.dll"
 $null = New-Item -ItemType Directory "build64" -Force
 pushd build64
-cmake .. -A"x64" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
-cmake --build . --parallel 3 --config Release
+cmake "$nativeRoot" -A"x64" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win64"
+cmake --build . --parallel 3 --config Release --target install
 popd
 
 popd

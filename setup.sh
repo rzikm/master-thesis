@@ -3,7 +3,7 @@ ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 MSQUIC_ARTIFACT_ROOT=$ROOT/artifacts/msquic
 NATIVE_ARTIFACT_ROOT=$ROOT/artifacts/native
-QUIC_NATIVE_SOURCE=$ROOT/src/dotnet-runtime/src/libraries/Native/AnyOS/System.Net.Quic.Native/
+QUIC_NATIVE_SOURCE=$ROOT/src/dotnet-runtime/src/libraries/Native/AnyOS/QuicNative
 
 # parse args
 while [[ $# > 0 ]]; do
@@ -56,8 +56,8 @@ pushd "$ROOT/src/dotnet-runtime"
 ./build.sh --restore
 popd
 
-echo "Building System.Net.Quic.Native"
-QUIC_NATIVE_BUILD_DIR="$ROOT/obj/System.Net.Quic.Native/"
+echo "Building QuicNative"
+QUIC_NATIVE_BUILD_DIR="$ROOT/obj/QuicNative/"
 mkdir -p "$QUIC_NATIVE_BUILD_DIR"
 pushd "$QUIC_NATIVE_BUILD_DIR"
 
