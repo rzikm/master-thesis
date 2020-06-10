@@ -2,8 +2,10 @@
 ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 MSQUIC_ARTIFACT_ROOT=$ROOT/artifacts/msquic
+
 NATIVE_ARTIFACT_ROOT=$ROOT/artifacts/native
 QUIC_NATIVE_SOURCE=$ROOT/src/dotnet-runtime/src/libraries/Native/AnyOS/QuicNative
+QUIC_NATIVE_BUILD_DIR="$ROOT/obj/QuicNative/"
 
 # parse args
 while [[ $# > 0 ]]; do
@@ -23,11 +25,6 @@ while [[ $# > 0 ]]; do
       ;;
   esac
 done
-
-if [ ! -e "$ROOT/extern/akamai-openssl-quic/config" ]; then
-    echo "Cannot find extern/akamai-openssl-quic, did you clone all submodules?"
-    exit 1
-fi
 
 if [ ! -e "$ROOT/src/dotnet-runtime/build.sh" ]; then
     echo "Cannot find src/dotnet-runtime, did you clone all submodules?"

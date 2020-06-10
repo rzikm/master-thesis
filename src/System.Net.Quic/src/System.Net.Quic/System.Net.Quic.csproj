@@ -8,14 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NativeLibsDir>..\..\..\..\artifacts\native\</NativeLibsDir>
     <Platforms>AnyCPU</Platforms>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <DefineConstants>TRACE;WANT_QUIC_PUBLIC</DefineConstants>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <DefineConstants>TRACE;WANT_QUIC_PUBLIC</DefineConstants>
+    <DefineConstants>TRACE;FEATURE_QUIC_PUBLIC;FEATURE_QUIC_STANDALONE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
