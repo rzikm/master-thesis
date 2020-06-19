@@ -1,0 +1,7 @@
+% Metadata to be stored in PDF, see documentation of the pdfx package for more details.
+
+\Author{Bc. Radek Zikmund}
+\Title{QUIC protocol implementation for .NET}
+\Keywords{QUIC\sep .NET\sep network protocol}
+\Subject{Text of the abstract}
+\Publisher{Charles University}

@@ -1,5 +1,20 @@
 syntax: glob
 
+### LaTeX temp files
+/tex/*.log
+/tex/*.dvi
+/tex/*.aux
+/tex/*.toc
+/tex/*.lof
+/tex/*.lot
+/tex/*.out
+/tex/*.bbl
+/tex/*.blg
+/tex/*.xmpi
+/tex/*.pdf
+
+/tex/.auctex-auto/
+
 ### VisualStudio ###
 
 # Tool Runtime Dir
