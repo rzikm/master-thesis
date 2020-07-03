@@ -1,0 +1,151 @@
+\chapter{Analysis}
+\begin{itemize}
+
+    \item Design considerations
+    \begin{itemize}
+
+        \item Performance
+        \begin{itemize}
+
+            \item Reducing allocations
+            \item Threading model
+            \item Use of Exceptions
+
+        \end{itemize}
+
+    \end{itemize}
+
+    \item Robustness
+    \item Testability
+
+    \item Integration:
+    \begin{itemize}
+
+        \item Build as part of dotnet runtime
+        \item Standalone build for easier evaluation
+
+    \end{itemize}
+
+    \item Selecting implemented subset
+    \begin{itemize}
+
+        \item What is necessary for the promised example to work?
+        \item +: connection, handshake, flow control, recovery, necessary frames
+        \item -: version negotiation, versioning,
+
+    \end{itemize}
+
+    \item Target API
+    \begin{itemize}
+
+        \item Description of methods on QUIC API classes + semantics
+        \item QuicListener
+        \item QuicConnection
+        \item QuicStream
+
+    \end{itemize}
+
+    \item Socket utilization
+    \begin{itemize}
+
+        \item Supporting server socket multiplexing
+        \item Future support for server preferred address
+        \item Future support for connection migration
+        \item Threading model
+        \item Incoming packet handling
+        \item User request handling
+        \item Timeout events
+
+    \end{itemize}
+
+    \item Epoch handling
+    \begin{itemize}
+        \item Separation of epochs in protocol
+    \end{itemize}
+
+    \item Encryption
+    \begin{itemize}
+
+        \item Key derivation implementation
+        \item Future updating 1-RTT protection keys (Key phase bit)
+
+    \end{itemize}
+
+    \item TLS implementation
+
+    \begin{itemize}
+
+        \item Necessary API
+        \item Available choices:
+        \begin{itemize}
+
+            \item OpenSSL
+            \item SChannel (insider build)
+            \item Others
+            \item Native library interop and implications (distribution etc)
+            \item Support for SslAuthenticationOptions (API surface)
+
+        \end{itemize}
+    \end{itemize}
+
+    \item Packet serialization/Deserialization
+    \begin{itemize}
+
+        \item QUIC Primitives encoding
+        \item Packet types
+        \item Frame types
+        \item Performance considerations
+        \item Allocation-free packet reading/writing
+
+    \end{itemize}
+
+    \item Stream implementation
+    \begin{itemize}
+
+        \item Separation of inbound and outbound part of the stream
+        \item Inbound part
+
+        \begin{itemize}
+
+            \item Buffering
+            \item out of order reception
+            \item Reading data by user
+            \item Flow control consideration
+
+        \end{itemize}
+
+        \item Outbound part
+        \begin{itemize}
+
+            \item Buffering
+            \item Acknowledgement, retransmission
+            \item Flow control consideration
+        \end{itemize}
+
+        \item Abort/Dispose model for streams
+        \item Managing streams within connection
+        \item Queue of streams to be updated
+
+    \end{itemize}
+
+    \item Flow control
+    \begin{itemize}
+
+        \item Connection level
+        \item Stream level
+        \item MaxStreams and API
+
+    \end{itemize}
+
+    \item Recovery/Robustness
+    \begin{itemize}
+
+        \item Detecting lost packets
+        \item Detecting duplicate packets
+        \item Tail loss probe
+        \item Congestion window
+        \item Interface for Congestion control algorithm
+
+    \end{itemize}
+
+\end{itemize}
