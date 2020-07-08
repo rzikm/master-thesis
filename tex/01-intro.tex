@@ -1,21 +1,121 @@
 \chapter{Introduction}
 
+The internet as we know it today heavily relies on the use of the HTTP protocol. Not only is it used
+by web browsers to download and otherwise interact with websites, it also serves as a transport
+medium for use with REST web APIs or technologies such as gRPC and GraphQL.\todo{References?}
+
+Currently, the latest published version of the protocol is HTTP/2 \todo{Maybe some reference?} from
+2015. However, there is already a draft version of its successor HTTP/3. HTTP/2 greatly improved the
+efficiency and loading times of web pages by introducing improvements such as request multiplexing
+over single TCP connection, header compression and the server-push feature. HTTP/3 improves on
+HTTP/2 by replacing the TCP transport layer by new UDP-based protocol named QUIC.
+
+There are several resources comparing the performance between HTTP/3 and HTTP/2. In 2015 the
+experimental implementation by the Chromium team showed a 3\% improvement in mean page load time and
+30\% less rebuffers when when watching videos
+\todo{https://blog.chromium.org/2015/04/a-quic-update-on-googles-experimental.html}. Cloudfare
+launched HTTP/3 support in April 2020 and has measured 12.4\% improvement in \textit{time to first
+byte} metric. \todo{https://blog.cloudflare.com/http-3-vs-http-2/}. The main improvements of HTTP/3
++ QUIC over HTTP/2 + TCP can be summarized in following points:
+
 \begin{itemize}
-  \item TCP+HTTP2.0 and it's problems
-  \item QUIC protocol and it's promises
-  \item Maybe some graphs
-  \item Current state of QUIC in .NET
-  \item Goal statement
+  \item \textit{Absence of head-of-line blocking} ---
+    HTTP/2 uses multiplexing over a single TCP connection to execute multiple requests in parallel.
+    However, due to TCP's guaranteed in-order delivery, losing a packet from one request delays
+    execution of other requests, because the lost packet needs to be retransmitted first. QUIC
+    implements stream multiplexing over UDP transport. QUIC delivers streams independently, so that in
+    most cases packet loss affecting one stream does not affect other streams.
+
+  \item \textit{Always encrypted} ---
+    QUIC transport protocol is always encrypted using TLS 1.3 in order to provide secure-by-default
+    transport.
+
+  \item \textit{Faster connection establishment} ---
+    QUIC interleaves TCP-like three-way-handshake with TLS handshake, requiring fewer round-trips to
+    establish connections. QUIC also supports TLS 1.3 Zero Round Trip Time Resumption (0-RTT)
+    \todo{Explanation: https://blog.cloudflare.com/introducing-0-rtt/}, allowing it to send user data
+    with the very first packet.
+    \todo{maybe include the image from one of the sources}
+
 \end{itemize}
 
-The internet is full of modern web applications
+Although QUIC is being designed together with HTTP/3, it is well separated and suitable to be used
+as a transport layer for other application-level protocols.
 
-HTTP, versions 1.1, 2.0
+Even though the QUIC specification is not yet finalized, there are already several implementations
+of the draft standards. These implementations are used to research and improve the protocol before
+the final version of the specification.
 
-HTTP3
+\todo{Remove this paragraph?}
+The purpose of this thesis is to implement support for the QUIC protocol for \.NET ecosystem.
+
+\section{Support for QUIC in \.NET}
+
+There are long-term plans to provide full QUIC and HTTP/3 support in \.NET.\ While HTTP/3 is going to
+be used transparently by the \texttt{HttpClient}, QUIC implementation will provide public facing API
+for programmers to use, most likely located in \texttt{System.Net.Quic} namespace.
+
+There has already been some work done on HTTP/3 and QUIC support. However, once it became clear that
+the final specification for HTTP/3 and QUIC will not be ready soon enough for it to be implemented
+for the next \.NET 5 release, the QUIC protocol API has been made internal and further work has been
+postponed.
+
+The existing internal QUIC implementation relies on the C msquic library \todo{link}. Although
+msquic is built for high-performance, depending on a native library from \.NET brings additional
+development and maintenance cost. Furthermore, the performance gained from use of native code may be
+outweighed by the cost of interop between native and managed code.
+
+Implementing QUIC in managed C\# inside the \.NET runtime libraries has potential to bring following
+benefits:
+
+\begin{itemize}
+  \item \textit{Experimentability/maintainability} ---
+    Native dependencies require knowledge and experience in another programming language and making
+    sure appropriate changes are applied to both sides of the interop boundary. Removing the need
+    for interop boundary greatly simplifies making changes to the implementation.
+
+  \item \textit{Portability} ---
+    There have been issues in the past where native dependencies on Linux behave differently on
+    different distributions. Single managed implementation prevents such issues.
+
+  \item \textit{Performance} ---
+    Native library interop code may require pinning of allocated objects, which may affect
+    performance of the \.NET garbage collector. Also, interop with libraries with different
+    threading model may lead to more performance problems. \todo{mention libcurl as an example? same
+    for portability}
+\end{itemize}
 
 \section{Goals of this Thesis}
 
-\begin{itemize}
-  \item goal 1...
-\end{itemize}
+The goal of this thesis is to provide a partial C\# QUIC implementation which can be used as a
+drop-in replacement for the current msquic based implementation present in the \.NET runtime
+repository. Because this work has potential to be merged into the \.NET runtime codebase, the
+implementation will be developed in a branch of \todo{fork of?} the official \.NET runtime repository \todo{link?}.
+
+\todo{not sure if this paragraph belongs there.}
+In \.NET, TLS is not implemented in managed code, but rather delegated to native libraries
+like OpenSSL and SChannel. These implementations do not expose API needed by the QUIC protocol. In
+order to avoid implementing entirety of TLS 1.3 as well as the QUIC protocol, this thesis will
+select a suitable TLS implementation to be integrated in the implementation. \todo{do we expect to
+  change the TLS backend in the future?}
+
+\begin{enumerate}
+  \item \textit{}
+\end{enumerate}
+
+\section*{Copy of the goals in the thesis assignment}
+
+\todo{Remove this section}
+
+The goal of this thesis is to provide a partial C\# implementation of the QUIC protocol for \.NET. The
+implementation should replace the current experimental QUIC support based on the msquic native
+library. Thesis implementation should target improving portability, maintainability, and simplifying
+experiments with QUICs congestion control algorithms. While TLS is an integral part of the QUIC
+protocol, the goal of this thesis is not to reimplement TLS but to choose an appropriate existing
+implementation and incorporate it into the solution.
+
+The resulting pilot implementation of the protocol should support at least reliably sending data
+through a controlled testing environment between a demo client and server applications on at least
+one platform supported by \.NET Core. However, the implementation should be extensible to cover the
+entire QUIC specification. The student should closely cooperate with the Microsoft development team
+to ensure eventual mergeability into the master \.NET Core branch.
