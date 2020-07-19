@@ -93,3 +93,10 @@
 % Comment out second line to disable.
 \newcommand{\todo}[1]{}
 \renewcommand{\todo}[1]{{\color{red} TODO: {#1}}}
+
+% the symbol of .NET
+\newcommand{\dotnet}{.NET\@}
+
+% prettier C# typesetting
+\newcommand{\csharp}{%
+  {\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}}
