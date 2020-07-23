@@ -70,6 +70,7 @@ namespace DevSandbox.QuicTracer
                         PacketType.Handshake => 1,
                         PacketType.OneRtt => 2,
                         PacketType.ZeroRtt => 2,
+                        _ => throw new Exception("Not expected")
                     };
                     _localCtx._packetNumbers[i] = Math.Max(_localCtx._packetNumbers[i], packet.PacketNumber);
 
@@ -107,6 +108,7 @@ namespace DevSandbox.QuicTracer
                         PacketType.Handshake => 1,
                         PacketType.OneRtt => 2,
                         PacketType.ZeroRtt => 2,
+                        _ => throw new Exception("Not expected")
                     };
                     _remoteCtx._packetNumbers[i] = Math.Max(_remoteCtx._packetNumbers[i], packet.PacketNumber);
 
@@ -157,9 +159,6 @@ namespace DevSandbox.QuicTracer
 
         public async Task Start()
         {
-            List<QuicEvent> delayedEvents = new List<QuicEvent>();
-            int secretsCount = 0;
-
             await foreach (var e in _eventReader.ReadAllAsync().ConfigureAwait(false))
             {
                 if (!_connections.TryGetValue(e.Connection, out var connection))

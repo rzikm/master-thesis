@@ -2,7 +2,7 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <Platforms>AnyCPU</Platforms>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>netcoreapp5.0</TargetFramework>
         <MsQuicPath>..\..\..\..\artifacts\msquic\</MsQuicPath>
     </PropertyGroup>
     <PropertyGroup>

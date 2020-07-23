@@ -1,13 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-
+    <TargetFramework>netcoreapp5.0</TargetFramework>
     <IsPackable>false</IsPackable>
-
     <RootNamespace>System.Net.Quic.Tests</RootNamespace>
-
     <LangVersion>8</LangVersion>
-
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
