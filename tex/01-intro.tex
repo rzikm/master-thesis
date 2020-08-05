@@ -1,80 +1,85 @@
 \chapter{Introduction}
 
 The internet, as we know it today, heavily relies on the use of the HTTP protocol. Not only is it
-used by web browsers to download and otherwise interact with websites, it also serves as a transport
+used by web browsers to download \todo{use different word} and otherwise interact with websites, it also serves as a transport
 medium for use with REST web APIs or popular technologies such as gRPC and GraphQL\@.
 
-Currently, the latest published version of the protocol is HTTP/2 defined in RFC 7540 from 2015.
-HTTP/2 improved on its predecessor HTTP/1.1 by introducing features such as request multiplexing
+Currently, the latest published version of the protocol is HTTP/2 defined in RFC 7540 from 2015~\todo{citations to references}.
+HTTP/2 improved on its predecessor HTTP/1.1 \todo{also add reference} by introducing features such as request multiplexing
 over a single TCP connection, header compression and the server-push feature, allowing it to
-significantly reduce loading times of web pages and generally improve the efficiency of the web.
+significantly reduce loading times of web pages and generally improve the efficiency of the web \todo{optionally also try to find a reference to measurements supporting this claim}.
 
 However, HTTP/2 protocol performance is still limited in some scenarios and some limiting
-factors can be traced to the TCP protocol used on the transport layer. Combination of request
+factors can be traced to the TCP protocol used on the transport layer. \todo{add reference to source of the analysis? Who found out where is the bottleneck of HTTP/2?} Combination of request
 multiplexing and TCP's guaranteed in-order delivery leads to a situation where the loss of a TCP
 packet bearing data for one request will delay transmission of packets bearing data for other
-requests. This problem is generally known as \textit{head-of-line blocking}.
+requests. This problem is generally known as \textit{head-of-line blocking}\todo{add reference to wikipedia or other source which defines the term}.
 
 Another area where HTTP/2 protocol can be improved is the connection establishment latency. For
-security reasons, almost all web connections now use HTTPS instead of plain HTTP\@.
+security reasons, almost all web connections now use HTTPS instead of plain HTTP\@. \todo{HTTP/2 is an extension which still allowed unencrypted HTTP connection, but today there is a strong pressure to use encrypted connections. Mention that HTTPS uses TLS as an 'nadstavba'. When designing HTTP/3, it can be assumed that encryption will be required and used at almost all times}
 Establishment of HTTPS connection requires first establishing the TCP connection via the three-way
 handshake, and then performing another handshake at the TLS protocol layer for negotiating
 encryption. This process combined requires several round trips before the first packet with the
-actual HTTP request can be sent.
+actual HTTP request can be sent. \todo{maybe an illustration would be useful}
 
-The above mentioned and other problems are addressed in the HTTP/2's successor HTTP/3. At the time
-of writing, the specification of HTTP/3 is still at the draft stage, but only small details of the
+The above mentioned and other problems \todo{reword before this, sounds weird, it seems that there is a word missing after `mentioned'} are addressed in the HTTP/2's successor HTTP/3 \todo{add references to HTTP/3, } \todo{mention HTTP/3 first to put more epmhasis on it}. At the time
+of writing \todo{date, at least a year, maybe month} of this thesis, the specification of HTTP/3 is still at the draft stage, but only small details of the
 protocol are expected to change. HTTP/3 does not introduce new features at HTTP level, but instead
-replaces the TLS and TCP protocols with a brand new UDP-based protocol named QUIC\@. Although QUIC
+replaces the TLS and TCP protocols with a brand new UDP-based protocol named
+QUIC\@\footnote{Originally intended as the acronym for Quick UDP Internet Connection, but during
+standartization QUIC has been changed to be the actual name of the protocol.}. Although QUIC
 specification development is tied with that of HTTP/3, it is designed as a general-purpose transport
 layer protocol that can be used for other higher application level protocols as well. The
-relationships between protocols on HTTP/2 and HTTP/3 stacks are illustraded in
-figure~\ref{fig:http2-vs-http3-stack}.
+relationships between protocols on HTTP/2 and HTTP/3 stacks are illustrated in
+figure~\ref{fig:http2-vs-http3-stack}. \todo{check numbering of the figures}
 
 \begin{figure}[h]\label{fig:http2-vs-http3-stack}
   \centering
   \includegraphics[width=\textwidth]{img/01-pile-http-protocol}
-  \todo{Redraw this without HTTP/1.1 in inkscape}
+  \todo{Redraw this without HTTP/1.1 in inkscape, indicate which parts of the stack implement stream
+    multiplexing, encryption, reliability etc.}
   \caption{Comparison between HTTP/2 and HTTP/3 protocol stacks}
 \end{figure}
 
 The main improvements of QUIC over TCP+TLS can be summarized in following points:
 
 \begin{itemize}
-  \item \textit{Stream multiplexing} ---
+  \item \textit{Stream multiplexing} --- \todo{check dash length}
     QUIC provides abstraction of multiple streams multiplexed on a single connection at the
-    transport level. And because loss detection and retransmission is implemented at also the QUIC
+    transport level. And because loss detection and retransmission is implemented also at the QUIC
     layer, rather than UDP, the protocol does not exhibit the \textit{head-of-line blocking} problem
-    described previously.
+    described above.
 
   \item \textit{Faster connection establishment} ---
-    QUIC intertwines TCP-like three-way-handshake and TLS 1.3 handshake together, requiring fewer
+    QUIC intertwines\todo{maybe find a word that does not require dictionary} TCP-like three-way-handshake and TLS 1.3 handshake together, requiring fewer
     round-trips to establish new connections and thus reducing latency. QUIC also supports TLS 1.3
     Zero Round Trip Time Resumption (a.k.a. 0-RTT) \todo{Explanation?:
     https://blog.cloudflare.com/introducing-0-rtt/}, allowing it to send user data with the very first
-    packet.
+    packet. \todo{explain a bit, reference the link, so that it is clear why we mention it}
 
   \item \textit{Always encrypted} ---
-    Because TLS handshake is part of connection establishment, the QUIC connection is always
+    Because TLS handshake is part of connection establishment \todo{the explanation of how TLS fits into QUIC needs to be clearer make sure it is clear that QUIC integrates TLS, and not replaces it}, the QUIC connection is always
     encrypted. QUIC is therefore secure-by-default and no extra steps need to be taken by the
     application protocol to achieve security.
 
-  \item \textit{Separating connection identification from peer's address} ---
-    QUIC protocol identifies the connection using its ID rather than the peer's address. This
-    feature is generally useful for mobile devices, which can often switch networks between Wi-Fi and
+  \item \textit{Separating connection identification from peer's IP address} ---
+    QUIC protocol identifies the connection using its ID \todo{where does the ID come from?} rather than the peer's address. This
+    feature is generally useful for mobile devices, \todo{mention IP addresses: which can hop between multiple IP addresses, which happens when...} which can often switch networks between Wi-Fi and
     mobile internet connection \todo{is it called GSM?}. With QUIC, these devices do not require
-    reconnecting, but the connection can be migrated transparently to the application protocol.
+    reconnecting, but the connection can be migrated transparently from the perspective of the application protocol\todo{reword so that it is clear that it does not migrate \textbf{into} application protocol}.
 
     This feature also enables possible QUIC extensions like Multipath QUIC, which would allow
     simulataneous use of multiple network interfaces for a single connection to achieve greater
-    throughput for a single connection. \todo{https://multipath-quic.org/}
+    throughput. \todo{https://multipath-quic.org/}
 
 \end{itemize}
 
-Even though the QUIC specification is not yet finalized, there are multiple implementations
-of the draft standard versions. Many of which are backed by big companies such as Cloudfare,
-Facebook and Microsoft. These implementations are used to evaluate the protocol specification and
-research improvements to the protocol.
+\todo{does google still have/use the gQUIC implementation? What does Chrome use?}
+
+Even though the QUIC specification is not yet finalized, there are multiple implementations of the
+draft standard versions \todo{reformulate to make clear which word is adjective}. Many of these
+implementations are backed by big companies such as Cloudfare, Facebook and Microsoft, and are used
+to evaluate the protocol specification and research improvements to the protocol.
 
 Measurements on these implementations allow performance comparisons between HTTP/3 and HTTP/2. In
 2015 the experimental implementation by the Chromium team showed a 3\% improvement in mean page load
@@ -86,21 +91,27 @@ metric~\cite{Tellakula2020}, demonstrating the promised reduced latency.
 
 Microsoft's development team has long-term plans to provide full QUIC and HTTP/3 support in \dotnet{}.
 In case of HTTP/3, the goal is that HTTP/3 be used by library classes such as \texttt{HttpClient},
-completely transparent to the user. Since QUIC can be used to build other protocols as well, its
+completely transparent to the user \todo{completely --- strange, reword, make sure it is clear that the best HTTP version is used for the connection to given url}. Since QUIC can be used to build other protocols as well, its
 implementation will be publicly exposed, most likely via classes in the \texttt{System.Net.Quic}
 namespace.
 
 There has already been some work done on HTTP/3 and QUIC support. However, once it became clear that
 the final specification for HTTP/3 and QUIC will not be ready in time for it to be implemented for
-the upcoming \dotnet{} 5 release, the QUIC protocol API has been made internal and further work has
+the upcoming \dotnet{} 5 release \todo{``planned for Month YEAR''}, the QUIC protocol API has been made internal and further work has
 been postponed.
 
-Current QUIC implementation in \dotnet{} is implemented as a wrapper around Microsoft's msquic
-library\footnote{https://github.com/microsoft/msquic} written in C, which has been also recently
+\todo{generally try to avoid \'s in Microsoft}
+
+\todo{write here: the goal is to further the implementation by... and than short analysis follows, see recording.}
+
+\todo{use unnumbered subsections to divide the text}
+
+Current QUIC implementation in \dotnet{} is implemented as a wrapper around Microsoft msquic
+library\footnote{https://github.com/microsoft/msquic} \todo{make it a regular reference} written in C, which has been also recently
 open-sourced. The library supports Windows and Linux operating systems, and its design is focused on
-high-performance scenarios. Future versions of Windows will also ship msquic in Windows kernel in
-the form of \texttt{msquic.sys} driver. At the time of writing, msquic library does not yet support
-macOS platform.
+high-performance scenarios. Future versions of Windows will also ship msquic in \todo{when it is in kerenel, then no driver is needed? try to reword this} Windows kernel in
+the form of \texttt{msquic.sys} driver. At the time of writing \todo{use ``as of MM YYYY''} msquic
+library does not yet support macOS platform.
 
 In general, depending on a native library from \dotnet{} can be problematic and managed
 implementation is often preferable for maintenance and portability reasons. In order to provide the
@@ -108,9 +119,15 @@ feature on all platforms supported by \dotnet{}, the native library in question 
 least the same platforms as \dotnet{}. If some platform is not supported, but an alternative library
 exists, separate versions of \dotnet{} source code need to be maintained for these platforms.
 Example of such platform-specific code in \dotnet{} libraries is the support for cryptographic
-(X509) certificates. On Windows, the implementation is backed by Windows CryptAPI (crypt32.dll), and
+(X509) certificates. On Windows, the implementation is backed by Windows CryptAPI (\texttt{crypt32.dll}), and
 on Linux and macOS, the implementation is backed by OpenSSL\@. \todo{macOS impl needs to be
   fact-checked}
+
+\todo{what about support for Android? It seems to be quite important for \dotnet{}, maybe ask Ziki}
+
+\todo{Android vs Linux, do we need to make distinction in this text?}
+
+\todo{Following paragraph is very cryptic, it needs to be more clear, especially make it concrete for msquic etc. The problem is not very evident from the text}
 
 Another reason why managed implementation is preferred is that native libraries may use a threading
 model which is not appropriate for the desired API in \dotnet{} code. This requires additional
@@ -128,6 +145,7 @@ In short, implementation of QUIC in managed \dotnet{} code can bring following b
 \todo{is this summary still necessary?}
 \begin{itemize}
   \item \textit{Experimentability} ---
+    \todo{this has not been mentioned before}
     It is easier to make changes to managed code, as opposed to changing native code, especially
     when making changes to the API\@.
 
@@ -144,7 +162,7 @@ implementation of the QUIC protocol and avoid adding native dependencies. This t
 create a partial implementation of QUIC, which could be used as the basis of the future official
 \dotnet{} implementation. This implies that our implementation should be done in a separate
 development branch of the \todo{fork of?} \dotnet{} runtime code
-repository\footnote{https://github.com/dotnet/runtime}.
+repository\footnote{https://github.com/dotnet/runtime}. \todo{move to citation}
 
 The design of the API for \dotnet{} QUIC implementation has been interrupted and further work has
 been postponed to after the upcoming \dotnet{} 5 release. Because, designing of APIs for official
@@ -165,6 +183,8 @@ the implementation, however, should be such that the rest of the specification c
 the future.
 
 \todo{do we need an app for demonstration? Aren't perf\@. comparisons with msquic enough?}
+
+\todo{mention that we could test it by implementing HTTP/3, but that would be too complex, so we design a primitive protocol just for our testing purposes....}
 
 In order to demonstrate that our implementation works in practice, we will use it to create a simple
 fileserver application. The sole purpose of the application will be sending set of files from a
@@ -191,10 +211,10 @@ The following list summarizes the goals of this thesis presented in previous sec
   \item Select and implement sufficient subset of QUIC specification to support basic data transfer.
 
   \item Use the implementation to replace the msquic based one in \dotnet{} runtime while preserving
-    the same API\@.
+    the same API\@. \todo{remove the ``Use the ...'', the sentence is hard to understand}
 
   \item Write an example application using the QUIC API, demonstrating that the implemented QUIC
-    subset is sufficient.
+    subset is sufficient. \todo{this is misleading, we need to demonstrate that the implementation works on a simple scenario that QUIC can be used, see recording}
 
   \item Compare the performance of the new implementation with the previous msquic-based one.
 
