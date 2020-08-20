@@ -15,16 +15,22 @@ or otherwise changing the application layer of the HTTP protocol stack, because 
 caused by behavior of the transport protocols used underneath.
 \todo{add reference to the analysis? Who has found out where is the bottleneck of HTTP/2?}
 
-Combination of request multiplexing in HTTP/2 and TCP's guaranteed in-order packet delivery leads to
-a situation where the loss of a TCP packet bearing data for one request will delay transmission of
-packets bearing data for other requests. This problem is generally known as \textit{head-of-line
-blocking}\footnote{More detailed description of head-of-line blocking can be found e.g\@. at \url{https://en.wikipedia.org/wiki/Head-of-line_blocking}.}.
+\section{Performance Issues of HTTP/2}
+
+Combination of request multiplexing in HTTP/2 and TCP's guaranteed in-order packet delivery can lead
+to a situation where the loss of a TCP packet bearing data for one request will delay transmission
+of packets bearing data for other requests. In case of web browsers downloading a web page, this
+means that loss of a packet carrying part of a small icon or a Javascript file can delay download of
+the webpage background, which will visibly slow page loading to the user. This problem is generally
+known as \textit{head-of-line blocking}\footnote{More detailed description of head-of-line blocking
+  can be found e.g\@. at \url{https://en.wikipedia.org/wiki/Head-of-line_blocking}.}.
 
 Another area where HTTP/2 protocol can be improved is the HTTPS connection establishment latency.
 HTTPS~\cite{rfc2818} is an extension to the HTTP protocol, which makes the connection encrypted by
 inserting TLS protocol layer between HTTP and TCP layer. Establishing HTTPS connection requires
 first establishing TCP connection --- performing the three-way handshake --- and then performing
-another handshake for TLS layer. Figure~\ref{fig:https-packets} illustrates the sequence of packets that has to be sent before the first HTTP request packet.
+another handshake for TLS layer. Figure~\ref{fig:https-packets} illustrates the sequence of packets
+that has to be sent before the first HTTP request packet.
 
 \begin{figure}[h]
   \centering
@@ -34,8 +40,11 @@ another handshake for TLS layer. Figure~\ref{fig:https-packets} illustrates the 
 
 More and more websites enforce the use of HTTPS to protect the privacy of their users. In August
 2020, 96 out of top 100 viewed websites actively redirect to HTTPS, and more than 75\% of all
-network traffic from Chrome web browser used HTTPS~\cite{googleTransparency}. With HTTPS becoming the
-norm, almost all connections suffer from the increased latency incurred by the additional TLS handshake.
+network traffic from Chrome web browser used HTTPS~\cite{googleTransparency}. With HTTPS becoming
+the norm, almost all connections suffer from the increased latency incurred by the additional TLS
+handshake.
+
+\section{HTTP/3 and QUIC}
 
 The next version of the HTTP protocol --- HTTP/3~\cite{draft-ietf-quic-http-29} --- addresses these
 problems by replacing the TCP and TLS layer with brand new UDP-based protocol named
@@ -53,7 +62,6 @@ HTTP/2 and HTTP/3 stacks are illustrated in figure~\ref{fig:http2-vs-http3-stack
 \end{figure}
 
 \todo{possibly more comments on the figure will go here}
-
 Although QUIC development is tied with that of HTTP/3, it is designed as a general-purpose transport
 layer protocol that can be used for other application level protocols as well. The main improvements
 of QUIC over TCP+TLS can be summarized in following points:
@@ -80,9 +88,11 @@ of QUIC over TCP+TLS can be summarized in following points:
 
   \litem{Separating connection identity from peer's IP address} QUIC protocol does not use peers
     IP addresses to identify connections, but instead uses connection IDs which are 8 to 20 byte
-    sequences negotiated during connection establishment. This makes QUIC very attractive for
-    mobile devices, which can switch between multiple IP addresses. This happens e.g\@. when device
-    switches from Wi-Fi to cellular data network. Ordinarily, the existing connection has to be terminated and new connection established from the new IP address. QUIC, on the other hand, can migrate the connections in a way that is transparent to the application layer.
+    sequences negotiated during connection establishment. This makes QUIC very attractive for mobile
+    devices, which can switch between multiple IP addresses. This happens e.g\@. when device
+    switches from Wi-Fi to cellular data network. Ordinarily, the existing connection has to be
+    terminated and new connection established from the new IP address. QUIC, on the other hand, can
+    migrate the connections in a way that is transparent to the application layer.
 
     This feature also enables QUIC extensions like Multipath
     QUIC~\cite{draft-deconinck-quic-multipath-04}, which allows simulataneous use of multiple
@@ -93,144 +103,164 @@ of QUIC over TCP+TLS can be summarized in following points:
 As of August 2020, the specifications of HTTP/3 and QUIC are still at draft stage, but the
 standartization process is believed to be very close to complete. There are already multiple
 implementations of the draft versions of the standard and many of these implementations are backed
-by big companies such as Cloudflare, Facebook and Microsoft.
+by big companies such as Google, Cloudflare, Facebook and Microsoft.
 
 Experiments with these implementations allow early performance comparisons between HTTP/3 and
 HTTP/2. In 2015 the experimental implementation by the Chromium team showed a 3\% improvement in
 mean page load time and 30\% less rebuffer events when watching YouTube videos~\cite{Wilk2015}.
 Cloudflare launched preliminary support for HTTP/3 in April 2020 and has measured 12.4\% decrease in
 the \textit{time to first byte} metric~\cite{Tellakula2020}, which is consistent with the QUICs
-promise of reduced latency.
+promise of reduced latency. The QUIC protocol outperforms TCP especially in unstable networks such
+as wireless mobile networks~\cite{Cook2017}.
 
 \section{Support for QUIC in \dotnet{}}
 
-Microsoft's development team has long-term plans to provide full QUIC and HTTP/3 support in \dotnet{}.
-In case of HTTP/3, the goal is that HTTP/3 be used by library classes such as \texttt{HttpClient},
-completely transparent to the user \todo{completely --- strange, reword, make sure it is clear that the best HTTP version is used for the connection to given url}. Since QUIC can be used to build other protocols as well, its
-implementation will be publicly exposed, most likely via classes in the \texttt{System.Net.Quic}
-namespace.
+Microsoft's \dotnet{} development team has long-term plans to provide full QUIC and HTTP/3 support
+in \dotnet{}. In case of HTTP/3, the support should be completely transparent to users, because the
+choice of protocol to be used is up to \texttt{HttpClient} class implementation.
+Since QUIC can be used to build other protocols than HTTP/3, its implementation will be exposed via
+public classes residing most likely inside the \texttt{System.Net.Quic} namespace.
 
-There has already been some work done on HTTP/3 and QUIC support. However, once it became clear that
-the final specification for HTTP/3 and QUIC will not be ready in time for it to be implemented for
-the upcoming \dotnet{} 5 release \todo{``planned for Month YEAR''}, the QUIC protocol API has been made internal and further work has
-been postponed.
+The QUIC support has been originally intended for the \dotnet{} 5 release planned for November 2020.
+However, it turned out that the standartization process wasn't going to be completed in time for
+QUIC to be implemented for the release, so the work was interrupted and official HTTP/3 and QUIC
+support was postponed for later releases.
 
-\todo{generally try to avoid \'s in Microsoft}
+\todo{probably remove the following subsection heading}
 
-\todo{write here: the goal is to further the implementation by... and then short analysis follows, see recording.}
+\subsection*{Existing QUIC Implementation in \dotnet{}}
 
-\todo{use unnumbered subsections to divide the text}
+The work-in-progress implementation of QUIC is still present in the master development branch of the
+\dotnet{} runtime repository~\cite{dotnetGithub}, but has been made accessible only internally. This
+implementation is a wrapper around the \libmsquic{} library~\cite{msquicGithub}, which is a C
+implementation of QUIC developed by Microsoft. The \libmsquic{} library is designed for
+high-performance scenarios and has been recently open-sourced.
 
-Current QUIC implementation in \dotnet{} is implemented as a wrapper around Microsoft msquic
-library\footnote{https://github.com/microsoft/msquic} \todo{make it a regular reference} written in C, which has been also recently
-open-sourced. The library supports Windows and Linux operating systems, and its design is focused on
-high-performance scenarios. Future versions of Windows will also ship msquic in \todo{when it is in kerenel, then no driver is needed? Try to reword this} Windows kernel in
-the form of \texttt{msquic.sys} driver. At the time of writing \todo{use ``as of MM YYYY''} msquic
-library does not yet support macOS platform.
+Decision to use \libmsquic{} as the QUIC protocol implementation is not final. Using an existing
+external implementation allows the development team to quickly evaluate the proposed QUIC API\@.
+However, there are compelling arguments for implementing the QUIC protocol in managed \dotnet{} code
+--- and more specifically, in \csharp{} --- for the production release.
 
-In general, depending on a native library from \dotnet{} can be problematic and managed
-implementation is often preferable for maintenance and portability reasons. In order to provide the
-feature on all platforms supported by \dotnet{}, the native library in question must support at
-least the same platforms as \dotnet{}. If some platform is not supported, but an alternative library
-exists, separate versions of \dotnet{} source code need to be maintained for these platforms.
-Example of such platform-specific code in \dotnet{} libraries is the support for cryptographic
-(X509) certificates. On Windows, the implementation is backed by Windows CryptAPI (\texttt{crypt32.dll}), and
-on Linux and macOS, the implementation is backed by OpenSSL\@. \todo{macOS impl needs to be
-  fact-checked}
+% It is also cross-platform, with support for Windows and Linux operating systems.
 
-\todo{what about support for Android? It seems to be quite important for \dotnet{}, maybe ask Ziki}
+\subsection*{Motivation for Implementing QUIC in Managed Code}
 
-\todo{Android vs Linux, do we need to make distinction in this text?}
+Code written in ahead-of-time compiled languages such as C or C++ (from now on reffered to as
+\textit{native code}) is likely to be faster than code written in \dotnet{} languages (from now on
+referred to as \textit{managed code}), which rely on just-in-time compilation. However, there are
+other aspects than raw performance to be considered when deciding to use native libraries such as
+\libmsquic{}:
 
-\todo{Following paragraph is very cryptic, it needs to be more clear, especially make it concrete for msquic etc. The problem is not very evident from the text}
-
-Another reason why managed implementation is preferred is that native libraries may use a threading
-model which is not appropriate for the desired API in \dotnet{} code. This requires additional
-overhead on the \dotnet{} side. Performance impact of the overhead may outweigh the performance
-gained by using the native library. \todo{ask Ziki to check following sentences} An example is the
-integration with the \textit{curl}\footnote{https://github.com/curl/curl} library, which was used
-in the past to implement handlers for HTTP requests. For multiple reasons, performance problems
-being one of them \todo{get specific issues links from KZ?}, handling HTTP/2 requests has been
-reimplemented in managed code and curl was used only as a backup. The performance considerations may
-be valid for msquic integration, because the msquic library uses an event-based interface, and
-\dotnet{} QUIC API is based on the abstract \texttt{Stream} class.
-
-In short, implementation of QUIC in managed \dotnet{} code can bring following benefits:
-
-\todo{is this summary still necessary?}
 \begin{itemize}
-  \litem{Experimentability}
-    \todo{this has not been mentioned before}
-    It is easier to make changes to managed code, as opposed to changing native code, especially
-    when making changes to the API\@.
 
-  \litem{Portability/maintainability}
-    There is a single source code for all platforms.
+  \litem{Cross-platform compatibility/availability} The \dotnet{} platform officially supports
+    multiple versions of Windows, macOS and several Linux distributions. If the native library does
+    not support all these platforms, then an alternative library has to be used on other platforms,
+    introducing more complexity into the codebase.
 
-  \litem{Performance}
-    Tailoring the library's implementation to the \dotnet{} threading model removes the overhead at
-    the interop boundary. Also, no objects need to be pinned on the heap.
+  \litem{Support for different library versions} Currently, no native libraries that managed
+    \dotnet{} libraries depend on are part of \dotnet{} distribution. Instead, it is expected that
+    the library is already installed on the target machine and can be dynamically loaded. This means
+    that the \dotnet{} code must work correctly with multiple different versions of the native
+    library.
+
+  \litem{Maintainability} Maintenance of the interop code requires the developer to be able to
+    read and understand the language in which the native library is written. Debugging the code
+    around the language boundaries may be difficult in case the necessary tooling for mixed-language
+    debugging is not available.
+
+  \litem{Library's API} One of the aspect greatly influencing the resulting performance is
+    similarity between the public API of the \dotnet{} library and the API of the native library in
+    question. The relevant aspects are whether the API are following:
+
+    \begin{itemize}
+      \item Event-based (i.e\@. using callbacks) vs\@. method based
+      \item Blocking vs\@. non-blocking
+      \item Synchronous vs\@. asynchronous
+      \item Which side allocates memory buffers
+    \end{itemize}
+
+    The interop layer of the code needs to translate the necessary differences, which may incur
+    noticeable performance overhead and even negate the performance gained from the use of native
+    library.
+
+  \litem{Future development} Implementing new features requires prior support in the native
+    library, and becuase the use of newer library versions cannot be enforced, the features must be
+    designed as optional in \dotnet{}.
+
 \end{itemize}
 
-The reasons above motivated Microsoft developers to decide that it would be better to have managed
-implementation of the QUIC protocol and avoid adding native dependencies. This thesis seeks to
-create a partial implementation of QUIC, which could be used as the basis of the future official
-\dotnet{} implementation. This implies that our implementation should be done in a separate
-development branch of the \todo{fork of?} \dotnet{} runtime code
-repository\footnote{https://github.com/dotnet/runtime}. \todo{move to citation}
+In the past, the \dotnet{} team has encountered multiple problems with the
+\libcurl~\cite{curlGithub} library, which was used to implement HTTP request handling. Different
+Linux distributions contain different versions of the \libcurl{} library, with different features as
+well as different bugs. The dotnet{} development team had to expend a lot of resources to make sure
+the managed code written by \dotnet{} developers behaved consistently on all platforms.
 
-The design of the API for \dotnet{} QUIC implementation has been interrupted and further work has
-been postponed to after the upcoming \dotnet{} 5 release. Because, designing of APIs for official
-\dotnet{} libraries is a lengthy process requiring review and approval from senior engineers
-maintaining the codebase, and because the current version of the API is sufficient for simple use
-cases, this thesis will avoid making any changes to the API and implement it without modifications.
-This will make our implementation a direct drop-in replacement of the previous msquic-based
-implementation and will allow us to compare performance of the two implementations side by side.
+Starting with \dotnet{} Core 2.1, the default implementation of HTTP request handling does not rely on
+native libraries like \libcurl{}. Instead, the functionality has been rewritten in pure managed
+code, which offered better performance and consistent behavior across all \dotnet{}
+platforms~\cite{SocketsHttpHandlerDocs}.
+
+The reasons above motivated Microsoft developers to decide that it would be better to have managed
+implementation of the QUIC protocol and avoid adding native dependencies.
+
+\section{Goals of this Thesis}
+
+This thesis seeks to create a partial implementation of QUIC, which could be used as the basis of
+the future official \dotnet{} implementation. The result of this thesis should be compilable branch
+of the \dotnet{} runtime, which exposes the QUIC API for other \dotnet{} developers to use.
+
+Although managed code should be portable, the API for working with TLS 1.3 that is necessary for
+implementing QUIC is currently unavailable in \dotnet{}. In order to avoid implementing TLS 1.3
+ourselves, the managed QUIC implementation will still require a native TLS 1.3 library. The
+future managed implementation would use different library to implement TLS 1.3 on different
+operating systems, but for the purposes of this thesis it will be sufficient to use the same library
+on all platforms.
+
+The existing QUIC implementation in \dotnet{} uses a layer of indirection, allowing multiple
+implementations exist side by side, and possibly switching betwen them at program runtime. This
+thesis will add the managed QUIC implementation alongside the \libmsquic{}-based one, and allow for
+comparison between them.
+
+We have mentioned that the design of the QUIC API was interrupted early. The current version does
+not expose all features of the QUIC protocol. However, the current API should be sufficient for
+implementing simple application protocols on top of QUIC\@. This thesis will therefore avoid making
+any modifications to the API\@.
 
 Implementing the full QUIC specification is outside the scope of a master thesis. Fortunately, some
 parts of the specification are concerned with aspects that need not come into effect for many
 connections, and can be therefore omitted from our prototype implementation. For example, most QUIC
 connections are not likely to use the connection migration feature. Because we do not expect readers
 to be fully familiar with the QUIC protocol specification and all its features, we will present an
-overview of the protocol in chapter 2 \todo{link} and defer selection of the actual protocol
-features to be implemented to the beginning of the analysis in chapter 3 \todo{link}. The design of
-the implementation, however, should be such that the rest of the specification can be implemented in
-the future.
+overview of the protocol in Chapter~\ref{chap:02-quic} and defer selection of the protocol features
+to be acutally implemented as part of this thesis to the beginning of the analysis in
+Chapter~\ref{chap:03-analysis}. The design of the implementation, however, should be such that the
+rest of the specification can be implemented in the future.
 
-\todo{do we need an app for demonstration? Aren't perf\@. comparisons with msquic enough?}
+It would make sense to evaluate functionality of our QUIC implementation by providing also partial
+implementation of HTTP/3. However, even supporting the simplest GET requests would be too
+complex. Instead, we will implement a primitive client-server console application. The client part
+of the application will send all files in a given directory to the server, which will store them.
+The files will be sent in parallel, utilizing the stream multiplexing feature of QUIC\@.
 
-\todo{mention that we could test it by implementing HTTP/3, but that would be too complex, so we design a primitive protocol just for our testing purposes....}
+Because the motivation behind QUIC is to improve performance over using the combination of TCP+TLS,
+this thesis should also try to compare the performance of these protocols when used from \dotnet{}
+via a set of benchmarks.
 
-In order to demonstrate that our implementation works in practice, we will use it to create a simple
-fileserver application. The sole purpose of the application will be sending set of files from a
-directory on the server to the client, utilizing the stream multiplexing feature of QUIC to transfer
-individual files in separate streams. The application will be tested in a simulated network
-environment, allowing us to show that our implementation works reasonably well even in presence of
-network problems such as packet loss or packet reordering.
+\subsection*{Summary of the Goals}
 
-\todo{maybe a figure?
-
-  1 --- client initiates connection.
-
-  2 --- server pushes number of files on first streams and individual files on other streams.
-
-  3 --- after receiving everything, connection is closed.
-
-}
-
-\section{Goals of this thesis}
-
-The following list summarizes the goals of this thesis presented in previous section.
+The following list summarizes the goals of this thesis presented in previous subsection.
 
 \begin{enumerate}
-  \item Select and implement sufficient subset of QUIC specification to support basic data transfer.
+  \item Select sufficient subset of QUIC specification needed support basic data transfer and
+    implement it.
 
-  \item Use the implementation to replace the msquic based one in \dotnet{} runtime while preserving
-    the same API\@. \todo{remove the ``Use the ...'', the sentence is hard to understand}
+  \item Make the existing QUIC API publicly accessible, and allow switching between the new managed
+    implementation and the existing \libmsquic{} based one.
 
-  \item Write an example application using the QUIC API, demonstrating that the implemented QUIC
-    subset is sufficient. \todo{this is misleading, we need to demonstrate that the implementation works on a simple scenario that QUIC can be used, see recording}
+  \item Evaluate the QUIC implementation by implementing a simple client-server console application
+    for sending files.
 
-  \item Compare the performance of the new implementation with the previous msquic-based one.
+  \item Try to compare the performance of the new implementation with the previous msquic-based one.
 
 \end{enumerate}

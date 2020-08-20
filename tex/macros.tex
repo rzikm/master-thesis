@@ -102,4 +102,11 @@
   {\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}}
 
 % special items for itemize and enumerate environments which have a label
-\newcommand\litem[1]{\item{\textit{#1}} ---}
+\newcommand\litem[1]{\item{\textit{#1}}:}
+
+% macro for typesetting library names
+\newcommand\libname[1]{\texttt{#1}}
+
+% macros for library names used throughout the thesis
+\newcommand{\libmsquic}{\libname{MsQuic}}
+\newcommand{\libcurl}{\libname{curl}}
