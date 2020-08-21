@@ -15,6 +15,7 @@
         <Compile Include="$(SysNetHttpPath)\tests\FunctionalTests\**\*Quic*.cs">
             <link>%(RecursiveDir)%(Filename)%(Extension)</link>
         </Compile>
+        <Compile Remove="$(SysNetHttpPath)\tests\FunctionalTests\MsQuicTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>
