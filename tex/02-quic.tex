@@ -1,39 +1,83 @@
 
-\chapter{QUIC Protocol Overview}\label{chap:02-quic}
-
-\todo{ check capitalization in citations }
+\chapter{QUIC Protocol}\label{chap:02-quic}
 
 This chapter is intended as a summary of the QUIC protocol specification for the readers of this
 thesis who have not encountered QUIC before. Readers familiar with the QUIC protocol specification
 may skip this chapter.
 
-This text is based on the version 27 of the draft specification documents. However, newer versions
-published between then and the time of writing do not introduce changes significant for this text.
-The latest versions of the draft specification documents are available at the IETF QUIC Working
-Group's Github page\footnote{https://github.com/quicwg/base-drafts}. This page also contains links
-to published draft versions and diffs between versions. The documents relevant for this thesis are
-``Core Transport Protocol'' (QUIC-TRANSPORT), ``Loss Detection \& Congestion Control''
-(QUIC-RECOVERY) and ``TLS Mapping'' (QUIC-TLS).
+This text is based on the version 29 of the draft specification documents from June 2020, more
+specifically on the documents describing the core transport~\cite{draft-ietf-quic-transport}, TLS
+integration~\cite{draft-ietf-quic-tls}, and congestion control~\cite{draft-ietf-quic-recovery}.
 
-QUIC protocol provides reliable and secure transport of multiple streams of data over a single
-connection. It is necessary to understand that the protocol is not designed to be the top-level
-protocol on the stack, but instead it is expected that other protocol are build on top of QUIC\@.
-This is shown for example by the fact that QUIC requires specifying error codes on some ocasions,
-but leaves the semantics of all available values to be defined by the application protocol.
+We will start this chapter by first providing a high-level overview of QUIC, and then provide a more
+detailed description of individual parts of the protocol.
 
-\todo{Following paragraphs seems weird.}
+\section{Overview of QUIC}
 
-Since QUICs main function is transporting streams of data, we will begin by first describing the
-streams abstraction provided by the protocol in greater detail. Following that, we will describe
-QUICs flow control mechanism, and only after that the particular workings of the QUIC connection.
+QUIC protocol provides a reliable and secure transport of multiple streams of data over a single
+connection\footnote{The ability to transport multiple streams over a single connection is called \textit{stream multiplexing}}. QUIC is implemented on top of UDP, which provides only unreliable transfer of datagrams.
+Stream multiplexing, loss recovery, congestion control, security and other features known from TCP
+or TLS, respectively, are implemented by QUIC itself. As in other protocols, QUIC allows
+communication between two endpoints: client and server.
 
-\todo{see recording, high level explanation of connection needs to be here + a diagram explaining
-  stream multiplexing}
+\todo{should I use (unnumbered) subsection headers to divide the text?} In QUIC connection,
+endpoints exchange QUIC packets. A single UDP datagram can contain multiple packets, although it
+generally contains only one. QUIC packets cannot span multiple UDP datagrams. The QUIC connection is
+identified by its Connection ID\@. \todo{decide if we want to use special font for things like
+  Connection ID, Stream ID, etc.} During connection establishment, each peer choses the Connection
+ID which the other endpoint should include in the header of sent packets.
 
-\todo{make more diagrams, figures}
+The separation of connection identity from the used socket allows multiple connections to be made
+using the same socket. Figure~\ref{fig:02-connection-multiplexing} illustrates how the incoming
+packets are associated with individual connections based on the Destination Connection ID field of
+the QUIC packets.
 
-\todo{make a big picture description, so that we do not delve in each area from top straight to
-  lowest detail, the reader needs to now how it all fits together, and then can be explained the details.}
+\begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
+  \includegraphics[width=0.9\textwidth]{img/02-socket-multiplexing}
+\end{myFigure}
+
+The payload of QUIC packets consists of one or more QUIC frames which carry individual pieces of
+information such as acknowledgements or segments of the streams sent by the application.
+
+QUIC can transport multiple streams in a single connection. These streams can be initiated by both
+client and server, and can be either unidirectional, or bidirectional.
+Figure~\ref{fig:02-stream-multiplexing} illustrates how QUIC may pack two streams into frames such
+that those streams are transported in parallel.
+
+\begin{myFigure}{fig:02-stream-multiplexing}{Stream multiplexing in QUIC}
+  \includegraphics[width=0.9\textwidth]{img/02-stream-multiplexing}
+\end{myFigure}
+
+Similarly to TCP, packets in QUIC connections are numbered. However, QUIC uses three separate
+\textit{Packet number spaces}:
+
+\begin{enumerate}
+  \litem{Initial} Used for exchanging initial information.
+  \litem{Handshake} Used during the connection handshake process.
+  \litem{1-RTT} Used throughout the lifetime of the connection to transfer application data.
+\end{enumerate}
+
+Packets from each packet number space are numbered and processed independently of the other packet
+spaces. Each packet number space also uses different keys for encryption. Initial keys are derived
+only from the Connection ID chosen by the client and therefore provide just an obfuscation. However,
+the 1-RTT keys are negotiated by the TLS 1.3 protocol and offer high level of security. The packet
+encryption is used for protection both against network traffic observers and against packet payload
+corruption.
+
+As a prevention against malicious too fast senders, QUIC implements a credit based flow-control
+scheme. In this scheme, each peer advertises how much data it is willing to accept and how many
+streams of each type can be opened by its peer. Violation of these limits leads to connection
+termination.
+
+Becuase UDP is an unreliable transport protocol, and QUIC must detect loss of the packets sent. The
+loss detection is implemented similarly to TPC via acknowledgements of the received packets.
+However, an important difference from TCP is that the lost packet is not retransmitted as-is.
+Instead, the data carried by the lost packet are sent in different packets if necessary. This is
+illustrated in figure~\ref{fig:02-packet-loss-example}
+
+\begin{myFigure}{fig:02-packet-loss-example}{Retransmission of lost data in QUIC}
+  \includegraphics[width=0.6\textwidth]{img/02-retransmission-example}
+\end{myFigure}
 
 \section{Streams}
 

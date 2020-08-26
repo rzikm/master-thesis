@@ -43,11 +43,9 @@ separate handshake for the TLS layer. As can be seen on illustration in
 figure~\ref{fig:https-packets}, a minimum of three round trips are needed before the HTTP request
 can be sent.
 
-\begin{figure}[h]
-  \centering
+\begin{myFigure}{fig:https-packets}{Packets sent during HTTPS connection establishment}
   \includegraphics[width=0.6\textwidth]{img/01-https-connection-packets}
-  \caption{Simplified view of the packets sent during HTTPS connection establishment}\label{fig:https-packets}
-\end{figure}
+\end{myFigure}
 
 To protect the privacy of their users, more and more websites enforce the use of HTTPS\@.
 In August 2020, 96 out of the top 100 viewed websites actively redirect to HTTPS, and more than 75\%
@@ -57,7 +55,7 @@ additional TLS handshake.
 
 \section{HTTP/3 and QUIC}
 
-The next version of the HTTP protocol --- HTTP/3~\cite{draft-ietf-quic-http-29} --- addresses the
+The next version of the HTTP protocol --- HTTP/3~\cite{draft-ietf-quic-http} --- addresses the
 above-mentioned issues by replacing the TCP and TLS layers with a brand new UDP-based protocol named
 QUIC\footnote{Originally intended as the acronym for Quick UDP Internet Connection, but it has been
 changed to be the actual name of the protocol during the standardization process}. The features of
@@ -65,13 +63,12 @@ the QUIC protocol allow moving responsibilities between layers of the HTTP proto
 responsibilities and relationships between protocols on HTTP/2 and HTTP/3 stacks are illustrated in
 figure~\ref{fig:http2-vs-http3-stack}.
 
-\begin{figure}[h]
-  \centering
+
+\begin{myFigure}{fig:http2-vs-http3-stack}{Comparison between HTTP/2 and HTTP/3 protocol stacks}
   \includegraphics[width=\textwidth]{img/01-pile-http-protocol}
   \todo{Redraw this without HTTP/1.1 in inkscape, indicate which parts of the stack implement stream
     multiplexing, encryption, reliability, etc.}
-  \caption{Comparison between HTTP/2 and HTTP/3 protocol stacks}\label{fig:http2-vs-http3-stack}
-\end{figure}
+\end{myFigure}
 
 \todo{possibly more comments on the figure will go here}
 
@@ -279,11 +276,11 @@ The following list summarizes the goals of this thesis presented in the previous
   \item Select a sufficient subset of QUIC specification needed to support the most basic data
     transfer and implement it inside \dotnet{} runtime codebase.
 
-  \item Expose the existing QUIC API, and allow switching between the new managed implementation and
-    the existing \libmsquic{} based one.
+  \item Make the existing QUIC API public, and allow switching between the new managed
+    implementation and the existing \libmsquic{} based one.
 
-  \item Evaluate the QUIC implementation by using it to implement a simple client-server console
-    application for sending files.
+  \item Evaluate the managed QUIC implementation by using it to implement a simple client-server
+    console application for sending files.
 
   \item \todo{Emphasise that this is optional?} Try to compare the performance of the new
     implementation with the previous \libmsquic{}-based one.

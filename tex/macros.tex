@@ -110,3 +110,14 @@
 % macros for library names used throughout the thesis
 \newcommand{\libmsquic}{\libname{MsQuic}}
 \newcommand{\libcurl}{\libname{curl}}
+
+% environment setting common attributes of figures
+\newcommand{\figureArgs}{} % dummy macro to be redefined
+\newenvironment{myFigure}[2]{% [label, caption]
+  \renewcommand{\figureArgs}{\caption{#2}\label{#1}}%
+  \figure[h]{}
+  \centering
+}{ %
+  \figureArgs{}
+  \endfigure{}
+}
