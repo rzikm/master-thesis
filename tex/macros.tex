@@ -112,7 +112,7 @@
 \newcommand{\libcurl}{\libname{curl}}
 
 % environment setting common attributes of figures
-\newcommand{\figureArgs}{} % dummy macro to be redefined
+\newcommand{\figureArgs}{} % dummy macro to be redefined, used to make caption go under the figure
 \newenvironment{myFigure}[2]{% [label, caption]
   \renewcommand{\figureArgs}{\caption{#2}\label{#1}}%
   \figure[h]{}
@@ -121,3 +121,22 @@
   \figureArgs{}
   \endfigure{}
 }
+
+% environment setting common attributes of tables
+\newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]
+  \table[h]
+  #1
+  \caption{#3}\label{#2}% for tables, the caption goes to the top
+  \centering
+  \tabular{#4}
+  \toprule
+  #5 \\
+  \midrule
+}{ %
+  \bottomrule
+  \endtabular{}
+  \endtable{}
+}
+
+% checkmark
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}

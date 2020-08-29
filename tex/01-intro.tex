@@ -40,7 +40,7 @@ HTTPS~\cite{rfc2818} is an extension to HTTP, which makes the connection encrypt
 TLS layer between HTTP and TCP\@. Establishing HTTPS connection, therefore, requires first
 establishing TCP connection --- performing the three-way handshake --- and then performing another
 separate handshake for the TLS layer. As can be seen on illustration in
-figure~\ref{fig:https-packets}, a minimum of three round trips are needed before the HTTP request
+\autoref{fig:https-packets}, a minimum of three round trips are needed before the HTTP request
 can be sent.
 
 \begin{myFigure}{fig:https-packets}{Packets sent during HTTPS connection establishment}
@@ -61,7 +61,7 @@ QUIC\footnote{Originally intended as the acronym for Quick UDP Internet Connecti
 changed to be the actual name of the protocol during the standardization process}. The features of
 the QUIC protocol allow moving responsibilities between layers of the HTTP protocol stack. The
 responsibilities and relationships between protocols on HTTP/2 and HTTP/3 stacks are illustrated in
-figure~\ref{fig:http2-vs-http3-stack}.
+\autoref{fig:http2-vs-http3-stack}.
 
 
 \begin{myFigure}{fig:http2-vs-http3-stack}{Comparison between HTTP/2 and HTTP/3 protocol stacks}
