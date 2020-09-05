@@ -3,8 +3,7 @@
 The internet as we know it today heavily relies on the use of the HTTP protocol. Not only is it used
 by web browsers for interacting with websites, but it is also heavily used server-side for
 communication between individual services, especially in the microservices architecture. HTTP is
-also used as a transport medium for technologies such as gRPC and GraphQL\@. \todo{do I need
-  citations for these techs?}
+also used as a transport medium for technologies such as gRPC and GraphQL\@.
 
 The latest version of the HTTP protocol is HTTP/2 published in 2015~\cite{rfc7540}. HTTP/2
 improved on its predecessor HTTP/1.1~\cite{rfc7230} by introducing features such as request
@@ -139,8 +138,6 @@ However, it turned out that the standardization process wasn't going to be compl
 QUIC to be implemented for the release, so the work was interrupted and official HTTP/3 and QUIC
 support was postponed for later releases.
 
-\todo{probably remove the following subsection heading}
-
 \subsection*{Existing QUIC Implementation in \dotnet{}}
 
 The work-in-progress implementation of QUIC is still present in the master development branch of the
@@ -201,7 +198,10 @@ as \libmsquic{}:
     Managed code needs to translate the differences between APIs, which may result in noticeable
     performance overhead and even negate the performance gained from the use of the native library.
 
-  \litem{Overhead of native calls} \todo{cost of pinvoke call}
+  \litem{Overhead of native calls} When execution transitions between managed and unmanaged code,
+    the runtime must ensure correct behavior of exceptions and garbage collector. This cost of the
+    managed-to-native transition is relatively small and is relevant only in frequent P/Invoke
+    calls.
 
   \litem{Future development} Exposing new features from newer versions of the native library can
     be problematic because the code needs to work also with older versions of the library.
@@ -209,11 +209,11 @@ as \libmsquic{}:
 \end{itemize}
 
 In the past, the \dotnet{} development team has encountered multiple problems with the
-\libcurl~\cite{curlGithub} library, which was used to implement HTTP request handling \todo{On linux
-  only?}. Different
-Linux distributions contain different versions of the \libcurl{} library supporting different
-features and having different bugs. The \dotnet{} development team had to expend a lot of resources to make sure
-the managed code written by other \dotnet{} developers behaved consistently on all platforms.
+\libcurl~\cite{curlGithub} library, which was used to implement HTTP request handling on macOS and
+Linux. Different Linux distributions contain different versions of the \libcurl{} library supporting
+different features and having different bugs. The \dotnet{} development team had to expend a lot of
+resources to make sure the managed code written by other \dotnet{} developers behaved consistently
+on all platforms.
 
 Starting with \dotnet{} Core 2.1, the default implementation of HTTP request handling does not rely
 on native libraries like \libcurl{}. Instead, the functionality has been rewritten in pure managed
@@ -236,13 +236,6 @@ the runtime, which exposes the QUIC API for other \dotnet{} developers to use.
 We have mentioned that the design of the QUIC API was interrupted early. Although the current
 version does not expose all features of the QUIC protocol, it is sufficient for evaluating of our
 implementation. This thesis will, therefore, avoid making any modifications to the API\@.
-
-\todo{I think this paragraph should be completely removed and moved to the analysis chapter.}
-Although the managed QUIC implementation should be portable, the API necessary for integrating TLS
-into QUIC is currently unavailable in the native libraries used by \dotnet{}. To avoid implementing
-TLS 1.3 ourselves, this thesis will select a suitable TLS library and integrate it into the QUIC
-implementation. Dependence on another library is expected to be temporary until the QUIC enabling
-APIs are present in TLS libraries currently in use in \dotnet{}.
 
 Implementing the full QUIC specification is outside the scope of a master thesis. Fortunately, to
 evaluate the performance of the managed QUIC implementation, many of the parts of the specification

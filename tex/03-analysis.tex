@@ -1,4 +1,13 @@
 \chapter{Analysis}\label{chap:03-analysis}
+
+\todo{this belongs to TLS section}
+
+Although the managed QUIC implementation should be portable, the API necessary for integrating TLS
+into QUIC is currently unavailable in the native libraries used by \dotnet{}. To avoid implementing
+TLS 1.3 ourselves, this thesis will select a suitable TLS library and integrate it into the QUIC
+implementation. Dependence on another library is expected to be temporary until the QUIC enabling
+APIs are present in TLS libraries currently in use in \dotnet{}.
+
 \begin{itemize}
 
     \item Design considerations

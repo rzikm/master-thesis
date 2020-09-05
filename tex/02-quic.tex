@@ -25,17 +25,20 @@ connection, endpoints exchange QUIC packets. A single UDP datagram can contain m
 although it generally contains only one. Bundling multiple QUIC packets in a single UDP datagram is
 called \textit{coalescing}. QUIC packets cannot span multiple UDP datagrams. The QUIC connection is
 identified by its Connection ID\@. \todo{decide if we want to use special font for things like
-  Connection ID, Stream ID, etc.} During connection establishment, each peer choses the Connection
-ID which the other endpoint should include in the header of sent packets.
+  Connection ID, Stream ID, etc.} During connection establishment, each peer choses the \todo{verify
+  if there should be indefinite article or not} Connection ID which the other endpoint should
+include in the header of sent packets in the \textit{Destination Connection ID} (DCID for short)
+\todo{list all abbreviations at the end/beginning of the thesis?}.
 
 The separation of connection identity from the used socket allows multiple connections to be made
 using the same socket. \autoref{fig:02-connection-multiplexing} illustrates how the incoming
-packets are associated with individual connections based on the Connection ID included in the header
-of the packet.
+packets are associated with individual connections based on the DCID field of the packet header.
 
 \begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
   \includegraphics[width=0.9\textwidth]{img/02-socket-multiplexing}
 \end{myFigure}
+
+\todo{better describe the image, it is hard to decypher, TODO, really different applications?}
 
 \subsection{QUIC Packets}
 
@@ -54,7 +57,7 @@ Similarly to TCP, packets in QUIC connections are numbered. However, QUIC uses t
 \end{enumerate}
 
 Packets from each packet number space are numbered and processed independently of the other packet
-spaces.
+spaces. This includes also acknowledgements for received packets. Acknowledgement for an Initial packet can be sent only in another Initial packet and vice versa.
 
 \subsection{Packet Encryption}
 
@@ -67,14 +70,17 @@ both against network traffic observers and against packet payload corruption.
 
 \subsection{Stream Multiplexing}
 
-QUIC can transport multiple streams of data in a single connection. Each stream is identified by its
-Stream ID and is processed independently of the other streams. \autoref{fig:02-stream-multiplexing}
-illustrates how QUIC may pack two streams into frames such that those streams are transported in
-parallel.
+QUIC can transport multiple streams of data in a single connection. Each stream can be either
+unidirectional or bidirectional, and is identified by its Stream ID. Each streamand is processed
+independently of the other streams. \autoref{fig:02-stream-multiplexing} illustrates how QUIC may
+pack two streams into frames such that those streams are transported in parallel.
 
 \begin{myFigure}{fig:02-stream-multiplexing}{Stream multiplexing in QUIC}
   \includegraphics[width=0.9\textwidth]{img/02-stream-multiplexing}
 \end{myFigure}
+
+\todo{change the picture so that the newest data is on the right side, basically just flip the
+  stream on the Sender's side}
 
 \subsection{Flow Control}
 
@@ -87,12 +93,22 @@ streams of each type can be opened by its peer.
 Becuase UDP is an unreliable transport protocol, and QUIC must detect loss of the packets sent. The
 loss detection is implemented similarly to TPC via acknowledgements of the received packets.
 However, an important difference from TCP is that the lost packet is not retransmitted as-is.
-Instead, the data carried by the lost packet are sent in different packets if necessary. This is
-illustrated in \autoref{fig:02-packet-loss-example}
+Instead, each QUIC frame in the original packet is either updated and sent in some future packet, or
+--- if the information is no longer relevant --- dropped altogether.
+
+\autoref{fig:02-packet-loss-example} illustrates the retransmission process. When the sender
+receives acknowledgement for packet 3, it infers that packet 2 never reached the receiver, and
+retransmits the STREAM frame in packet 4. The ACK frame for packet 1 does not need to be
+retransmitted, because it was sent in packet 3. Therefore, packet 4 includes ACK only for packet 2.
+
+\todo{redraw the image to match the description above}
 
 \begin{myFigure}{fig:02-packet-loss-example}{Retransmission of lost data in QUIC}
-  \includegraphics[width=0.6\textwidth]{img/02-retransmission-example}
+  \includegraphics[width=0.5\textwidth]{img/02-retransmission-example}
 \end{myFigure}
+
+\todo{if the image is deleted then the text should still make sense! I must add description what I
+  actually see on the image. Also, make the image more like a UML process diagram}
 
 \subsection{Wire Encoding}
 
@@ -128,7 +144,7 @@ that are used in QUIC\@:
 
     \litem{1-RTT} main packets used during the lifetime of QUIC connection;
 
-    \litem{Version Negotiation} --- sent by server when client tries to establish connection using
+    \litem{Version Negotiation} sent by server when client tries to establish connection using
     unsupported version of QUIC\@;
 
     \litem{0-RTT} carries \textit{early data} when TLS 1.3 0-RTT mode of operation is enabled; and
@@ -144,17 +160,15 @@ encrypted or numbered.
 
 \subsection{QUIC Frames}
 
-Initial, Handshake 0-RTT and 1-RTT frames carry QUIC packets used to transport low-level protocol
-messages called QUIC Frames. These frames include e.g.\ ACK frames carrying acknowledgements for
-received packets, STREAM frames carrying application data, and CRYPTO frames carrying data for TLS
-handshake.
+Packets of type Initial, Handshake, 0-RTT and 1-RTT packets carry low-level QUIC protocol messages
+called QUIC frames. These include e.g.\ ACK frames carrying acknowledgements for received packets,
+STREAM frames carrying application data, and CRYPTO frames carrying data for TLS handshake.
 
-All received QUIC packets have to be acknowledged --- an ACK frame with the packet number must be
-sent in an appropriate packet type. However, the frame types carried in the packet determine whether
-the acknowledgement has to be sent immediately or if it can be delayed. For example, packets
-containing only ACK frames are not acknowledged immediately to avoid unnecessary traffic. Frame
-types requiring immediate ack are called \textit{ack-eliciting frames}, and the packets with at
-least one such frames are called \textit{ack-eliciting packets}.
+All received QUIC packets have to be acknowledged. However, the frame types carried in the packet
+determine whether the receiver must acknowledge it immediately or later when it sends some data on
+its own. For example, packets containing only ACK frames are not acknowledged immediately to avoid
+unnecessary traffic. Frame types requiring immediate ack are called \textit{ack-eliciting frames},
+and the packets with at least one such frame are called \textit{ack-eliciting packets}.
 
 There are also restrictions on which frames can be sent in which packets. For example, the STREAM
 frames can only be sent in an 1-RTT frames to avoid compromising security.
@@ -165,34 +179,37 @@ packets they can be sent.
   {tab:02-frame-types}
   {QUIC frame types}
   {l@{\hskip -0.1in}ccccc}
-  {Frame type           & Ack-eliciting & Initial      & Handshake    & 0-RTT        & 1-RTT}
-PADDING                 &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-PING                    &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-ACK                     & \checkmark{}  & \checkmark{} & \checkmark{} &              & \checkmark{} \\
-RESET\_STREAM            & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-STOP\_SENDING            & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-CRYPTO                  & \checkmark{}  & \checkmark{} & \checkmark{} &              & \checkmark{} \\
-NEW\_TOKEN               & \checkmark{}  &              &              &              & \checkmark{} \\
-STREAM                  & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-MAX\_DATA                & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-MAX\_STREAM\_DATA         & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-MAX\_STREAMS             & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-DATA\_BLOCKED            & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-STREAM\_DATA\_BLOCKED     & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-STREAMS\_BLOCKED         & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-NEW\_CONNECTION\_ID       & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-RETIRE\_CONNECTION\_ID    & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-PATH\_CHALLENGE          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-PATH\_RESPONSE           & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-CONNECTION\_CLOSE        &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-HANDSHAKE\_DONE          & \checkmark{}  &              &              &              & \checkmark{} \\
+  {                    &               & \multicolumn{4}{c}{Allowed in packet type}                \\ \cmidrule(lr){3-6}
+   Frame type          & Ack-eliciting & Initial      & Handshake    & 0-RTT        & 1-RTT}
+PADDING                &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
+PING                   & \checkmark{}  & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
+ACK                    &               & \checkmark{} & \checkmark{} &              & \checkmark{} \\
+RESET\_STREAM          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+STOP\_SENDING          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+CRYPTO                 & \checkmark{}  & \checkmark{} & \checkmark{} &              & \checkmark{} \\
+NEW\_TOKEN             & \checkmark{}  &              &              &              & \checkmark{} \\
+STREAM                 & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+MAX\_DATA              & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+MAX\_STREAM\_DATA      & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+MAX\_STREAMS           & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+DATA\_BLOCKED          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+STREAM\_DATA\_BLOCKED  & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+STREAMS\_BLOCKED       & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+NEW\_CONNECTION\_ID    & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+RETIRE\_CONNECTION\_ID & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+PATH\_CHALLENGE        & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+PATH\_RESPONSE         & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
+CONNECTION\_CLOSE      &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
+HANDSHAKE\_DONE        & \checkmark{}  &              &              &              & \checkmark{} \\
 \end{myTable}
 
 \subsection{Connection Establishment}
 
 QUIC connection is considered establishmed when the TLS handshake is completed. This implies that
 both peers have derived the necessary protection keys to be able to receive application data carried
-in 1-RTT frames. An example handshake flow is illustrated in
+in 1-RTT frames.
+
+An example handshake flow is illustrated in
 \autoref{fig:02-example-handshake-flow}. The figure lists also the semantics of the content of the
 CRYPTO frames sent. However, this is only for illustrative purposes as QUIC does not interpret the
 contents of the CRYPTO frames.
@@ -218,6 +235,8 @@ contents of the CRYPTO frames.
                                           <- Handshake[1]: ACK[0]
   \end{verbatim}
   \todo{Note that this is copied from RFC? Also, this example lacks the HANDSHAKE\_DONE frame}
+
+  \todo{Make this diagram graphical, not textual}
 \end{myFigure}
 
 In it's first datagram, client sends an Initial packet with a single CRYPTO frame contaiting the
@@ -237,101 +256,83 @@ needs to be separately acknowledged by an ACK frame and a reply from the TLS lay
 another CRYPTO frame. By this time, client can also derive 1-RTT protection keys and send or receive
 application data in STREAM frames.
 
-\subsection{QUIC packet types}
+\subsection{Connection Termination}
 
-There are multiple QUIC packet types. These are following:
-
-Payload of Initial, Handshake, and 1-RTT packets contains a sequence of \textit{frames} which are
-the low-level messages of the QUIC protocol. Examples of frames include \texttt{STREAM} frames
-carrying stream data, \texttt{ACK} frames carrying acknowledgements of received packets and
-\texttt{CRYPTO} frames carrying cryptography negotiation messages.
-\autoref{fig:streams-frames-and-packets} illustrates how stream data are packaged in frames and
-transmitted in packets.
-
-QUIC connections are identified by a connection ID, which is an opaque sequence of 8 to 20 bytes.
-Each endpoint sets a value for its peer to include in packets sent towards the endpoint. The
-separation of connection identification from endpoint's address eventually allows connection
-migration.
-
-\subsection{Handshake and Establishing a Connection}
-
-As mentioned in the introduction, QUIC connection handshake combines TCP's three-way handshake with
-TLS protocol handshake. This is achieved by carrying handshake messages of the TLS protocol in
-\texttt{CRYPTO} frames. The content of the \texttt{CRYPTO} frames should not be interpreted by QUIC,
-only passed to TLS implementation. TLS protocol is also used to negotiate QUIC protocol parameters
-via TLS extension parameters and the application-level protocol is negotiated using ALPN
-\todo{explain what ALPN is?} protocol.
-
-Similarly to TLS, QUIC packets use increasingly more secure
-protection keys for packet encryption.
+QUIC connection can be terminated in three ways:
 
 \begin{itemize}
-  \item \textit{Initial keys} are derived from protocol version and Destination Connection ID chosen
-    by the client, and are more of an obfuscation rather than protection.
-  \item \textit{Handshake keys} are derived during protection secrets exchange by the TLS layer and
-    offer intermediate protection.
-  \item \textit{1-RTT keys} are derived at the end of TLS handshake and offer strongest
-    cryptographic protection.
+  \item Idle timeout
+  \item Immediate close
+  \item Stateless reset
 \end{itemize}
 
-The primary intent of Initial and Handshake packets is transport of \texttt{CRYPTO} frames
+\subsubsection{Idle Timeout}
 
+If idle timeout is enabled, the connection is silently closed if no packet from the peer has been
+received for the specified period of time. Each peer may advertise a \texttt{max\_idle\_timeout}
+transport parameter, but the effective value is the minimum of the two values.
 
-Clients initiate new connections by sending an \textit{Initial} QUIC packet. The packet contains a
-header with version identifier and random \todo{at least outwardly} source\footnote{Even though
-client here chooses both connection IDs, server is allowed choose new destination connection ID to
-use and client must accept the change.} and destination connection ID\@. The client inititial packet
-carry mainly \texttt{CRYPTO} frames containing TLS \textit{ClientHello} message.
+To prevent timeouts endpoints can send a PING or another ack-eliciting frame to test the liveness of
+the connection. However, sending of PING frames should be initiated by the application protocol, not
+QUIC implementation itself to prevent sending unnecessary PING frames.
 
-Server replies to the clients initial by sending two packets: Initial packet with an \texttt{ACK}
-frame acknowledging the receipt of the clients Initial; and Handshake packet with
+\subsubsection{Immediate close}
 
-\begin{enumerate}
-  \item \textit{Version} --- identifier of the version of the protocol used;
-  \item \textit{Source Connection ID} and \textit{Destination Connection ID} --- generated randomly
-    in a way that can't be predicted by outside observer;
-  \item \textit{}
-\end{enumerate}
+Immediate close can be initiated both by QUIC implementation and by the application protocol. An
+endpoint can initiate an immediate close by sending a CONNECTION\_CLOSE frame. This causes all
+streams to immediately become closed.
 
-For performance reasons, implementations must the size of UDP datagrams sent in order to avoid
-fragmentation at lower network layers. Loss or corruption of a single fragment would lead to entire
-UDP datagram being discarded at receivers side. The maximum size, also called maximum transmission
-unit (MTU) is dependent on the network and is generally around 1350 bytes.
+By sending a CONNECTION\_CLOSE frame, the peer enters a closing state, in which it includes the
+CONNECTION\_CLOSE frame in all packets it sends in reply to incoming packets.
 
-\subsection{Connection Lifetime}
+Upon receiving a CONNECTION\_CLOSE, the peer should echo the CONNECTION\_CLOSE back to the peer. And
+enter the closing state.
 
-QUIC packets sent during the connection lifetime are strictly separated into three epochs, called
-\textit{packet number spaces} in the specification. QUIC uses slightly different types of packets
-for each packet number spaces, and we will refer to packet number spaces using the type of the
-packet used in them: \textit{Initial}, \textit{Handshake} and \textit{1-RTT}. The packet number
-spaces can be viewed as individual stages of connection establishment.
+The closing state lasts until the endpoint is sure the other endpoint is also in closing state (e.g.
+until it also receives CONNECTION\_CLOSE), or until a closing timeout expires.
 
-Packets sent in one packet number space are processed independently of the other packet number
-spaces. For example, Acknowledgements for packets sent in \textit{Initial} epoch can only be only
-sent in an \textit{Initial} packet. The three packet types also use different protection keys for
-packet encryption:
+The CONNECTION\_CLOSE frame carries an error code and, optionally, a human readable error phrase.
+When initiated by QUIC, the error codes semantics defined by the QUIC specification. However, when
+initiated by the application protocol, the semantics of all possible error code values sent in the
+frame are defined by the application protocol itself.
+
+\subsubsection{Stateless reset}
+
+A stateless reset is an option of last resort for an endpoint that does not have access to the state
+of a connection, which may be the result of a crash or outage. An endpoint may send a stateless
+reset in response to receiving a packet that it is unable to associate with an active connection.
+
+In such cases, the endpoint sends a specially crafted packet which ends with a Stateless Reset Token
+associated with a connection ID\@. The requirements on the Stateless Reset Token are quite complex
+and we encourage readers to read the full specification if they are interested in details. \todo{include reference to the appropriate section?}
+
+\subsection{TLS Extensions used by QUIC}
+
+QUIC uses some of the standard TLS extensions. The first is Application Level Protocol
+Negotiation~\cite{rfc7301} (ALPN for short). When multiple application protocols are supported on
+the same TCP or UDP port, ALPN allows the application layer to negotiate --- as part of the TLS
+handshake --- which protocol will be used.
+
+The second TLS extension used is Server Name Indication~\cite{rfc6066} (SNI for short). Clients use
+this extension to specify the hostname of the server they are connecting to. When multiple websites
+are hosted on the same IP address and port, SNI allows the server to use the SSL certificate and
+other security configuration for the website requested by the client.
+
+\subsection{QUIC Transport Parameters}
+
+QUIC leverages the extensibility of TLS handshake to also exchange specific parameters for the
+connections. Many of the parameters have a default value which is used when particular transport
+parameter is not sent, and some transport parameters are mandatory in some cases. Example information set through transport parameters is:
 
 \begin{itemize}
 
-  \item \textit{Initial} --- Keys are derived solely from the protocol version used and the
-    Connection ID chosen by the client. This protection is not considered secure, but merely an
-    obfuscation.
-
-  \item \textit{Handshake} --- Intermediate protection keys are derived by TLS implementation during
-    encryption negotiation and provide partial protection.
-
-  \item \textit{1-RTT} --- Fully secure protection keys are available after finishing connection.
-    handshake.
+  \item Initial flow control limits
+  \item Whether connection migration is allowed
+  \item Maximum delay before sending acknowledgement for ack-eliciting packets
+  \item Maximum idle timeout before the connection is silently closed
+  \item Maximum size of a UDP packet the endpoint is willing to receive
 
 \end{itemize}
-
-Since only 1-RTT packet number space is considered secure, application data can only generally sent
-only after connection handshake in 1-RTT packet number space. However, QUIC can optionally allow
-sending application data in special \textit{0-RTT} packets. 0-RTT packets belong to 1-RTT packet
-number space, but can be sent by client before receiving any packets from server. 0-RTT packet
-support requires previous successful connection, and introduces a trade-off between reduced latency
-and security.
-
 
 \section{Streams}
 
@@ -345,7 +346,7 @@ stream is encoded in the two least significant bits of the Stream ID, as summari
   {tab:02-stream-id-type-map}
   {Mapping of QUIC Stream types to Stream ID bits}
   {cc}
-  {Stream type                    & Least significant bits}
+  {Stream type                     & Least significant bits}
   Client-Initiated, Bidirectional  & 00 \\
   Server-Initiated, Bidirectional  & 01 \\
   Client-Initiated, Unidirectional & 10 \\
@@ -361,11 +362,12 @@ the stream, each direction of the stream behaves as separate inbound and outboun
 streams. This means, e.g.\@, that the reading and writing part of the stream can be closed
 independently of each other.
 
-Streams are opened simply by starting to sent the stream data. The stream can then be closed by the
-writer either by specifying that all data has been written to the stream, or by abruptly terminating
-the stream, also called \textit{resetting the stream}. The reader of the stream can request stream
-reset in case it no longer wishes to receive data on that stream. Abrupt termination of the stream
-requires specifying an application-level error code that will be communicated to the peer.
+Streams are opened simply by starting to sent the stream data using the STREAM frames. The stream
+can then be closed by the writer either by specifying that all data has been written to the stream,
+or by abruptly terminating the stream, also called \textit{resetting the stream}. The reader of the
+stream can request stream reset in case it no longer wishes to receive data on that stream. Abrupt
+termination of the stream requires specifying an application-level error code that will be
+communicated to the peer.
 
 Implementations should provide a way for application protocols to specify relative priority of
 streams.
@@ -389,26 +391,65 @@ On receiving part of the stream, application protocols need to be able to:
 
 \end{itemize}
 
-\todo{do I need schematics of the frames?}
-
 \section{Flow Control}
 
 QUIC aims to be general-purpose transport protocol to be used over potentially untrusted network,
-and as such it needs to protect endpoints from malicous peers. One of the mechanisms for achieving
-this is limiting the amount of data sender can send and thus preventing overwhelming of slow
-receivers by fast senders. Violations of the flow control limits result constitute a protocol
-violation and result in an abrupt connection termination.
+and as such it needs to protect endpoints from malicous peers. To prevent malicious senders from
+exhausting all available memory on the server by sending large amount of data, or fast senders from
+overwhelming slow receivers, QUIC employs a credit-based flow control scheme.
 
-All QUIC streams are flow controlled individually, and also together as an aggregate. The receiver
-controls the maximum amount of data sender can send by specifying
+All QUIC streams are flow controlled individually, and also together as an aggregate. Each peer also controls the number of streams the other peer is allowed to open. All flow control limits are communicated to the other peer using three types of frames:
 
 \begin{itemize}
-  \item maximum offset of data sent for each individual streams and
-  \item maximum sum of all offsets of data sent for individual streams.
+  \litem{MAX\_STREAM\_DATA} maximum offset of data sent on a stream with specified ID\@.
+  \litem{MAX\_DATA} maximum sum of all offsets of data sent on all streams.
+  \litem{MAX\_STREAMS} maximum number of opened streams of a particular stream type.
 \end{itemize}
 
-Additionally, receiver also controls the maximum number of streams the sender can open at any given
-moment in order to limit concurrency within a connection.
+The limits set by these frames can be only increased. Endpoints must ignore any attempts to decrease
+the flow control limits. This ensures consistency when two consecutive QUIC packets with flow
+control updates are reordered during transit.
+
+In case the peer violates any of the control flow limits mentioned above, the connection will be
+immediately terminated.
+
+\section{Loss Detection and Recovery}
+
+To ensure that sent data are actually received by the peer, QUIC requires each peer to acknowledge
+all packets that they receive. These acknowledgements are sent using the ACK frame, which contains
+ranges of packet numbers being acknowledged.
+
+In order for a packet to be considered lost, following conditions must be met:
+
+\begin{enumerate}
+  \item The packet wasn't is unacknowledged.
+  \item A packet that was sent later has been acknowledged.
+  \item Either the packet has been sent long enough in the past, or its packet number is
+    sufficiently smaller than any acknowledged packet sent later.
+\end{enumerate}
+
+The third condition is dependent on the values of particular constants. The specification recommends
+that the packet is considered lost if the gap between its packet number and the next acknowledged
+packet is at least 3, or if it was sent for longer than $9/8$ times the estimate of the current
+round-trip time.
+
+In case there is no acknowledged packet that was sent later, the packet cannot be considered loss
+because of the first condition listed above. However, such packet can still be lost. If no
+acknowledgement is received after the packet has been sent for more than \textit{Probe Timeout} (PTO
+for short), QUIC endpoints send up to 2 probe packets. The PTO duration doubles each time probes are
+sent, until either a reply is received or the connection is terminated because of idle timeout
+\todo{back reference?}.
+
+Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
+amount of data that can be in-flight. The QUIC-RECOVERY specification document describes a
+congestion control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm.
+However, it leaves the selection of the congestion control algorithm up to the implementation.
+
+\section{Security}
+
+\section{Additional Features}
+
+\todo{mainly for connection migration purposes}
 
 \begin{itemize}
 

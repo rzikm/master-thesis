@@ -230,4 +230,51 @@
   organization = {Microsoft},
 }
 
+@TechReport{rfc7301,
+  series =        {Request for Comments},
+  number =        7301,
+  howpublished =  {RFC 7301},
+  publisher =     {RFC Editor},
+  doi =           {10.17487/RFC7301},
+  url =           {https://rfc-editor.org/rfc/rfc7301.txt},
+  author =        {Stephan Friedl and Andrei Popov and Adam Langley and Stephan Emile},
+  title =         {{Transport Layer Security (TLS) Application-Layer Protocol Negotiation Extension}},
+  pagetotal =     9,
+  year =          2014,
+  month =         jul,
+  abstract =      {This document describes a Transport Layer Security (TLS) extension for application-layer protocol negotiation within the TLS handshake. For instances in which multiple application protocols are supported on the same TCP or UDP port, this extension allows the application layer to negotiate which protocol will be used within the TLS connection.},
+}
+
+@TechReport{rfc6066,
+  author       = {Donald E. Eastlake 3rd},
+  title        = {{Transport Layer Security (TLS) Extensions: Extension Definitions}},
+  doi          = {10.17487/RFC6066},
+  number       = {6066},
+  pagetotal    = {25},
+  type         = {RFC},
+  url          = {https://rfc-editor.org/rfc/rfc6066.txt},
+  abstract     = {This document provides specifications for existing TLS extensions. It is a companion document for RFC 5246, "The Transport Layer Security (TLS) Protocol Version 1.2". The extensions specified are server\_name, max\_fragment\_length, client\_certificate\_url, trusted\_ca\_keys, truncated\_hmac, and status\_request. {[}STANDARDS-TRACK{]}},
+  howpublished = {RFC 6066},
+  month        = jan,
+  publisher    = {RFC Editor},
+  series       = {Request for Comments},
+  year         = {2011},
+}
+
+@TechReport{rfc6582,
+  author       = {Andrei Gurtov and Tom Henderson and Sally Floyd and Yoshifumi Nishida},
+  title        = {{The NewReno Modification to TCP's Fast Recovery Algorithm}},
+  doi          = {10.17487/RFC6582},
+  number       = {6582},
+  pagetotal    = {16},
+  type         = {RFC},
+  url          = {https://rfc-editor.org/rfc/rfc6582.txt},
+  abstract     = {RFC 5681 documents the following four intertwined TCP congestion control algorithms: slow start, congestion avoidance, fast retransmit, and fast recovery. RFC 5681 explicitly allows certain modifications of these algorithms, including modifications that use the TCP Selective Acknowledgment (SACK) option (RFC 2883), and modifications that respond to "partial acknowledgments" (ACKs that cover new data, but not all the data outstanding when loss was detected) in the absence of SACK. This document describes a specific algorithm for responding to partial acknowledgments, referred to as "NewReno". This response to partial acknowledgments was first proposed by Janey Hoe. This document obsoletes RFC 3782. {[}STANDARDS-TRACK{]}},
+  howpublished = {RFC 6582},
+  month        = apr,
+  publisher    = {RFC Editor},
+  series       = {Request for Comments},
+  year         = {2012},
+}
+
 @Comment{jabref-meta: databaseType:biblatex;}
