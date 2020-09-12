@@ -494,8 +494,119 @@ amount of data that can be in-flight. The QUIC-RECOVERY specification document d
 congestion control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm. However, it leaves the
 selection of the congestion control algorithm up to the implementation.
 
-\section{Security}
+\section{Packet Protection}
+
+All QUIC packets of type Initial, Handshake, 1-RTT and 0-RTT are encrypted to ensure integrity and
+confidentiality of the transmitted data. Negotiation of the cryptographic ciphers and the encryption
+keys is handled by the TLS handshake. This section focuses on how the negotiated encryption is
+applied to QUIC packets.
+
+\subsection{Authenticated Encryption with Associated Data}
+
+QUIC uses type of encryption called Authenticated encryption with associated data~\cite{rfc5116}
+(AEAD for short). This type of encryption ensures both confidentiality and authenticity of the
+encrypted data. In addition to encrypted data, AEAD encryption outputs also an authentication tag
+which is used to check the integrity of the payload during decryption. The encryption can be
+authenticated by supplying additional authentication data (AAD for short) which are not encrypted,
+but influence the authentication tag and, therefore, must be supplied also during decryption. As an
+additional protection, AEAD also accepts a \textit{nonce} parameter, which is an additional input
+which is supposed to be unique for each encrypted packet.
+
+The programming interface for AEAD provides following operations:
+
+\begin{itemize}
+
+  \item Encryption:
+
+  \begin{itemize}
+
+    \item input: plaintext, key, nonce, AAD (optional)
+
+    \item output: ciphertext, authentication tag
+
+  \end{itemize}
+
+  \item Decryption:
+
+  \begin{itemize}
+
+    \item input: ciphertext, key, nonce, authentication tag, AAD (if provided during encryption)
+
+    \item output: plaintext or error if the authentication tag does not match the supplied
+      ciphertext and AAD
+
+  \end{itemize}
+
+\end{itemize}
+
+\subsection{Deriving QUIC Protection Keys}
+
+QUIC derives multiple distinct keys from the secrets negotiated by TLS handshake. The derivation
+uses the HKDF-Expand-Label function~\cite{rfc5869} to derive keys of desired length. The keys are
+derived as follows:
+
+\begin{equation*}
+  \begin{split}
+  key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic key"}, \texttt{""}, 32) \\
+  iv  & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic iv"}, \texttt{""}, 12)  \\
+  hp  & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic hp"}, \texttt{""}, 32)  \\
+  \end{split}
+\end{equation*}
+
+The following subsections describe how the $key$, $iv$, and $hp$ keys are used in the actual process
+of packet encryption.
+
+\subsection{Packet Protection Procedure}
+
+When actually encrypting the packets, QUIC first encrypts the packet payload using the AEAD cipher
+negotiated by the TLS implementation. The parameters for AEAD are:
+
+\begin{itemize}
+
+    \litem{key} the $key$ derived in previous section
+
+    \litem{nonce} the $iv$ derived in previous section, last 8 bytes XORed with the packet number
+
+    \litem{AAD} the contents of the packet header
+
+    \litem{plaintext} the payload of the packet.
+
+\end{itemize}
+
+The produced authentication tag is appended to the protected payload and is included in the payload
+size.
+
+QUIC also protects the header of the packet. The header protection mechanism is more complex than
+that of the payload. The process requires calculating the \textit{header protection mask}, which is
+then applied using exclusive OR to parts of the packet header. The details of the header protection
+mask calculation depend on the negotiated cipher, but it always uses the $hp$ key and a 16-byte
+sample of the encrypted payload.
+
+\todo{Try illustrating the process using a figure}
+
+\subsection{Updating 1-RTT Protection Keys}
+
+Some AEAD functions have limits for how many packets can be encrypted using the same keys. Analysis
+in the specification document shows that updating the protection keys after sending at most
+$2^{23}$ packets provides the same confidentiality level as a standard TLS connection~\cite{draft-ietf-quic-tls}.
+
+The key update is signalled by flipping a \textit{key phase} bit in the 1-RTT packet header. And
+after observing the change in the \textit{key phase}, an endpoint derives new secret and $key$ and
+$iv$ keys using the HKDF-Expand-Label function:
+
+\begin{equation*}
+  \begin{split}
+  secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{"quic ku"}, \texttt{""}, 32) \\
+  key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic key"}, \texttt{""}, 32) \\
+  iv_{n+1}  & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic iv"}, \texttt{""}, 12)  \\
+  \end{split}
+\end{equation*}
+
+Because the \textit{key phase} bit is protected by header protection, the $hp$ key must remain
+unchanged to ensure that the other endpoint can correctly remove the header protection.
 
 \section{Additional Features}
 
-\todo{mainly for connection migration purposes}
+\subsection{Peer validation?}
+
+\subsection{Connection migration}

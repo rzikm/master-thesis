@@ -31,6 +31,52 @@
 % Draw black "slugs" whenever a line overflows, so that we can spot it easily.
 \overfullrule=1mm
 
+
+
+%%% Functional foreach construct
+%%% (https://stackoverflow.com/questions/2402354/split-comma-separated-parameters-in-latex)
+
+\makeatletter
+
+% #1 - Function to call on each comma-separated item in #3
+% #2 - Parameter to pass to function in #1 as first parameter
+% #3 - Comma-separated list of items to pass as second parameter to function #1
+\def\foreach#1#2#3{%
+  \@test@foreach{#1}{#2}#3,\@end@token%
+}
+
+% Internal helper function - Eats one input
+\def\@swallow#1{}
+
+% Internal helper function - Checks the next character after #1 and #2 and
+% continues loop iteration if \@end@token is not found
+\def\@test@foreach#1#2{%
+  \@ifnextchar\@end@token%
+    {\@swallow}%
+    {\@foreach{#1}{#2}}%
+}
+
+% Internal helper function - Calls #1{#2}{#3} and recurses
+% The magic of splitting the third parameter occurs in the pattern matching of the \def
+\def\@foreach#1#2#3,#4\@end@token{%
+  #1{#2}{#3}%
+  \@test@foreach{#1}{#2}#4\@end@token%
+}
+
+%%% foreach usage:
+% Example-function used in foreach, which takes two params and builds hrefs
+%\def\makehref#1#2{\href{#1/#2}{#2}}
+
+% Using foreach by passing #1=function, #2=constant parameter, #3=comma-separated list
+%\foreach{\makehref}{http://stackoverflow.com}{2409851,2408268}
+
+% Will in effect do
+%\href{http://stackoverflow.com/2409851}{2409851}\href{http://stackoverflow.com/2408268}{2408268}
+
+\makeatother
+
+
+
 %%% Macros for definitions, theorems, claims, examples, ... (requires amsthm package)
 
 \theoremstyle{plain}
@@ -105,7 +151,7 @@
 \newcommand\litem[1]{\item{\textit{#1}}:}
 
 % special item for description lists to make the description go on the next line
-\newcommand\ditem[1]{\item[#1]\hfill \\}
+\newcommand\ditem[1]{\item[#1] \leavevmode \\}
 
 % macro for typesetting library names
 \newcommand\libname[1]{\texttt{#1}}
@@ -124,6 +170,47 @@
   \figureArgs{}
   \endfigure{}
 }
+
+% macros for typesetting various code elements inside th text, TODO: add colors
+
+\definecolor{codecolorclass}{rgb}{0, 0.4, 0}
+\definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
+\definecolor{codecolornamespace}{gray}{0}
+
+\newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
+\newcommand{\keyword}[1]{\color{codecolorkeyword}\texttt{#1}}
+\newcommand{\namespace}[1]{\color{codecolornamespace}\texttt{#1}}
+\newcommand{\method}[1]{\textit{\texttt{#1}}}
+
+% macros for typesetting description lists with C# class members
+
+\newcommand{\propgetset}{\{ \keyword{get}; \keyword{set}; \}}
+\newcommand{\propget}{\{ \keyword{get}; \}}
+\newcommand{\propset}{\{ \keyword{set}; \}}
+
+\newcommand{\ditemsrcsize}{\footnotesize}
+
+
+\newcommand{\ditemmethodseparator}{}
+
+% method to apply in \foreach macro
+\def\makeditemmethodarg#1#2{\ditemmethodseparator{}\class{#2}%
+\renewcommand{\ditemmethodseparator}{, }%set proper separator for the next item
+}
+
+\newcommand{\ditemmethodmakearglist}[1]{% arglist
+\renewcommand{\ditemmethodseparator}{}%clear the separator for the first item
+\foreach{\makeditemmethodarg}{}{#1}%
+}
+
+\newcommand{\ditemmethod}[3]% type, name, args (types only)
+  {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2}(\ditemmethodmakearglist{#3})}}}
+
+\newcommand{\ditemctor}[2]% name, args
+  {\ditem{\ditemsrcsize\texttt{\method{#1}(\ditemmethodmakearglist{#2})}}}
+
+\newcommand{\ditemproperty}[3]% type, name, get/set
+  {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2} #3}}}
 
 % environment setting common attributes of tables
 \newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]

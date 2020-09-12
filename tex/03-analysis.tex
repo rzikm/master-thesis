@@ -1,6 +1,302 @@
 \chapter{Analysis}\label{chap:03-analysis}
 
-\todo{this belongs to TLS section}
+In this chapter, we analyze the protocol and select the necessary subset needed for evaluation of a
+pure \dotnet{} implementation. Afterwads we design the architecture and outline the implementation
+\todo{this should be expanded once the chapter is written}
+
+\section{Protocol Features Selection}
+
+The set of features to be implemented is guided by the goals we set in this thesis goals in the
+introduction chapter. For the purpose of feature selection, we can rephrase subset of the original
+goals into the following:
+
+\todo{the goals below are a convenient rephrasing and can't be mapped 1-to-1 to the goals stated in
+  the introduction, is that OK?}
+
+\begin{enumerate}
+
+  \item Support basic data transport, enabling some experimentation with QUIC as the transport for
+    application layer protocols.
+
+  \item Enable performance measurements that are representative of the potential full QUIC
+    implementation.
+
+\end{enumerate}
+
+The first goal definitely requires full implementation of the multiplexed stream abstraction as
+defined by the QUIC specification. It requires also implementing loss detection and recovery to
+ensure that no data gets lost during the transport.
+
+In order to get representative performance measurements, all performance affecting aspects of the
+protocol should be implemented. The most important are packet protection and flow control becuase
+they influence performance throughout the lifetime of the QUIC connection.
+
+To summarize, the thesis should implement at least the following features:
+
+\begin{itemize}
+
+    \item Connection lifetime support (establishment, termination)
+
+    \item Stream multiplexing
+
+    \item Packet protection
+
+    \item Loss detection and recovery
+
+    \item Flow control
+
+\end{itemize}
+
+On the other hand, many QUIC features that react to one-time events can be disregarded, because
+there either is no need for them in the evaluation environment, or they do not have relevant
+performance or functional implications. In particular, implementation of the following features can
+be avoided:
+
+\begin{itemize}
+
+    \item Connection migration
+
+    \item Complex (token-based) address validation
+
+    \item Network path MTU detection
+
+    \item Version negotiation
+
+    \item 1-RTT key updates
+
+    \item Advanced security measures (see Section 21 in transport specification~\cite{draft-ietf-quic-transport})
+
+\end{itemize}
+
+The rest of the features form a grey area which can be implemented fully, partially, or even not at
+if convenient.
+
+\section{Design Considerations}
+
+Before we start the actual analysis, we will briefly outline the design principles used for the
+actual design of the implementation and their rationale.
+
+\subsection{Performance}
+
+One of the key factors in the decision between managed \dotnet{} implementation of QUIC or using
+external library like \libmsquic{} is performance. Therefore, the decisions made during the
+implementation design should focus towards greater performance, possibly sacrificing maintainability
+if the trade-off is justified.
+
+As a general rule, the implementation will:
+
+\begin{itemize}
+
+    \litem{Avoid heap allocations} Although heap allocation is considered cheap, frequent
+    allocations put pressure on the \dotnet{} garbage collector, leading to unnecessary stalls.
+    Therefore, the amount of heap allocation on hot paths of the code executions should be
+    minimized.
+
+    \litem{Prefer return codes over exceptions} Throwing an exception is an expensive operation, and
+    their frequent use would have negative impact on the performance.
+
+\end{itemize}
+
+\subsection{Testability}
+
+The second design aspect we would focus on is testability of the implementation. Ideally, the design
+would minimize the need for live debugging of the implementation. This is especially important
+because stopping the implementation on a breakpoint will inevitably disrupt the connection, possibly
+leading to termination because of a timeout.
+
+The design intention is to allow writing automated tests that are able to inspect the packets sent
+by the endpoint, and verify that they are consistent with the behavior defined by the QUIC
+specification.
+
+\subsection{Robustness?}
+
+\todo{probably can be removed, can be mentioned when parsing incoming packets}
+
+\subsection{Debugging?}
+
+\todo{consider qlog and quic-log formats}
+
+\section{Target \dotnet{} API}
+
+This section describes API that will be used to expose the QUIC implementation to other developers.
+As mentioned in the introduction chapter, the current design is a work-in-progress and is subject to
+change in the future. All of the mentioned classes are located in the \namespace{System.Net.Quic}
+namespace.
+
+\subsection{QuicListener Class}
+
+The \class{QuicListener} class is the equivalent of the \class{TcpListener}. Servers use this
+class to accept incoming QUIC connections.
+
+\begin{description}
+
+    \ditemctor{QuicListener}{QuicListenerOptions} Constructor.
+
+    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new connection. Read-only.
+
+    \ditemmethod{ValueTask<QuicConnection>}{AcceptConnectionAsync}{CancellationToken}
+    Accepts a new incoming QUIC Connection.
+
+    \ditemmethod{void}{Start}{} Starts listening.
+
+    \ditemmethod{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
+
+\end{description}
+
+\subsection{QuicListenerOptions Class}
+
+The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener}s.
+
+\begin{description}
+
+    \ditemproperty{SslServerAuthenticationOptions}{ServerAuthenticationOptions}{\propgetset}
+        SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
+
+    \ditemproperty{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
+
+    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+
+    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+
+    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
+
+    \ditemproperty{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
+
+    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
+
+    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
+
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+
+\end{description}
+
+\subsection{QuicConnection Class}
+
+The \class{QuicConnection} class provides operation on the QUIC connection. Clients open new
+connections by creating a new instance of this class and calling the \method{ConnectAsync} method.
+Servers receive new connections using the \class{QuicListener} class.
+
+\begin{description}
+
+    \ditemctor{QuicConnection}{QuicClientConnectionOptions} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
+
+    \ditemproperty{bool}{Connected}{\propget} Indicates whether the \class{QuicConnection} is connected (the handshake has completed).
+
+    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propget} Local IP endpoint of the connection.
+
+    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propget} Remote IP endpoint of the connection.
+
+    \ditemmethod{ValueTask}{ConnectAsync}{CancellationToken} Connects to the remote endpoint.
+
+    \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+
+    \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+
+    \ditemmethod{ValueTask<QuicStream>}{AcceptStreamAsync}{Cancellationtoken} Accepts an incoming stream.
+
+    \ditemmethod{ValueTask}{CloseAsync}{long, CancellationToken} Closes the connection with the specified given error code and terminates all active streams.
+
+    \ditemmethod{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
+
+    \ditemmethod{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
+
+\end{description}
+
+\subsection{QuicClientConnectionOptions}
+
+The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC conections.
+
+\begin{description}
+
+    \ditemproperty{SslClientAuthenticationOptions}{ClientAuthenticationOptions}{\propgetset} Client authentication options to use when establishing the connection.
+
+    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propgetset} The local IP endpoint that will be bound to.
+
+    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propgetset} The IP endpoint to connect to.
+
+    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
+
+    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
+
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+
+\end{description}
+
+\subsection{QuicStream Class}
+
+The \class{QuicStream} class represents a single stream in a QUIC connection. This class inherits
+from the abstract \class{Stream} class. The list below mentions only members specific for the \class{QuicStream} class, members from the \class{Stream} base class are omitted.
+
+The class contains methods for both inbound and outbound streams. Invoking read methods on
+write-only stream will cause an exception to be thrown and vice versa.
+
+\begin{description}
+
+    \ditemproperty{long}{StreamId}{\propget} The Stream ID\@.
+
+    \ditemmethod{void}{AbortRead}{long} Aborts the receiving part of the stream with the provided error code.
+
+    \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
+
+    \ditemmethod{ValueTask}{WriteAsync}{*, CancellationToken} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+
+    \ditemmethod{ValueTask}{WriteAsync}{*, bool, CancellationToken} Like the overload above, but also allows pecifying that the provided data are the last on the stream and that the stream should be gracefully closed.
+
+    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{CancellationToken} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
+
+    \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until shutdown completes.
+
+\end{description}
+
+\subsection{Exceptions}
+
+The QUIC API can throw following exceptions:
+
+\begin{description}
+
+    \ditem{\ditemsrcsize\class{QuicException}} Base class for all thrown exceptions, used when a more specific exception is not available
+
+    \ditem{\ditemsrcsize\class{QuicConnectionAbortedException}} Thrown when the connection is forcibly closed either by the transport or by the remote endpoint.
+
+    \ditem{\ditemsrcsize\class{QuicStreamAbortedException}} Thrown when the stream was aborted by the remote endpoint.
+
+    \ditem{\ditemsrcsize\class{QuicOperationAbortedException}} Thrown when the pending operation was aborted by the local endpoint.
+
+\end{description}
+
+\section{TLS Implementation}
+
+TLS handshake forms an integral part of the QUIC connection establishment. Because correct TLS
+implementation is crucial for ensuring the security of the resulting implementation, this thesis
+should avoid implementing TLS by itself. Instead, it should reuse some existing and well-tested
+implementation.
+
+The novel way in which QUIC integrates with TLS requires specific functionality on the API of the
+TLS implementation. Below is a nonexhaustive list of operations the TLS library's API must provide:
+
+\begin{itemize}
+
+  \item Current state of te handshake
+
+  \item Temporary keys used to protect the handshake process
+
+  \item Raw unencrypted TLS records to be sent to the other endpoint
+
+  \item Negotiated cipher
+
+  \item Specifying protocols used for ALPN
+
+  \item Specifying custom TLS extension to exchange QUIC transport parameters
+
+\end{itemize}
+
+\subsection{TLS Implementations used in \dotnet{}}
+
+The \dotnet{} runtime libraries use different native libraries to provide TLS functionality on
+different operating systems. On Windows, \textit{Secure Channel}~\cite{Schannel} (Schannel for
+short)
+
+\todo{This is where we left off}
 
 Although the managed QUIC implementation should be portable, the API necessary for integrating TLS
 into QUIC is currently unavailable in the native libraries used by \dotnet{}. To avoid implementing
@@ -8,156 +304,86 @@ TLS 1.3 ourselves, this thesis will select a suitable TLS library and integrate 
 implementation. Dependence on another library is expected to be temporary until the QUIC enabling
 APIs are present in TLS libraries currently in use in \dotnet{}.
 
-\begin{itemize}
+\subsection{Necessary API}
+\subsection{Available choices:}
 
-    \item Design considerations
-    \begin{itemize}
+\subsubsection{OpenSSL}
+\subsubsection{SChannel (insider build)}
+\subsubsection{Others}
+\subsubsection{Native library interop and implications (distribution etc)}
+\subsubsection{Support for SslAuthenticationOptions (API surface)}
 
-        \item Performance
-        \begin{itemize}
+\section{Integration:}
 
-            \item Reducing allocations
-            \item Threading model
-            \item Use of Exceptions
+\todo{should be after TLS because of OpenSSL dependency}
 
-        \end{itemize}
+\subsection{Build as part of dotnet runtime}
+\subsection{Standalone build for easier evaluation}
 
-        \item Robustness
 
-        \item Testability
+\section{Socket utilization}
 
-        \item Debugging --- quic-log qlog formats
+\subsection{Supporting server socket multiplexing}
+\subsection{Future support for server preferred address}
+\subsection{Future support for connection migration}
+\subsection{Threading model}
+\subsection{Incoming packet handling}
+\subsection{User request handling}
+\subsection{Timeout events}
 
-    \end{itemize}
 
-    \item Integration:
-    \begin{itemize}
+\section{Epoch handling}
+\subsection{Separation of epochs in protocol}
 
-        \item Build as part of dotnet runtime
-        \item Standalone build for easier evaluation
+\section{Encryption}
 
-    \end{itemize}
+\subsection{Key derivation implementation}
+\subsection{Future updating 1-RTT protection keys (Key phase bit)}
 
-    \item Selecting implemented subset
-    \begin{itemize}
 
-        \item What is necessary for the promised example to work?
-        \item +: connection, handshake, flow control, recovery, necessary frames
-        \item -: version negotiation, versioning,
+\section{Packet serialization/Deserialization}
 
-    \end{itemize}
+\subsection{QUIC Primitives encoding}
+\subsection{Packet types}
+\subsection{Frame types}
+\subsection{Performance considerations}
+\subsection{Allocation-free packet reading/writing}
 
-    \item Target API
-    \begin{itemize}
 
-        \item Description of methods on QUIC API classes + semantics
-        \item QuicListener
-        \item QuicConnection
-        \item QuicStream
+\section{Stream implementation}
 
-    \end{itemize}
+\subsection{Separation of inbound and outbound part of the stream}
+\subsection{Inbound part}
 
-    \item Socket utilization
-    \begin{itemize}
 
-        \item Supporting server socket multiplexing
-        \item Future support for server preferred address
-        \item Future support for connection migration
-        \item Threading model
-        \item Incoming packet handling
-        \item User request handling
-        \item Timeout events
+\subsubsection{Buffering}
+\subsubsection{out of order reception}
+\subsubsection{Reading data by user}
+\subsubsection{Flow control consideration}
 
-    \end{itemize}
 
-    \item Epoch handling
-    \begin{itemize}
-        \item Separation of epochs in protocol
-    \end{itemize}
+\subsection{Outbound part}
 
-    \item Encryption
-    \begin{itemize}
+\subsubsection{Buffering}
+\subsubsection{Acknowledgement, retransmission}
+\subsubsection{Flow control consideration}
 
-        \item Key derivation implementation
-        \item Future updating 1-RTT protection keys (Key phase bit)
+\subsection{Abort/Dispose model for streams}
+\subsection{Managing streams within connection}
+\subsection{Queue of streams to be updated}
 
-    \end{itemize}
 
-    \item TLS implementation
+\section{Flow control}
 
-    \begin{itemize}
+\subsection{Connection level}
+\subsection{Stream level}
+\subsection{MaxStreams and API}
 
-        \item Necessary API
-        \item Available choices:
-        \begin{itemize}
 
-            \item OpenSSL
-            \item SChannel (insider build)
-            \item Others
-            \item Native library interop and implications (distribution etc)
-            \item Support for SslAuthenticationOptions (API surface)
+\section{Recovery/Robustness}
 
-        \end{itemize}
-    \end{itemize}
-
-    \item Packet serialization/Deserialization
-    \begin{itemize}
-
-        \item QUIC Primitives encoding
-        \item Packet types
-        \item Frame types
-        \item Performance considerations
-        \item Allocation-free packet reading/writing
-
-    \end{itemize}
-
-    \item Stream implementation
-    \begin{itemize}
-
-        \item Separation of inbound and outbound part of the stream
-        \item Inbound part
-
-        \begin{itemize}
-
-            \item Buffering
-            \item out of order reception
-            \item Reading data by user
-            \item Flow control consideration
-
-        \end{itemize}
-
-        \item Outbound part
-        \begin{itemize}
-
-            \item Buffering
-            \item Acknowledgement, retransmission
-            \item Flow control consideration
-        \end{itemize}
-
-        \item Abort/Dispose model for streams
-        \item Managing streams within connection
-        \item Queue of streams to be updated
-
-    \end{itemize}
-
-    \item Flow control
-    \begin{itemize}
-
-        \item Connection level
-        \item Stream level
-        \item MaxStreams and API
-
-    \end{itemize}
-
-    \item Recovery/Robustness
-    \begin{itemize}
-
-        \item Detecting lost packets
-        \item Detecting duplicate packets
-        \item Tail loss probe
-        \item Congestion window
-        \item Interface for Congestion control algorithm
-
-    \end{itemize}
-
-\end{itemize}
+\subsection{Detecting lost packets}
+\subsection{Detecting duplicate packets}
+\subsection{Tail loss probe}
+\subsection{Congestion window}
+\subsection{Interface for Congestion control algorithm}
