@@ -1,7 +1,11 @@
 # Master Thesis - Implementation of QUIC protocol for .NET
 
-This repository contains all necessary code changes needed for managed (C#) implementation of the
-QUIC protocol for .NET.
+This repository contains all necessary code needed for managed (C#) implementation of the QUIC
+protocol for .NET.
+
+## Blog posts
+
+I have documented some of my development progress on [my blog site](https://rzikm.github.io).
 
 ## Supported QUIC Protocol Features
 
@@ -120,3 +124,5 @@ by defining the `USE_MSQUIC` environment variable. The msquic library must be av
 machine. You can build it as part of the repository by passing `-msquic` to the setup script and
 rebuilding the library from the System.Net.Quic.sln solution. Note that running msquic on Windows
 currently requires insider build. See [msquic repository](https://github.com/microsoft/msquic).
+
+Preliminary performance comparisons can be found on [my blog](https://rzikm.github.io/quic-in-net-comparison-with-msquic/).
