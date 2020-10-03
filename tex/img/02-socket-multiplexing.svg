@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="138.73125mm"
+   height="69.754234mm"
+   viewBox="0 0 138.73125 69.754234"
+   version="1.1"
+   id="svg106"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="02-socket-multiplexing.svg">
+  <defs
+     id="defs100">
+    <marker
+       style="overflow:visible"
+       id="marker1617"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1615" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1511"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1509" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1501"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1499" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1220" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2"
+     inkscape:cx="264.28097"
+     inkscape:cy="146.67554"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1005"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata103">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-54.700826,-23.633183)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.264583, 0.793749;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 118.87978,62.186774 H 55.902613"
+       id="path1801"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583;-inkscape-font-specification:'sans-serif, Bold';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;"
+       x="54.503883"
+       y="53.239346"
+       id="text110"><tspan
+         sodipodi:role="line"
+         id="tspan108"
+         x="54.503883"
+         y="53.239346"
+         style="stroke-width:0.264583;-inkscape-font-specification:'sans-serif, Bold';font-family:sans-serif;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-size:4.58610018px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;">Incoming packets</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 122.24939,24.160347 V 93.38742"
+       id="path116" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.5861px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583;-inkscape-font-specification:'sans-serif, Bold';font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;"
+       x="126.83537"
+       y="27.031483"
+       id="text120"><tspan
+         sodipodi:role="line"
+         id="tspan118"
+         x="126.83537"
+         y="27.031483"
+         style="font-weight:bold;stroke-width:0.264583;-inkscape-font-specification:'sans-serif, Bold';font-family:sans-serif;font-style:normal;font-stretch:normal;font-variant:normal;font-size:4.58610018px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;">Server</tspan></text>
+    <circle
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+       id="path122"
+       cx="122.21432"
+       cy="62.026253"
+       r="3.298084" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="124.15095"
+       y="69.288826"
+       id="text126"><tspan
+         sodipodi:role="line"
+         id="tspan124"
+         x="124.15095"
+         y="69.288826"
+         style="font-weight:normal;stroke-width:0.264583">Socket</tspan></text>
+    <g
+       id="g1190"
+       transform="translate(2.647537,-43.804205)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect138"
+         width="26.613571"
+         height="8.0500402"
+         x="129.98999"
+         y="76.070259" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="143.2308"
+         y="81.458687"
+         id="text142"><tspan
+           sodipodi:role="line"
+           id="tspan140"
+           x="143.2308"
+           y="81.458687"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">Connection A</tspan></text>
+    </g>
+    <g
+       id="g1195"
+       transform="translate(2.647537,-43.774489)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect1185"
+         width="26.613571"
+         height="8.0500402"
+         x="163.25838"
+         y="76.040543" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="176.5574"
+         y="81.458687"
+         id="text148"><tspan
+           sodipodi:role="line"
+           id="tspan146"
+           x="176.5574"
+           y="81.458687"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">Connection B</tspan></text>
+    </g>
+    <g
+       id="g1000"
+       transform="translate(-28.240493,40.83049)">
+      <g
+         id="g1838"
+         transform="translate(-2.7883109)">
+        <g
+           id="g1867"
+           transform="translate(-0.81992734,0.13229167)">
+          <rect
+             style="fill:#ffffff;stroke:#000000;stroke-width:0.265;stroke-miterlimit:4;stroke-dasharray:none"
+             id="rect150"
+             width="48.785118"
+             height="7.7526474"
+             x="170.2317"
+             y="41.439919"
+             ry="2.2829072" />
+          <text
+             xml:space="preserve"
+             style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+             x="194.52336"
+             y="46.331009"
+             id="text995"><tspan
+               sodipodi:role="line"
+               id="tspan993"
+               x="194.52336"
+               y="46.331009"
+               style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">New connection attempt</tspan></text>
+        </g>
+      </g>
+    </g>
+    <g
+       id="g1094"
+       transform="translate(7.2539591)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect114"
+         width="17.503731"
+         height="8.0923052"
+         x="47.579159"
+         y="57.656158" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="53.403038"
+         y="61.725033"
+         id="text1004"><tspan
+           sodipodi:role="line"
+           id="tspan1002"
+           x="53.403038"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.177224px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 59.029597,57.696783 v 4.626013"
+         id="path1006" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="61.940838"
+         y="61.725033"
+         id="text1010"><tspan
+           sodipodi:role="line"
+           id="tspan1008"
+           x="61.940838"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">3</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="M 47.535449,62.306248 H 64.847416"
+         id="path1012" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="50.286957"
+         y="64.910576"
+         id="text1016"><tspan
+           sodipodi:role="line"
+           id="tspan1014"
+           x="50.286957"
+           y="64.910576"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">...</tspan></text>
+    </g>
+    <g
+       id="g1105"
+       transform="translate(6.7487804)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect1018"
+         width="17.503731"
+         height="8.0923052"
+         x="69.530663"
+         y="57.656158" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="75.354546"
+         y="61.725033"
+         id="text1022"><tspan
+           sodipodi:role="line"
+           id="tspan1020"
+           x="75.354546"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.177224px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 80.981101,57.696783 v 4.626013"
+         id="path1024" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="83.892342"
+         y="61.725033"
+         id="text1028"><tspan
+           sodipodi:role="line"
+           id="tspan1026"
+           x="83.892342"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">2</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="M 69.486953,62.306248 H 86.79892"
+         id="path1030" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="72.238464"
+         y="64.910576"
+         id="text1034"><tspan
+           sodipodi:role="line"
+           id="tspan1032"
+           x="72.238464"
+           y="64.910576"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">...</tspan></text>
+    </g>
+    <g
+       id="g1116"
+       transform="translate(7.2800533)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect1036"
+         width="17.503731"
+         height="8.0923052"
+         x="90.445702"
+         y="57.656158" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="96.269585"
+         y="61.725033"
+         id="text1040"><tspan
+           sodipodi:role="line"
+           id="tspan1038"
+           x="96.269585"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.177224px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m 101.89614,57.696783 v 4.626013"
+         id="path1042" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="104.80738"
+         y="61.725033"
+         id="text1046"><tspan
+           sodipodi:role="line"
+           id="tspan1044"
+           x="104.80738"
+           y="61.725033"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">1</tspan></text>
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="M 90.401993,62.306248 H 107.71396"
+         id="path1048" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="93.153503"
+         y="64.910576"
+         id="text1052"><tspan
+           sodipodi:role="line"
+           id="tspan1050"
+           x="93.153503"
+           y="64.910576"
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">...</tspan></text>
+    </g>
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+       id="rect128"
+       width="35.077286"
+       height="17.850622"
+       x="145.4949"
+       y="52.606525" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="151.85506"
+       y="57.17992"
+       id="text132"><tspan
+         sodipodi:role="line"
+         id="tspan130"
+         x="151.85506"
+         y="57.17992"
+         style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="169.66876"
+       y="57.17992"
+       id="text136"><tspan
+         sodipodi:role="line"
+         id="tspan134"
+         x="169.66876"
+         y="57.17992"
+         style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">Connection</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 145.6099,57.795254 h 34.96313"
+       id="path1118" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 145.52503,58.331977 h 35.08268"
+       id="path1120"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 158.21397,52.657088 V 70.346249"
+       id="path1122"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="151.85506"
+       y="62.076843"
+       id="text1126"><tspan
+         sodipodi:role="line"
+         id="tspan1124"
+         x="151.85506"
+         y="62.076843"
+         style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="151.85506"
+       y="65.71701"
+       id="text1130"><tspan
+         sodipodi:role="line"
+         id="tspan1128"
+         x="151.85506"
+         y="65.71701"
+         style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="151.85506"
+       y="69.458565"
+       id="text1134"><tspan
+         sodipodi:role="line"
+         id="tspan1132"
+         x="151.85506"
+         y="69.458565"
+         style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">3</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="167.68536"
+       y="62.076843"
+       id="text1138"><tspan
+         sodipodi:role="line"
+         id="tspan1136"
+         x="167.68536"
+         y="62.076843"
+         style="font-weight:normal;stroke-width:0.264583">A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="167.62328"
+       y="65.71701"
+       id="text1142"><tspan
+         sodipodi:role="line"
+         id="tspan1140"
+         x="167.62328"
+         y="65.71701"
+         style="font-weight:normal;stroke-width:0.264583">B</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;stroke-width:0.264583"
+       x="167.68536"
+       y="69.458565"
+       id="text1146"><tspan
+         sodipodi:role="line"
+         id="tspan1144"
+         x="167.68536"
+         y="69.458565"
+         style="font-weight:normal;stroke-width:0.264583">A</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow2Lend)"
+       d="m 125.63412,62.054162 h 19.52373"
+       id="path1197"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1501)"
+       d="M 156.15537,52.478064 145.59688,40.809322"
+       id="path1495"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1511)"
+       d="M 168.92828,52.53401 179.84429,40.818839"
+       id="path1497"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="185.1432"
+       y="49.183556"
+       id="text1599"><tspan
+         sodipodi:role="line"
+         id="tspan1597"
+         x="185.1432"
+         y="49.183556"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID <tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   id="tspan1831">=</tspan> 2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.85;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="136.25281"
+       y="47.247818"
+       id="text1603"><tspan
+         sodipodi:role="line"
+         id="tspan1601"
+         x="136.25281"
+         y="47.247818"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">DCID <tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   id="tspan1827">=</tspan> 1</tspan><tspan
+         sodipodi:role="line"
+         x="136.25281"
+         y="50.546295"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         id="tspan1605">DCID <tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   id="tspan1829">=</tspan> 3</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0px;stroke-width:0.264583"
+       x="128.48312"
+       y="60.659653"
+       id="text1609"><tspan
+         sodipodi:role="line"
+         id="tspan1607"
+         x="128.48312"
+         y="60.659653"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583">lookup</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1617)"
+       d="m 162.80039,70.475892 v 11.30211"
+       id="path1613"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="173.51236"
+       y="77.310287"
+       id="text1663"><tspan
+         sodipodi:role="line"
+         x="173.51236"
+         y="77.310287"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Italic';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         id="tspan1665">not found</tspan></text>
+  </g>
+</svg>

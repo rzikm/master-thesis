@@ -29,27 +29,26 @@ In order to identify QUIC connections, endpoints use Connection IDs negotiated d
 establishment. Each endpoint independently chooses a Connection ID it will use to identify the
 connection. When sending a QUIC packet, the endpoint uses these Connection IDs to populate the
 \textit{Source Connection ID} (SCID for short) and \textit{Destination Connection ID} (DCID for
-short) fields of the QUIC packet header.
+short) fields of the QUIC packet header. During the lifetime of the connection, both endpoints can
+issue additional Connection IDs the other endpoint can use. The additional connection IDs are
+primarily used when client migrates the connection to new local IP address.
 
-\todo{list all abbreviations at the end/beginning of the thesis?}.
-
-\todo{ remove the stuff about socket multiplexing? The socket multiplexing stuff is not mentioned in the spec, nor it is the expected usage scenario. }
-
-The separation of connection identity from the used socket allows multiple connections to be made
-using the same socket. \autoref{fig:02-connection-multiplexing} illustrates how the incoming packets
-are associated with individual connections based on the DCID field of the packet header.
+\autoref{fig:02-connection-multiplexing} illustrates how server processes incoming packets from
+client connections. Server maintains a mapping between Destination Connection IDs and the
+corresponding connections. The incoming packets are associated with existing connections based on
+the value of the DCID field of the packet header. If packet cannot be associated with an existing
+connection, the contents of the packet determine whether new connection is attempted, otherwise the
+packet is discarded.
 
 \begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
 
-\includegraphics[width=0.9\textwidth]{img/02-socket-multiplexing}
+\input{img/02-socket-multiplexing.pdf_tex}
 
 \end{myFigure}
 
-\todo{better describe the image, it is hard to decipher, TODO, really different applications?}
-
 \subsection{QUIC Packets}
 
-QUIC packets sent in the UDP datagram are the smallest processible unit of QUIC\@. The packets are
+QUIC packets sent in the UDP datagram are the smallest processable unit of QUIC\@. The packets are
 formed by a header and a variable-length payload consisting of one or more QUIC frames. QUIC frames
 carry individual pieces of information, such as acknowledgments or stream data sent by the
 application.
@@ -85,17 +84,15 @@ packet payload corruption.
 
 QUIC can transport multiple streams of data in a single connection. Each stream can be either
 unidirectional or bidirectional and is identified by its Stream ID. Each stream is processed
-independently of the other streams. \autoref{fig:02-stream-multiplexing} illustrates how QUIC may
-pack two streams into frames such that those streams are transported in parallel.
+independently of the other streams. Each QUIC packet can carry data for one or more QUIC streams.
+\autoref{fig:02-stream-multiplexing} illustrates how QUIC may pack two streams into frames such that
+those streams are transported in parallel.
 
 \begin{myFigure}{fig:02-stream-multiplexing}{Stream multiplexing in QUIC}
 
-\includegraphics[width=0.9\textwidth]{img/02-stream-multiplexing}
+  \input{img/02-stream-multiplexing.pdf_tex}
 
 \end{myFigure}
-
-\todo{change the picture so that the newest data is on the right side, basically, just flip the
-stream on the Sender's side}
 
 \subsection{Flow Control}
 
@@ -120,7 +117,7 @@ retransmits the STREAM frame in packet 4. The sender does not have to retransmit
 
 \begin{myFigure}{fig:02-packet-loss-example}{Retransmission of lost data in QUIC}
 
-\includegraphics[width=0.5\textwidth]{img/02-retransmission-example}
+\input{img/02-retransmission-example.pdf_tex}
 
 \end{myFigure}
 
@@ -309,27 +306,9 @@ because QUIC does not interpret the CRYPTO frames' contents.
 
 \begin{myFigure} {fig:02-example-handshake-flow} {Example QUIC handshake flow}
 
-\begin{verbatim}
-   Client                                                  Server
+  % the diagram is too large otherwise, we have to resize it a bit
+  \resizebox{\linewidth}{!}{\input{img/02-handshake-flow.pdf_tex}}
 
-   Initial[0]: CRYPTO[CH] ->
-
-                                    Initial[0]: CRYPTO[SH] ACK[0]
-                          Handshake[0]: CRYPTO[EE, CERT, CV, FIN]
-                                    <- 1-RTT[0]: STREAM[1, "..."]
-
-   Initial[1]: ACK[0]
-   Handshake[0]: CRYPTO[FIN], ACK[0]
-   1-RTT[0]: STREAM[0, "..."], ACK[0] ->
-
-                                             Handshake[1]: ACK[0]
-                            <- 1-RTT[1]: STREAM[3, "..."], ACK[0]
-\end{verbatim}
-
-  \todo{Note that this is copied from RFC? Also, this example lacks the
-    HANDSHAKE\_DONE frame}
-
-  \todo{Make this diagram graphical, not textual}
 \end{myFigure}
 
 In its first datagram, the client sends an Initial packet with a single CRYPTO frame containing the
@@ -350,6 +329,9 @@ frame. From the information in the server's Handshake packet's CRYPTO frame, the
 1-RTT protection keys and processes the server's 1-RTT packet. In addition to sending an ACK frame
 for the server's 1-RTT packet, the client can now start sending application data on stream 0 using a
 STREAM frame.
+
+After server detects that Handshake has successfully completed, it sends a HANDSHAKE\_DONE frame to
+communicate the fact to the client.
 
 \subsection{Connection Termination}
 
