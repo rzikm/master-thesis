@@ -366,3 +366,7 @@ linker
 # ln -s $(pwd)/src/libraries/Common/src src/coreclr/src/System.Private.CoreLib/common
 src/coreclr/src/System.Private.CoreLib/shared
 src/coreclr/src/System.Private.CoreLib/common
+/tex/img/*.pdf
+/tex/img/*.pdf_tex
+/tex/bibliography.bib.bak
+/tex/bibliography.bib.sav
