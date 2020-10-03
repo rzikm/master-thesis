@@ -36,7 +36,7 @@ page~\cite{wiki:head-of-line_blocking}.
 \subsection*{HTTPS Connection Establishment Latency}
 
 HTTPS~\cite{rfc2818} is an extension to HTTP, which makes the connection encrypted by inserting the
-TLS layer between HTTP and TCP\@. Therefore, establishing an HTTPS connection requires first
+TLS layer between HTTP and TCP. Therefore, establishing an HTTPS connection requires first
 establishing a TCP connection --- performing the three-way handshake --- and then performing another
 separate handshake for the TLS layer. As can be seen on illustration in \autoref{fig:https-packets},
 a minimum of three round trips are needed before the HTTP request can be sent.
@@ -45,15 +45,16 @@ a minimum of three round trips are needed before the HTTP request can be sent.
   {fig:https-packets}
   {Packets sent during HTTPS connection establishment}
 
-  \includegraphics[width=0.6\textwidth]{img/01-https-connection-packets}
+  \input{img/01-https-handshake.pdf_tex}
 
 \end{myFigure}
 
 More and more websites enforce the use of HTTPS in order to protect the privacy of their users. In
 August 2020, 96 out of the top 100 viewed websites actively redirect to HTTPS, and more than 75\% of
-all network traffic from the Chrome web browser used HTTPS~\cite{googleTransparency}. With HTTPS
-becoming the norm, almost all connections suffer from the increased latency caused by the additional
-TLS handshake.
+all network traffic from the Chrome web browser used HTTPS~\cite{googleTransparency} Even server to
+server communication in cloud are trending towards HTTPS to protect against partially compromised
+networks. With HTTPS becoming the norm, almost all connections suffer from the increased latency
+caused by the additional TLS handshake.
 
 \section{HTTP/3 and QUIC}
 
@@ -69,14 +70,9 @@ responsibilities and relationships between protocols on HTTP/2 and HTTP/3 stacks
   {fig:http2-vs-http3-stack}
   {Comparison between HTTP/2 and HTTP/3 protocol stacks}
 
-  \includegraphics[width=\textwidth]{img/01-pile-http-protocol}
-
-  \todo{Redraw this without HTTP/1.1 in inkscape, indicate which parts of the stack implement stream
-    multiplexing, encryption, reliability, etc.}
+  \input{img/01-http2-vs-http3-stack.pdf_tex}
 
 \end{myFigure}
-
-\todo{possibly more comments on the figure will go here}
 
 Although QUIC development is tied with that of HTTP/3, it is designed as a general-purpose transport
 layer protocol that can be used for other application-layer protocols. The following points
@@ -86,8 +82,8 @@ summarize the main improvements of QUIC over TCP+TLS:
 
     \litem{Stream multiplexing} QUIC provides an abstraction of multiple streams of data multiplexed
     on a single connection. Moreover, because QUIC itself also implements loss detection, packet
-    loss can be managed in a way that does not exhibit the head-of-line blocking problem described
-    above.
+    loss can be managed in a way that reduces the scope of the head-of-line blocking problem
+    described above to the single affected stream.
 
     \litem{Faster connection establishment} QUIC also performs TLS 1.3 handshake, but it does so in
     parallel with the base protocol's handshake. The combined handshake requires fewer round-trips
@@ -142,8 +138,9 @@ exposed via public classes residing most likely inside the \texttt{System.Net.Qu
 
 The QUIC support has been initially intended for the \dotnet{} 5 release planned for November 2020.
 However, it turned out that the standardization process was not going to be completed in time for
-QUIC to be implemented for the release, so the work was interrupted, and official HTTP/3 and QUIC
-support was postponed for later releases.
+QUIC to be implemented for the release. \dotnet{} 5 therefore ships with a preview (non-production
+ready) HTTP/3 and QUIC support, and production ready HTTP/3 and QUIC implementation was postponed
+for \dotnet{} 6.
 
 \subsection*{Existing QUIC Implementation in \dotnet{}}
 
@@ -174,7 +171,8 @@ than raw performance to be considered when deciding to use native libraries such
     \litem{Cross-platform compatibility/availability} The \dotnet{} platform officially supports
     multiple versions of Windows, macOS, and several Linux distributions. If the native library does
     not support all these platforms, then the implementation must use an alternative library on
-    other platforms, introducing more complexity into the codebase.
+    other platforms, introducing more complexity into the codebase and possible incompatibilities
+    between platforms.
 
     \litem{Support for different library versions} Currently, no native libraries that managed
     \dotnet{} libraries depend on are part of the \dotnet{} distribution. Instead, \dotnet{} runtime
@@ -220,8 +218,8 @@ on all platforms.
 
 Starting with \dotnet{} Core 2.1, the default implementation of HTTP request handling does not rely
 on native libraries like \libcurl{}. Instead, the functionality has been rewritten in pure managed
-code, which offered better performance and consistent behavior across all \dotnet{}
-platforms~\cite{SocketsHttpHandlerDocs}.
+code on top of sockets, which offered better performance and consistent behavior across all
+\dotnet{} platforms~\cite{SocketsHttpHandlerDocs}.
 
 \section{Goals of this Thesis}
 
@@ -265,20 +263,22 @@ compare their performance to that of TCP+TLS based \texttt{SslStream}.
 
 \subsection*{Summary of the Goals}
 
+
 The following list summarizes the goals of this thesis presented in the previous subsection.
 
 \begin{enumerate}
 
   \item Select a sufficient subset of QUIC specification needed to support the most basic data
-transfer and implement it inside \dotnet{} runtime codebase.
+    transfer and implement it inside \dotnet{} runtime codebase.
 
   \item Make the existing QUIC API public, and allow switching between the new managed
-implementation and the existing \libmsquic{} based one.
+    implementation and the existing \libmsquic{} based one. \todo{Good point from ziki: this is not
+    a goal, but a step. maybe call this section Steps?}
 
   \item Evaluate the managed QUIC implementation by using it to implement a simple client-server
-console application for sending files.
+    console application for sending files.
 
   \item \todo{Emphasise that this is optional?} Try to compare the performance of the new
-implementation with the previous \libmsquic{}-based one.
+    implementation with the previous \libmsquic{}-based one.
 
 \end{enumerate}
