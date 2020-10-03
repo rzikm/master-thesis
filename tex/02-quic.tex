@@ -31,9 +31,9 @@ connection. When sending a QUIC packet, the endpoint uses these Connection IDs t
 \textit{Source Connection ID} (SCID for short) and \textit{Destination Connection ID} (DCID for
 short) fields of the QUIC packet header.
 
-\todo{Explain that there can be multiple Connection IDs}
-
 \todo{list all abbreviations at the end/beginning of the thesis?}.
+
+\todo{ remove the stuff about socket multiplexing? The socket multiplexing stuff is not mentioned in the spec, nor it is the expected usage scenario. }
 
 The separation of connection identity from the used socket allows multiple connections to be made
 using the same socket. \autoref{fig:02-connection-multiplexing} illustrates how the incoming packets
@@ -45,7 +45,7 @@ are associated with individual connections based on the DCID field of the packet
 
 \end{myFigure}
 
-\todo{better describe the image, it is hard to decypher, TODO, really different applications?}
+\todo{better describe the image, it is hard to decipher, TODO, really different applications?}
 
 \subsection{QUIC Packets}
 
@@ -124,8 +124,7 @@ retransmits the STREAM frame in packet 4. The sender does not have to retransmit
 
 \end{myFigure}
 
-\todo{if the image is deleted, then the text should still make sense! I must add a description of
-what I actually see on the image. Also, make the image more like a UML process diagram}
+\todo{Also, make the image more like a UML process diagram}
 
 \subsection{Wire Encoding}
 
@@ -151,20 +150,43 @@ the shortest encoding necessary to represent the given number.
 \section{QUIC Connection}
 
 In the overview section, we mentioned that QUIC endpoints use Connection IDs to identify connections
-and that they exchange QUIC Packets packed in UDP datagrams. QUIC uses a total of five different
-packet types:
+and that they exchange UDP datagrams with QUIC packets containing QUIC frames.
 
-\begin{enumerate} \litem{Initial \textnormal{and} Handshake} used during connection establishment;
+\subsection{Connection ID}
 
-    \litem{1-RTT} main packets used during the lifetime of QUIC connection;
+The primary function of a connection ID is to ensure that changes in addressing at lower protocol
+layers (UDP, IP) do not cause packets for a QUIC connection to be delivered to the wrong endpoint.
 
-    \litem{Version Negotiation} sent by the server when the client tries to establish a connection
-using an unsupported version of QUIC\@;
+Endpoints in the connection select Connection IDs for the other endpoint to use when sending
+packets. There can be more than one Connection ID identifying the connection for the endpoint.
+During the connection lifetime, each endpoint can issue additional Connection IDs, or retire
+connection IDs issued by the other endpoint.
 
-    \litem{0-RTT} carries \textit{early data} when TLS 1.3 0-RTT mode of operation is enabled; and
+By retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID,
+and the other endpoint should drop any incoming packets that use it. Retiring a Connection ID serves
+as a request to the peer to issue a new Connection ID as a replacement.
 
-    \litem{Retry} optionally used by servers for client's address validation when establishing new
-connections.
+Each Connection ID is bound to local and destination addresses. During connection migration, the
+endpoints must start using different Connection ID to prevent correlation of the network traffic.
+
+\subsection{QUIC Packets}
+
+QUIC uses a total of five different packet types:
+
+\begin{enumerate}
+
+  \litem{Initial \textnormal{and} Handshake} used during connection establishment;
+
+  \litem{1-RTT} main packets used during the lifetime of QUIC connection;
+
+  \litem{Version Negotiation} sent by the server when the client tries to establish a connection
+  using an unsupported version of QUIC\@;
+
+  \litem{0-RTT} carries \textit{early data} when TLS 1.3 0-RTT mode of operation is enabled; and
+
+  \litem{Retry} optionally used by servers for client's address validation when establishing new
+  connections.
+
 \end{enumerate}
 
 Packets of type Initial, Handshake, and 1-RTT correspond to the packets sent in the connection's
@@ -174,14 +196,64 @@ the 1-RTT packet number space also includes 0-RTT packets.
 Version Negotiation and Retry packets are used in special cases. They are not associated with a
 packet number space and are neither numbered nor encrypted.
 
-Packets of different types contain different fields. Many fields are common for multiple packet
-types; some are unique to a particular packet type. The following list explains the meaning of the
-essential \todo{essential implies that they are mandatory, and others not, consider different word}
-packet fields.
+Packets of different types contain different fields. The packet types can be separated into two
+groups: packets with so called \textit{long header}, and packets with \textit{short header}. The
+form of the header determines the fields in the header, with short header containing fewer fields to
+improve efficiency of the protocol. All packets except 1-RTT packets use the long header format.
 
-\todo{list the fields}
+The following list explains the meaning of the individual packet fields. The list also indicates if
+the field is specific to a particular header or packet type.
 
-\todo{table associating which fields are present in which packet}
+\newcommand\ditemLh[1]{\ditemWithComment{#1}{long header only}}
+\newcommand\ditemSh[1]{\ditemWithComment{#1}{short header only}}
+
+\begin{description}
+
+    \ditem{Header Form Bit} used to distinguish between packets with so called \textit{long header}
+    and \textit{short header} format
+
+    \ditem{Fixed Bit}  A bit that is always set to 1 in valid packets.
+
+    \ditemLh{Long Packet Type} Discriminator of the packet type.
+
+    \ditemLh{Version} Indicates which version of QUIC is in use and determines how rest of the
+    protocol fields are interpreted.
+
+    \ditemLh{Destination Connection ID Length} Length of the Destination Connection ID.
+
+    \ditem{Destination Connection ID}  The Connection ID issued by the recipient of the packet.
+
+    \ditemLh{Source Connection ID Length}  Length of the Source Connection ID.
+
+    \ditemLh{Source Connection ID} The Connection ID issued by the sender of the packet. Note that
+    1-RTT packets do not contain this field because the sender is authenticated by the encryption.
+
+    \ditem{Reserved Bits} Bits reserved for use in the next QUIC versions. In the initial QUIC
+    version, these bits are set to 0.
+
+    \ditemWithComment{Packet Number Length}{Initial, Handshake, 1-RTT, 0-RTT packets}
+    The length of the encoding used for the packet number. The packet number does not use the
+    variable-length encoding. Instead, the packet number is truncated and up to 4 least significant
+    bytes are included in the packet. The length of the truncated packet number is always chosen so
+    that the other endpoint can safely reconstruct the full packet number.
+
+    \ditemWithComment{Length}{Initial, Handshake, 1-RTT, 0-RTT packets} The length of the remainder
+    of the packet. This includes the Packet Number, the payload of the packet, and --- for encrypted
+    packets --- the AEAD integrity tag.
+
+    \ditemWithComment{Packet Number}{Initial, Handshake, 1-RTT, 0-RTT packets} The truncated packet
+    number.
+
+    \ditemSh{Spin Bit} A bit used for optional on-path latency measurements.
+
+    \ditemWithComment{Retry Token}{Initial, Retry packets} Contains an opaque token generated by the server to validate the clients address.
+
+    \ditemWithComment{Retry Integrity Tag}{Retry packet only} A tag used by servers during client
+    address validation during connection establishment.
+
+    \ditemSh{Key Phase Bit} A bit used to communicate an encryption key update.
+
+\end{description}
 
 \subsection{QUIC Frames}
 
@@ -293,7 +365,7 @@ QUIC connection can be terminated in three ways:
 
 \end{itemize}
 
-\subsubsection{Idle Timeout}
+\subsubsection{Idle Timeout}\label{sec:idle-timeout}
 
 If idle timeout is enabled, the endpoint silently closes the connection if it does not receive a
 packet from the peer for a specified time period. Each peer may advertise a timeout period using the
@@ -487,7 +559,7 @@ packet to be acknowledged has been sent. To avoid possible deadlocks in such sce
 endpoint sens a \textit{probe packet} if it does not receive a packet from a peer in a period called
 \textit{probe timeout} (PTO for short). QUIC endpoints send up to 2 probe packets. The PTO duration
 doubles each time probe packets are sent until either a reply is received or the connection is
-terminated due to idle timeout \todo{back reference?}.
+terminated due to idle timeout (see \autoref{sec:idle-timeout})
 
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The QUIC-RECOVERY specification document describes a
