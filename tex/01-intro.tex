@@ -132,9 +132,9 @@ as wireless mobile networks~\cite{Cook2017}.
 
 Microsoft's \dotnet{} development team has long-term plans to provide full QUIC and HTTP/3 support
 in \dotnet{}. Support of HTTP/3 should be completely transparent to users because the implementation
-of \texttt{HttpClient} automatically chooses the best available HTTP version~\cite{HttpClientDocs}.
+of \class{HttpClient} automatically chooses the best available HTTP version~\cite{HttpClientDocs}.
 However, since QUIC can be used to build other protocols than HTTP/3, its implementation will be
-exposed via public classes residing most likely inside the \texttt{System.Net.Quic} namespace.
+exposed via public classes residing most likely inside the \namespace{System.Net.Quic} namespace.
 
 The QUIC support has been initially intended for the \dotnet{} 5 release planned for November 2020.
 However, it turned out that the standardization process was not going to be completed in time for
@@ -259,7 +259,7 @@ feature of QUIC\@.
 In the previous section, we mentioned that the indirect nature of the existing QUIC API could be
 used to alternate between \libmsquic{}-based QUIC and our QUIC implementation at runtime. As an
 optional goal, this thesis will implement benchmarks to compare the two QUIC implementations and
-compare their performance to that of TCP+TLS based \texttt{SslStream}.
+compare their performance to that of TCP+TLS based \class{SslStream}.
 
 \subsection*{Summary of the Goals}
 

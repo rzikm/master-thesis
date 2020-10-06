@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="165.23509mm"
+   height="51.674046mm"
+   viewBox="0 0 165.23509 51.674046"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="03-crypto-seal.svg">
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="DiamondLend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DiamondLend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(0.8,0,0,0.8,-5.6,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 -7.0710894,0 0,7.0710589 7.0710462,0 Z"
+         id="path1216" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DiamondM"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DiamondM"
+       inkscape:isstock="true">
+      <path
+         transform="scale(0.4)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 -7.0710894,0 0,7.0710589 7.0710462,0 Z"
+         id="path1201" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DiamondSend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DiamondSend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(0.2,0,0,0.2,-1.2,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,-7.0710768 -7.0710894,0 0,7.0710589 7.0710462,0 Z"
+         id="path1222" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1425"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="EmptyTriangleOutL"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(0.8,0,0,0.8,-4.8,0)"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1423" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1397"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="EmptyTriangleOutL"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(0.8,0,0,0.8,-4.8,0)"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1395" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="EmptyTriangleOutL"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="EmptyTriangleOutL"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(0.8,0,0,0.8,-4.8,0)"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#b3b3b3;stroke-width:1pt;stroke-opacity:1"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path1279" />
+    </marker>
+    <rect
+       x="107.48133"
+       y="40.314999"
+       width="27.158804"
+       height="4.0538201"
+       id="rect934" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="451.91663"
+     inkscape:cy="98.793741"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1005"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-28.580786,-13.428533)">
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+       id="rect849"
+       width="43.873775"
+       height="28.268545"
+       x="28.713078"
+       y="13.560824"
+       ry="0" />
+    <text
+       xml:space="preserve"
+       style="font-weight:bold;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="50.69265"
+       y="18.009026"
+       id="text835"><tspan
+         sodipodi:role="line"
+         id="tspan833"
+         x="50.69265"
+         y="18.009026"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSeal</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 28.783497,19.735851 h 43.75888"
+       id="path851"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;text-anchor:start;stroke-width:0.264583"
+       x="31.379141"
+       y="25.766964"
+       id="text877"><tspan
+         sodipodi:role="line"
+         x="31.379141"
+         y="25.766964"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan883">- ProtectHeader()</tspan><tspan
+         sodipodi:role="line"
+         x="31.379141"
+         y="29.453495"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan885">- UnprotectHeader()</tspan><tspan
+         sodipodi:role="line"
+         x="31.379141"
+         y="33.140026"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan887">- ProtectPayload()</tspan><tspan
+         sodipodi:role="line"
+         x="31.379141"
+         y="36.826561"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan889">- UnprotectPayload()</tspan></text>
+    <g
+       id="g1053"
+       transform="translate(19.823098,-12.458554)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect900"
+         width="61.878204"
+         height="23.97702"
+         x="79.284546"
+         y="26.019379"
+         ry="0" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="M 79.309501,32.194405 H 141.22412"
+         id="path902"
+         sodipodi:nodetypes="cc" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="109.96947"
+         y="30.799675"
+         id="text839"><tspan
+           sodipodi:role="line"
+           id="tspan837"
+           x="109.96947"
+           y="30.799675"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';stroke-width:0.264583">CryptoSealAlgorithm</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;text-anchor:start;stroke-width:0.264583"
+         x="82.24894"
+         y="38.225517"
+         id="text930"><tspan
+           sodipodi:role="line"
+           x="82.24894"
+           y="38.225517"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
+           id="tspan922">- Protect()</tspan><tspan
+           sodipodi:role="line"
+           x="82.24894"
+           y="41.912048"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
+           id="tspan924">- Unprotect()</tspan><tspan
+           sodipodi:role="line"
+           x="82.24894"
+           y="45.598579"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
+           id="tspan926">- CreateHeaderProtectionMask()</tspan><tspan
+           sodipodi:role="line"
+           x="82.24894"
+           y="49.285114"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+           id="tspan928" /></text>
+    </g>
+    <text
+       xml:space="preserve"
+       id="text932"
+       style="font-style:italic;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;white-space:pre;shape-inside:url(#rect934)" />
+    <g
+       aria-label="CryptoSealChaCha"
+       id="text964"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;fill:#b3b3b3;stroke-width:0.264583"
+       transform="translate(10.58134,13.617304)" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;text-anchor:start;stroke-width:0.264583"
+       x="82.24894"
+       y="64.508896"
+       id="text974"><tspan
+         sodipodi:role="line"
+         x="82.24894"
+         y="64.508896"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan970" /><tspan
+         sodipodi:role="line"
+         x="82.24894"
+         y="68.195427"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
+         id="tspan972" /></text>
+    <g
+       id="g1661">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect983"
+         width="38.468357"
+         height="7.5258408"
+         x="110.81257"
+         y="57.444447"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="130.09137"
+         y="62.711391"
+         id="text987"><tspan
+           sodipodi:role="line"
+           id="tspan985"
+           x="130.09137"
+           y="62.711391"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSealAesCcm</tspan></text>
+    </g>
+    <g
+       id="g1063"
+       transform="translate(11.268925,11.537428)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         id="rect994"
+         width="38.468357"
+         height="7.5258408"
+         x="55.140984"
+         y="45.907017"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="74.419785"
+         y="51.173962"
+         id="text998"><tspan
+           sodipodi:role="line"
+           id="tspan996"
+           x="74.419785"
+           y="51.173962"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSealAesGcm</tspan></text>
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1425)"
+       d="M 85.726549,57.272507 116.68373,37.573651"
+       id="path1079" />
+    <path
+       style="fill:#ffffff;stroke:#b3b3b3;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#EmptyTriangleOutL)"
+       d="M 174.73061,57.272507 143.77343,37.573651"
+       id="path1081" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1397)"
+       d="M 130.04675,57.395604 V 37.605318"
+       id="path1117" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DiamondLend)"
+       d="M 75.873142,24.106072 H 99.03154"
+       id="path1457"
+       sodipodi:nodetypes="cc" />
+    <g
+       id="g1666">
+      <path
+         id="rect958"
+         style="fill:#ffffff;stroke:#b3b3b3;stroke-width:0.264583"
+         d="m 155.21524,57.444445 h 38.46835 v 7.525841 h -38.46835 z" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583;fill:#b3b3b3;"
+         x="174.49403"
+         y="62.711391"
+         id="text1656"><tspan
+           sodipodi:role="line"
+           id="tspan1654"
+           x="174.49403"
+           y="62.711391"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583;fill:#b3b3b3;">CryptoSealChaCha</tspan></text>
+    </g>
+  </g>
+</svg>

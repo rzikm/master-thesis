@@ -110,8 +110,9 @@ packet is updated and sent in some future packet or dropped altogether if it is 
 
 \autoref{fig:02-packet-loss-example} illustrates the retransmission process. When the sender
 receives the acknowledgment for packet 3, it infers that packet 2 never reached the receiver, and
-retransmits the STREAM frame in packet 4. The sender does not have to retransmit the ACK for packet
-1 because it was already sent in packet 3. Therefore, packet 4 includes ACK only for packet 2.
+retransmits the \STREAM{} frame in packet 4. The sender does not have to retransmit the ACK for
+packet 1 because it was already sent in packet 3. Therefore, packet 4 includes ACK only for packet
+2.
 
 \todo{redraw the image to match the description above}
 
@@ -123,14 +124,18 @@ retransmits the STREAM frame in packet 4. The sender does not have to retransmit
 
 \todo{Also, make the image more like a UML process diagram}
 
-\subsection{Wire Encoding}
+\subsection{Wire Encoding}\label{sec:wire-encoding}
 
 The process of encoding QUIC packets to be sent via the network is optimized for size. All values
-sent over the network are encoded in Big-Endian, also known as \textit{network order}. Almost all
-numerical values are encoded using a variable-length integer encoding. This encoding uses the first
-byte's two most significant bits to encode whether the value is encoded as 1, 2, 4, or 8-byte
-integer. This encoding supports only positive numbers. The ranges available for individual encoding
-lengths are listed in \autoref{tab:02-quic-varint-length}.
+sent over the network are encoded in Big-Endian, also known as \textit{network order}. There are two
+nontrivial encodings used: variable-length integer encoding and packet number encoding.
+
+\subsubsection{Variable-Length Integer Encoding}\label{sec:variable-length-encoding}
+
+Almost all numerical values are encoded using a variable-length integer encoding. This encoding uses
+the first byte's two most significant bits to encode whether the value is encoded as 1, 2, 4, or
+8-byte integer. This encoding supports only positive numbers. The ranges available for individual
+encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
 
 \begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths}
   {ccr}
@@ -143,6 +148,24 @@ lengths are listed in \autoref{tab:02-quic-varint-length}.
 
 In order to optimize the size of QUIC packets, the implementations are encouraged to always choose
 the shortest encoding necessary to represent the given number.
+
+\subsubsection{Packet Number Encoding}\label{sec:packet-number-encoding}
+
+Packet numbers in the QUIC packet headers use a very specific encoding which both saves space in the
+packet header and improves security of the protocol. The packet number is truncated, and only up to
+4 least significant bytes are stored in the packet header.
+
+The number of bytes that is determined by the gap between the packet number of the packet being
+sent, and the highest packet number the peer has acknowledged. In order for the other endpoint to be
+able to correctly decode the packet number, the number of bytes used to encode the packet number
+must be sufficient to be able to represent at least twice the difference between the current packet
+number and the highest packet number acknowledged by the peer.
+
+When decoding the packet number, the endpoint uses the knowledge of highest previously received
+packet number to correctly decode the packet number.
+
+\todo{RFC lists a function for decoding, but it is rather long (25 lines because of some overflow
+  checks), should I include it here?}
 
 \section{QUIC Connection}
 
@@ -229,10 +252,8 @@ the field is specific to a particular header or packet type.
     version, these bits are set to 0.
 
     \ditemWithComment{Packet Number Length}{Initial, Handshake, 1-RTT, 0-RTT packets}
-    The length of the encoding used for the packet number. The packet number does not use the
-    variable-length encoding. Instead, the packet number is truncated and up to 4 least significant
-    bytes are included in the packet. The length of the truncated packet number is always chosen so
-    that the other endpoint can safely reconstruct the full packet number.
+    The length of the encoding used for the packet number. This field uses a special encoding which
+    was described in \autoref{sec:packet-number-encoding}
 
     \ditemWithComment{Length}{Initial, Handshake, 1-RTT, 0-RTT packets} The length of the remainder
     of the packet. This includes the Packet Number, the payload of the packet, and --- for encrypted
@@ -255,44 +276,44 @@ the field is specific to a particular header or packet type.
 \subsection{QUIC Frames}
 
 Packets of type Initial, Handshake, 0-RTT and 1-RTT packets carry low-level QUIC protocol messages
-called QUIC frames. These include, e.g., ACK frames carrying acknowledgments for received packets,
-STREAM frames carrying application data, and CRYPTO frames carrying data for TLS handshake.
+called QUIC frames. These include, e.g., \ACK{} frames carrying acknowledgments for received packets,
+\STREAM{} frames carrying application data, and \CRYPTO{} frames carrying data for TLS handshake.
 
 Even though all received QUIC packets have to be acknowledged, some packets do not need to be
-acknowledged immediately. For example, packets containing only ACK frames are not acknowledged
+acknowledged immediately. For example, packets containing only \ACK{} frames are not acknowledged
 immediately to avoid unnecessary network traffic. Instead, the acknowledgment is sent later together
 with other data. Frame types requiring immediate acknowledgments are called \textit{ack-eliciting
 frames}, and the packets with at least one such frame are called \textit{ack-eliciting packets}.
 
-There are multiple restrictions on which frames can be sent in which packets. For example, STREAM
+There are multiple restrictions on which frames can be sent in which packets. For example, \STREAM{}
 frames can only be sent in 1-RTT packets to avoid compromising security.
 \autoref{tab:02-frame-types} lists all frame types, whether they are ack-eliciting and in which
 packets they can be sent.
 
 \begin{myTable}[\small] {tab:02-frame-types} {QUIC frame types}
   {l@{\hskip -0.1in}ccccc}
-  {                      &               & \multicolumn{4}{c}{Allowed in packet type}                \\ \cmidrule(lr){3-6}
-    Frame type           & Ack-eliciting & Initial      & Handshake    & 0-RTT        & 1-RTT}
-  PADDING                &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-  PING                   & \checkmark{}  & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-  ACK                    &               & \checkmark{} & \checkmark{} &              & \checkmark{} \\
-  RESET\_STREAM          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  STOP\_SENDING          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  CRYPTO                 & \checkmark{}  & \checkmark{} & \checkmark{} &              & \checkmark{} \\
-  NEW\_TOKEN             & \checkmark{}  &              &              &              & \checkmark{} \\
-  STREAM                 & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  MAX\_DATA              & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  MAX\_STREAM\_DATA      & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  MAX\_STREAMS           & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  DATA\_BLOCKED          & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  STREAM\_DATA\_BLOCKED  & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  STREAMS\_BLOCKED       & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  NEW\_CONNECTION\_ID    & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  RETIRE\_CONNECTION\_ID & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  PATH\_CHALLENGE        & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  PATH\_RESPONSE         & \checkmark{}  &              &              & \checkmark{} & \checkmark{} \\
-  CONNECTION\_CLOSE      &               & \checkmark{} & \checkmark{} & \checkmark{} & \checkmark{} \\
-  HANDSHAKE\_DONE        & \checkmark{}  &              &              &              & \checkmark{} \\
+  {                     &               & \multicolumn{4}{c}{Allowed in packet type} \\ \cmidrule(lr){3-6}
+    Frame type          & Ack-eliciting & Initial & Handshake & 0-RTT & 1-RTT}
+  \PADDING{}            &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \PING{}               & \checkmark{}           & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \ACK{}                &               & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
+  \RESETSTREAM{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STOPSENDING{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \CRYPTO{}             & \checkmark{}           & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
+  \NEWTOKEN{}           & \checkmark{}           &         &           &       & \checkmark{}          \\
+  \STREAM{}             & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXDATA{}            & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXSTREAMDATA{}      & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXSTREAMS{}         & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \DATABLOCKED{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STREAMDATABLOCKED{}  & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STREAMSBLOCKED{}     & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \NEWCONNECTIONID{}    & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \RETIRECONNECTIONID{} & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \PATHCHALLENGE{}      & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \PATHRESPONSE{}       & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \CONNECTIONCLOSE{}    &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \HANDSHAKEDONE{}      & \checkmark{}           &         &           &       & \checkmark{}          \\
 \end{myTable}
 
 \subsection{Connection Establishment}
@@ -301,8 +322,8 @@ A QUIC connection is considered established when the TLS handshake completes. By
 have derived the necessary protection keys and can receive 1-RTT frames with application data.
 
 An example handshake flow is illustrated in \autoref{fig:02-example-handshake-flow}. The figure also
-lists the contents of the CRYPTO frames sent. However, this is only for illustrative purposes
-because QUIC does not interpret the CRYPTO frames' contents.
+lists the contents of the \CRYPTO{} frames sent. However, this is only for illustrative purposes
+because QUIC does not interpret the \CRYPTO{} frames' contents.
 
 \begin{myFigure} {fig:02-example-handshake-flow} {Example QUIC handshake flow}
 
@@ -311,26 +332,26 @@ because QUIC does not interpret the CRYPTO frames' contents.
 
 \end{myFigure}
 
-In its first datagram, the client sends an Initial packet with a single CRYPTO frame containing the
+In its first datagram, the client sends an Initial packet with a single \CRYPTO{} frame containing the
 \textit{Client Hello} TLS message.
 
 The server replies with a datagram containing three coalesced QUIC packets. The first is an Initial
-packet that acknowledges the client's Initial packet, and a CRYPTO frame with a \textit{Server
-Hello} message. The contents of Client Hello and Server Hello messages are used by TLS to derive
-Handshake protection keys. The server advances the TLS handshake further by sending another CRYPTO
-frame in the Handshake packet. The server also has enough information to derive also the 1-RTT keys,
-so it can also start sending data on Stream 1 using the STREAM frame in a 1-RTT packet.
+packet that acknowledges the client's Initial packet, and a \CRYPTO{} frame with a \textit{Server
+  Hello} message. The contents of Client Hello and Server Hello messages are used by TLS to derive
+Handshake protection keys. The server advances the TLS handshake further by sending another
+\CRYPTO{} frame in the Handshake packet. The server also has enough information to derive also the
+1-RTT keys, so it can also start sending data on Stream 1 using the \STREAM{} frame in a 1-RTT packet.
 
-Because the server's Initial packet contained an ack-eliciting CRYPTO frame, the client needs to
+Because the server's Initial packet contained an ack-eliciting \CRYPTO{} frame, the client needs to
 respond with another Initial frame with an ACK frame. The client can now derive the Handshake keys,
 enabling him to process the server's Handshake packet. The Handshake packet needs to be separately
-acknowledged by an ACK frame, and a reply from the TLS layer must be sent using another CRYPTO
-frame. From the information in the server's Handshake packet's CRYPTO frame, the client derives
+acknowledged by an \ACK{} frame, and a reply from the TLS layer must be sent using another \CRYPTO{}
+frame. From the information in the server's Handshake packet's \CRYPTO{} frame, the client derives
 1-RTT protection keys and processes the server's 1-RTT packet. In addition to sending an ACK frame
 for the server's 1-RTT packet, the client can now start sending application data on stream 0 using a
-STREAM frame.
+\STREAM{} frame.
 
-After server detects that Handshake has successfully completed, it sends a HANDSHAKE\_DONE frame to
+After server detects that Handshake has successfully completed, it sends a \HANDSHAKEDONE{} frame to
 communicate the fact to the client.
 
 \subsection{Connection Termination}
@@ -361,20 +382,20 @@ protocol, not QUIC implementation, to prevent unnecessary network traffic.
 \subsubsection{Immediate close}
 
 An immediate close can be initiated both by QUIC implementation and by the application protocol.
-Either endpoint can initiate an immediate close by sending a CONNECTION\_CLOSE frame. This causes
+Either endpoint can initiate an immediate close by sending a \CONNECTIONCLOSE{} frame. This causes
 all streams to become closed immediately.
 
-By sending a CONNECTION\_CLOSE frame, the peer enters a closing state, in which it includes the
-CONNECTION\_CLOSE frame in all packets it sends in reply to incoming packets.
+By sending a \CONNECTIONCLOSE{} frame, the peer enters a closing state, in which it includes the
+\CONNECTIONCLOSE{} frame in all packets it sends in reply to incoming packets.
 
-Upon receiving a CONNECTION\_CLOSE, the peer should echo the CONNECTION\_CLOSE back to the peer and
-enter the closing state.
+Upon receiving a \CONNECTIONCLOSE{}, the peer should once echo the \CONNECTIONCLOSE{} back to the
+peer and enter the closing state.
 
 The closing state lasts until the endpoint is sure the other endpoint is also in the closing state
-(e.g., until it also receives CONNECTION\_CLOSE), or until a closing timeout expires. The closing
+(e.g., until it also receives \CONNECTIONCLOSE{}), or until a closing timeout expires. The closing
 timeout period is calculated from the current estimate of the round-trip time of the connection.
 
-The CONNECTION\_CLOSE frame carries an error code and, optionally, a human-readable error phrase.
+The \CONNECTIONCLOSE{} frame carries an error code and, optionally, a human-readable error phrase.
 When initiated by QUIC, the error codes semantics defined by the QUIC specification. However, when
 initiated by the application protocol, the semantics of all possible error code values sent in the
 frame are defined by the application protocol itself.
@@ -450,11 +471,11 @@ the stream, each direction of the stream behaves as separate inbound and outboun
 streams. This means, e.g., that the reading and writing part of the stream can be closed
 independently of each other.
 
-Streams are opened simply by sending the first STREAM frame for that stream. The endpoint sending
+Streams are opened simply by sending the first \STREAM{} frame for that stream. The endpoint sending
 data on the stream can close the stream either gracefully by specifying that all data have been
-written or by abruptly terminating the stream using RESET\_STREAM frame. The abrupt termination is
+written or by abruptly terminating the stream using \RESETSTREAM{} frame. The abrupt termination is
 also referred to as \textit{resetting the stream}. The endpoint receiving the stream can request a
-stream reset using the STOP\_SENDING frame if it no longer wishes to receive data on that stream.
+stream reset using the \STOPSENDING{} frame if it no longer wishes to receive data on that stream.
 Abrupt termination of the stream requires specifying an application-level error code that is
 communicated to the peer.
 
@@ -496,11 +517,11 @@ communicated to the peer using three types of frames:
 
 \begin{itemize}
 
-\litem{MAX\_STREAM\_DATA} maximum offset of data sent on a stream with specified ID\@.
+\litem{\MAXSTREAMDATA{}} maximum offset of data sent on a stream with specified ID\@.
 
-\litem{MAX\_DATA} maximum sum of all offsets of data sent on all streams.
+\litem{\MAXDATA{}} maximum sum of all offsets of data sent on all streams.
 
-\litem{MAX\_STREAMS} maximum number of opened streams of a particular stream type.
+\litem{\MAXSTREAMS{}} maximum number of opened streams of a particular stream type.
 
 \end{itemize}
 
@@ -514,8 +535,8 @@ must immediately terminate the connection.
 \section{Loss Detection and Recovery}
 
 To ensure that the peer receives sent data, QUIC requires each endpoint to send acknowledgments for
-all packets using ACK frames. The ACK frames contain ranges of packet numbers that the endpoint
-acknowledges.
+all packets using \ACK{} frames. The \ACK{} frames contain ranges of packet numbers that the
+endpoint acknowledges.
 
 QUIC declares a packet lost when it meets the following conditions:
 
@@ -548,7 +569,7 @@ amount of data that can be in-flight. The QUIC-RECOVERY specification document d
 congestion control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm. However, it leaves the
 selection of the congestion control algorithm up to the implementation.
 
-\section{Packet Protection}
+\section{Packet Protection}\label{sec:packet-protection}
 
 All QUIC packets of type Initial, Handshake, 1-RTT and 0-RTT are encrypted to ensure integrity and
 confidentiality of the transmitted data. Negotiation of the cryptographic ciphers and the encryption
@@ -593,7 +614,7 @@ The programming interface for AEAD provides following operations:
 
 \end{itemize}
 
-\subsection{Deriving QUIC Protection Keys}
+\subsection{Deriving QUIC Protection Keys}\label{sec:02-encryption-key-derivation}
 
 QUIC derives multiple distinct keys from the secrets negotiated by TLS handshake. The derivation
 uses the HKDF-Expand-Label function~\cite{rfc5869} to derive keys of desired length. The keys are
@@ -613,7 +634,25 @@ of packet encryption.
 \subsection{Packet Protection Procedure}
 
 When actually encrypting the packets, QUIC first encrypts the packet payload using the AEAD cipher
-negotiated by the TLS implementation. The parameters for AEAD are:
+negotiated by the TLS implementation. QUIC specification allows use of all AEAD ciphers allowed in
+TLS 1.3. These ciphers are:
+
+\begin{itemize}
+
+  \item TLS\_AES\_128\_GCM\_SHA256
+
+  \item TLS\_AES\_256\_GCM\_SHA384
+
+  \item TLS\_CHACHA20\_POLY1305\_SHA256
+
+  \item TLS\_AES\_128\_CCM\_SHA256
+
+  \item TLS\_AES\_128\_CCM\_8\_SHA256
+
+\end{itemize}
+
+
+The parameters for AEAD for packet payload protection are:
 
 \begin{itemize}
 
@@ -638,7 +677,7 @@ sample of the encrypted payload.
 
 \todo{Try illustrating the process using a figure}
 
-\subsection{Updating 1-RTT Protection Keys}
+\subsection{Updating 1-RTT Protection Keys}\label{sec:02-key-update}
 
 Some AEAD functions have limits for how many packets can be encrypted using the same keys. Analysis
 in the specification document shows that updating the protection keys after sending at most

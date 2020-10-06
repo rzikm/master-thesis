@@ -55,6 +55,7 @@
 \usepackage[labelfont=bf]{caption} % use bold captions lables (Figure X.X:)
 \usepackage{tikz}           % for drawing (checkmark etc)
 
+
 %%% Basic information on the thesis
 
 % Thesis title in English (exactly as in the formal assignment)
@@ -105,6 +106,10 @@ Abstract. TODO last.
 %% Most settings are pre-set by the pdfx package.
 \hypersetup{unicode}
 \hypersetup{breaklinks=true}
+
+%% make \autoref use section instead of subsection and subsubsection
+\let\subsectionautorefname\sectionautorefname
+\let\subsubsectionautorefname\sectionautorefname
 
 % Definitions of macros (see description inside)
 \include{macros}

@@ -181,8 +181,8 @@
 \definecolor{codecolornamespace}{gray}{0}
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
-\newcommand{\keyword}[1]{\color{codecolorkeyword}\texttt{#1}}
-\newcommand{\namespace}[1]{\color{codecolornamespace}\texttt{#1}}
+\newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{#1}}}
+\newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
 \newcommand{\method}[1]{\textit{\texttt{#1}}}
 
 % macros for typesetting description lists with C# class members
@@ -209,6 +209,9 @@
 \newcommand{\ditemmethod}[3]% type, name, args (types only)
   {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2}(\ditemmethodmakearglist{#3})}}}
 
+\newcommand{\ditemmethodWithComment}[4]% type, name, args (types only)
+  {\ditemWithComment{\ditemsrcsize\texttt{\class{#1} \method{#2}(\ditemmethodmakearglist{#3})}}{#4}}
+
 \newcommand{\ditemctor}[2]% name, args
   {\ditem{\ditemsrcsize\texttt{\method{#1}(\ditemmethodmakearglist{#2})}}}
 
@@ -233,3 +236,33 @@
 
 % checkmark
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+
+% macro for typesetting QUIC frame types
+\newcommand{\quicFrame}[1]{\texttt{#1}}
+\newcommand{\PADDING}{\quicFrame{PADDING}}
+\newcommand{\PING}{\quicFrame{PING}}
+\newcommand{\ACK}{\quicFrame{ACK}}
+\newcommand{\RESETSTREAM}{\quicFrame{RESET\_STREAM}}
+\newcommand{\STOPSENDING}{\quicFrame{STOP\_SENDING}}
+\newcommand{\CRYPTO}{\quicFrame{CRYPTO}}
+\newcommand{\NEWTOKEN}{\quicFrame{NEW\_TOKEN}}
+\newcommand{\STREAM}{\quicFrame{STREAM}}
+\newcommand{\MAXDATA}{\quicFrame{MAX\_DATA}}
+\newcommand{\MAXSTREAMDATA}{\quicFrame{MAX\_STREAM\_DATA}}
+\newcommand{\MAXSTREAMS}{\quicFrame{MAX\_STREAMS}}
+\newcommand{\DATABLOCKED}{\quicFrame{DATA\_BLOCKED}}
+\newcommand{\STREAMDATABLOCKED}{\quicFrame{STREAM\_DATA\_BLOCKED}}
+\newcommand{\STREAMSBLOCKED}{\quicFrame{STREAMS\_BLOCKED}}
+\newcommand{\NEWCONNECTIONID}{\quicFrame{NEW\_CONNECTION\_ID}}
+\newcommand{\RETIRECONNECTIONID}{\quicFrame{RETIRE\_CONNECTION\_ID}}
+\newcommand{\PATHCHALLENGE}{\quicFrame{PATH\_CHALLENGE}}
+\newcommand{\PATHRESPONSE}{\quicFrame{PATH\_RESPONSE}}
+\newcommand{\CONNECTIONCLOSE}{\quicFrame{CONNECTION\_CLOSE}}
+\newcommand{\HANDSHAKEDONE}{\quicFrame{HANDSHAKE\_DONE}}
+
+% macros for commonly used class names
+\newcommand{\QuicConnection}{\class{Quic\allowbreak{}Connection}}
+\newcommand{\QuicSocketContext}{\class{Quic\allowbreak{}Socket\allowbreak{}Context}}
+\newcommand{\QuicReader}{\class{Quic\allowbreak{}Reader}}
+\newcommand{\QuicWriter}{\class{Quic\allowbreak{}Writer}}
+\newcommand{\CryptoSeal}{\class{Crypto\allowbreak{}Seal}}
