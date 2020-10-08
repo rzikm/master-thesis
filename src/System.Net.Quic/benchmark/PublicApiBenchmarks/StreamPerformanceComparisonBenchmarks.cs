@@ -10,8 +10,8 @@ namespace PublicApiBenchmarks
 {
     public class StreamPerformanceComparisonBenchmarks : SslStreamComparisonBenchmark
     {
-        [Params(64 * 1024, 1024 * 1024, 32 * 1024 * 1024)]
-        // [Params(64 * 1024, 1024 * 1024)]
+        // [Params(64 * 1024, 1024 * 1024, 32 * 1024 * 1024)]
+        [Params(64 * 1024, 1024 * 1024)]
         // [Params(1024 * 1024, 32 * 1024 * 1024)]
         // [Params(16 * 1024 * 1024)]
         // [Params(1024 * 1024)]
@@ -75,12 +75,12 @@ namespace PublicApiBenchmarks
 
         protected override void IterationSetupQuicStream()
         {
-            QuicClient = QuicFactory.CreateClient(QuicListener.ListenEndPoint);
+            QuicClient = QuicFactory.CreateClient(new IPEndPoint(IPAddress.Loopback, QuicListener.ListenEndPoint.Port));
             QuicClient.ConnectAsync().AsTask().GetAwaiter().GetResult();
         }
 
-        // [Benchmark(Description = "ManagedQuicStream")]
-        [Benchmark]
+        [Benchmark(Description = "ManagedQuicStream")]
+        // [Benchmark]
         public async Task QuicStream()
         {
             await using var stream = await QuicClient.AcceptStreamAsync();
@@ -100,7 +100,7 @@ namespace PublicApiBenchmarks
             ClientSslStream.AuthenticateAsClient("localhost");
         }
 
-        [Benchmark(Baseline = true)]
+        // [Benchmark(Baseline = true)]
         public async Task SslStream()
         {
             await RecvData(ClientSslStream);

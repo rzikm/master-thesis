@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Net;
 using System.Net.Quic;
@@ -11,6 +12,8 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
+using Microsoft.Diagnostics.NETCore.Client;
+using Microsoft.Diagnostics.Tracing.Parsers;
 
 namespace PublicApiBenchmarks
 {
@@ -40,9 +43,10 @@ namespace PublicApiBenchmarks
                 // AddDiagnoser(ThreadingDiagnoser.Default);
                 
                 // AddDiagnoser(QuicDiagnoser.Default);
-                // AddJob(Job.InProcess.WithIterationCount(30));
+                AddJob(Job.InProcess.WithIterationCount(30));
+                // AddJob(Job.InProcess);
                 
-                AddJob(Job.Default);
+                // AddJob(Job.Default);
             }
         }
 

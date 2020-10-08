@@ -10,7 +10,7 @@ namespace Samples
     /// <summary>
     ///     Runs a simple and verbose sample of sending fixed amount of data from server to client.
     /// </summary>
-    internal class SimpleClientAndServer
+    public class SimpleClientAndServer
     {
         private const int DataSizeBytes = 1024 * 1024;
 

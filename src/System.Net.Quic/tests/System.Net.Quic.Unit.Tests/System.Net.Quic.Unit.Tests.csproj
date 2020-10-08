@@ -11,18 +11,14 @@
     <ProjectReference Include="..\..\src\System.Net.Quic\System.Net.Quic.csproj" />
   </ItemGroup>
 
+  <!-- Source code files -->
   <ItemGroup>
-    <Compile Include="$(SysNetHttpPath)/tests/UnitTests/*Quic*.cs">
+    <Compile Include="$(SysNetQuicPath)/tests/UnitTests/**/*.cs">
       <link>%(RecursiveDir)%(Filename)%(Extension)</link>
     </Compile>
   </ItemGroup>
-    
-  <ItemGroup>
-    <Compile Include="$(SysNetHttpPath)/tests/UnitTests/Quic/**/*.cs">
-      <link>%(RecursiveDir)%(Filename)%(Extension)</link>
-    </Compile>
-  </ItemGroup>
-    
+
+  <!-- Certificates needed for testing -->
   <ItemGroup>
     <Content Include="..\..\..\..\certs\cert.crt">
       <Link>Certs\cert.crt</Link>

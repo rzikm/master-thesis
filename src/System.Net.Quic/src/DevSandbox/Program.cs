@@ -13,15 +13,15 @@ namespace DevSandbox
     {
         public static async Task Main(string[] args)
         {
-            // var eventListener = new QuicEventListener();
-            // var logger = new QuicPacketLogger(eventListener.EventReader);
-            // var logTask = Task.Run(logger.Start);
-            Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
+            var eventListener = new QuicEventListener();
+            var logger = new QuicPacketLogger(eventListener.EventReader);
+            var logTask = Task.Run(logger.Start);
+            // Environment.SetEnvironmentVariable("USE_MSQUIC", "1");
             // await Run();
             // eventListener.Stop();
             // await logTask;
 
-            await SslStreamStuff();
+            await Samples.SimpleClientAndServer.Run();
         }
 
         private const string CertFile = "Certs/cert-combined.pfx";

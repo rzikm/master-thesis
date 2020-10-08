@@ -12,10 +12,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="$(SysNetHttpPath)\tests\FunctionalTests\**\*Quic*.cs">
+        <Compile Include="$(SysNetQuicPath)\tests\FunctionalTests\**\*Quic*.cs">
             <link>%(RecursiveDir)%(Filename)%(Extension)</link>
         </Compile>
-        <Compile Remove="$(SysNetHttpPath)\tests\FunctionalTests\MsQuicTests.cs"/>
+        <Compile Remove="$(SysNetQuicPath)\tests\FunctionalTests\MsQuicTests.cs" />
     </ItemGroup>
 
     <ItemGroup>

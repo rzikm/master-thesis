@@ -20,7 +20,7 @@ namespace PublicApiBenchmarks
                         new SslApplicationProtocol("benchmark")
                     }
                 },
-                ListenEndPoint = endpoint ?? new IPEndPoint(IPAddress.IPv6Loopback, 0)
+                ListenEndPoint = endpoint ?? new IPEndPoint(IPAddress.Any, 0)
             });
         }
 
