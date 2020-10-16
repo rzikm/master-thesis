@@ -4,10 +4,8 @@ param(
 
 $dotnetRuntimeRoot = "$PSScriptRoot\src\dotnet-runtime"
 
-$opensslRoot = "$PSScriptRoot\extern\akamai-openssl-quic"
-
-$nativeRoot = "$PSScriptRoot\src\dotnet-runtime\src\libraries\Native\AnyOS\QuicNative"
-$nativeArtifactRoot = "$PSScriptRoot\artifacts\native"
+$opensslRoot = "$PSScriptRoot\extern\openssl"
+$opensslArtifactRoot = "$PSScriptRoot\artifacts\openssl"
 
 $msquicRoot = "$PSScriptRoot\extern\msquic"
 $msquicArtifactRoot = "$PSScriptRoot\artifacts\msquic"
@@ -60,6 +58,25 @@ foreach ($command in "perl", "nasm")
     }
 }
 
+
+echo "Building custom OpenSSL"
+$null = New-Item -ItemType Directory "$opensslArtifactRoot" -Force
+pushd $opensslRoot
+
+echo "Checking build prerequisities";
+foreach ($command in "perl", "nasm")
+{
+    if(!(Get-Command $command -ErrorAction SilentlyContinue))
+    {
+        echo "Cannot find $command, make sure it is in path"
+        exit 1;
+    }
+}
+
+perl "Configure" VC-WIN64A "--prefix=$opensslArtifactRoot"
+nmake install_sw
+popd
+
 echo "Restoring dotnet-runtime NuGet packages"
 
 pushd $dotnetRuntimeRoot
@@ -67,24 +84,3 @@ pushd $dotnetRuntimeRoot
 .\eng\build.ps1 -restore
 
 popd
-
-echo "Building native libs"
-$null = New-Item -ItemType Directory "$PSScriptRoot\obj\QuicNative" -Force
-pushd "$PSScriptRoot\obj\QuicNative\"
-
-echo "Building 32-bit QuicNative.dll"
-$null = New-Item -ItemType Directory "build32" -Force
-pushd build32
-cmake "$nativeRoot" -A"Win32" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win32"
-cmake --build . --parallel 3 --config Release --target install
-popd
-
-echo "Building 64-bit QuicNative.dll"
-$null = New-Item -ItemType Directory "build64" -Force
-pushd build64
-cmake "$nativeRoot" -A"x64" "-DCMAKE_INSTALL_PREFIX=$nativeArtifactRoot\win64"
-cmake --build . --parallel 3 --config Release --target install
-popd
-
-popd
-

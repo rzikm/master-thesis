@@ -29,11 +29,62 @@ List of highlights of unimplemented protocol features follows
 
 Their implementation is subject for future development.
 
-## Quickstart
+## OpenSSL integration
+
+To function correctly, the implementation requires a custom branch of OpenSSL from Akamai
+https://github.com/akamai/openssl/tree/OpenSSL_1_1_1g-quic. The implementation tries to decect that
+a QUIC-supporting OpenSSL is present in the path. If not a mock implementation is used instead.
+
+The mock implementation can be used for trying the library locally, but interoperation with other
+QUIC implementations is possible only with the OpenSSL-based TLS. If you want to make sure your
+implementation runs with OpenSSL, define the `DOTNETQUIC_OPENSSL` environment variable. This will
+cause the implementation to throw if OpenSSL cannot be loaded.
+
+## Setup and Build
 
 Make sure you cloned all git submodules of this repository
 
     git submodule update --init
+
+### Building the Library
+
+You should be able to build and run the code using the `src/System.Net.Quic/System.Net.Quic.sln`
+solution. This should produce a standalone `System.Net.Quic.dll` you can reference form a normal
+.NET project. Note that compiling the source requires preview version of .NET 5 SDK.
+
+Alternatively, you can build entire dotnet runtime from source from the `src/dotnet-runtime`
+subdirectory.
+
+### Building as part of dotnet runtime
+
+Follow the guide in [Official .NET
+repository](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/docs/workflow). Note
+that the code running against this build of runtime still requires custom build of OpenSSL in the
+path.
+
+### Building the Unit tests
+
+You can build and run unit tests using the `src/System.Net.Quic/System.Net.Quic.sln` solution, but
+you first need to perform nuget restore in the `src/dotnet-runtime` subdirectory. Use commands:
+
+    # on Linux
+    ./build.sh -restore
+
+    # on Windows
+    setup.cmd -restore
+
+### Building custom OpenSSL
+
+The necessary fork of OpenSSL is included as a submodule in `extern/openssl` directory. Follow the
+readme instructions in OpenSSL's
+[INSTALL.md](https://github.com/openssl/openssl/blob/master/INSTALL.md)
+
+### Quick Setup Script
+
+Alternatively, the necessary steps above can be performed via a helper scripts. Make sure all
+submodules are cloned
+
+    git submodule update --init --recursive
 
 Then run the setup script:
 
@@ -45,27 +96,30 @@ Then run the setup script:
 
 The scripts will:
 
-- Build the native `QuicNative` library using the custom openssl branch of OpenSSL which provides
-	necessary APIs for QUIC The native binaries should be placed in `artifacts/native` directory in
-	the repository, they will be copied from there when .csproj projects are built. refer to
-	OpenSSL's [INSTALL.md](https://github.com/openssl/openssl/blob/master/INSTALL.md) for build
-	prerequisites.
-- Restore nuget packages inside the dotnet runtime repository, these are needed to build unit tests
-  , but not the actual `System.Net.Quic.dll` library.
+- Build the modified `openssl` library using the custom branch of OpenSSL which provides necessary
+	APIs for QUIC The native binaries should be placed in `artifacts/openssl` directory in the
+	repository. You then need to add the directory to the path so that the libraries are loaded by
+	.NET at runtime. refer to OpenSSL's
+	[INSTALL.md](https://github.com/openssl/openssl/blob/master/INSTALL.md) for build prerequisites.
+- Restore nuget packages inside the dotnet runtime repository, these are needed to build unit tests,
+  but not the actual `System.Net.Quic.dll` library.
 - you can also pass `-msquic` option to the script to also build the `msquic` library which is used
 	in benchmarks to compare the implementation performance. Building msquic requires Powershell
 	Core (even on Linux OS). Refer to [msquic README](https://github.com/microsoft/msquic) for all
 	prerequisites.
-
-After running the setup script, you should be able to build and run the code using the
-`src/System.Net.Quic/System.Net.Quic.sln` solution.
 
 ## Usage and API
 
 For usage, see examples in the [Samples](https://github.com/rzikm/master-thesis/tree/master/src/System.Net.Quic/src/Samples) project.
 
 For the list of API methods, see [Quic*.cs files inside the 
-repo](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/Common/src/System/Net/Http/aspnetcore/Quic).
+repo](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/System.Net.Quic/src/System/Net/Quic).
+
+## Tracing and qvis
+
+The implementation can produce traces that can be consumed by https://qvis.edm.uhasselt.be
+visualizer. To collect traces, define `DOTNETQUIC_TRACE` environment variable. The traces will be
+saved in the working directory of the program.
 
 ## Known Issues
 
@@ -98,24 +152,21 @@ mergeability, and because that way I can run the functional tests originally mad
 based implementation. This repository contains only files which are specific to my master thesis and
 do not belong to the .NET runtime repository.
 
-The actual source code of managed QUIC implementation is located in
-[src/dotnet-runtime/src/libraries/Common/src/System/Net/Http/aspnetcore/Quic/Implementations/Managed](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/Common/src/System/Net/Http/aspnetcore/Quic/Implementations/Managed).
+The actual source code of managed QUIC implementation is located in the dotnet runtime fork in
+[src/dotnet-runtime/src/libraries/System.Net.Quic/src/System/Net/Quic/Implementations/Managed](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/System.Net.Quic/src/System/Net/Quic/Implementations/Managed).
 
 The code for unit tests for managed QUIC implementation is located at:
-[src/dotnet-runtime/src/libraries/System.Net.Http/tests/UnitTests](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/System.Net.Http/tests/UnitTests).
+[src/dotnet-runtime/src/libraries/System.Net.Quic/src/System/Net/Quic/Implementations/Managed](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/System.Net.Quic/src/System/Net/Quic/Implementations/Managed).
+[src/dotnet-runtime/src/libraries/System.Net.Quic/tests/UnitTests](https://github.com/rzikm/dotnet-runtime/tree/master-managed-quic/src/libraries/System.Net.Quic/tests/UnitTests).
 
-To make the implementation accessible also outside the dotnet runtime, I created a standalone .NET
-library project, which includes the above mentioned sources and provides a public wrapper for them.
-Referncing this library allows using `QuicConnection` and other classes in .NET applications without
-the need for custom-built .NET runtime.
+To make the implementation accessible also without having to build the entire dotnet runtime, I
+created a standalone .NET library project, which includes the above mentioned sources. Referncing
+this library allows using `QuicConnection` and other classes without the need to use entire
+custom-built .NET runtime.
 
 The solution with the wrapper project is located under `src/System.Net.Quic/`. This is also the
 solution I use for active development, as the compile times are shorter than building the
 `System.Net.Http` assembly containing the internal QUIC sources.
-
-## Building as part of dotnet runtime
-
-Make sure you cloned all submodules in /src/dotnet-runtime, and the guide in [Official .NET repository](https://github.com/rzikm/dotnet-runtime/tree/ac3506ca275af0bf284555d216602a9438c9a662/docs/workflow).
 
 ## Comparing with msquic
 

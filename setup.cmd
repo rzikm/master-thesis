@@ -5,8 +5,8 @@
 :: For VS2017 and later, multiple instances can be installed on the same box SxS and VSxxxCOMNTOOLS is only set if the user
 :: has launched the VS2017 or VS2019 Developer Command Prompt.
 ::
-:: Following this logic, we will default to the VS2017 or VS2019 toolset if VS150COMNTOOLS or VS160COMMONTOOLS tools is
-:: set, as this indicates the user is running from the VS2017 or VS2019 Developer Command Prompt and
+:: Following this logic, we will default to the VS2019 toolset if VS160COMMONTOOLS tools is
+:: set, as this indicates the user is running from the VS2019 Developer Command Prompt and
 :: is already configured to use that toolset. Otherwise, we will fail the script if no supported VS instance can be found.
 
 if defined VisualStudioVersion goto :RunVCVars
@@ -29,8 +29,8 @@ if "%VisualStudioVersion%"=="16.0" (
 )
 
 :MissingVersion
-:: Can't find VS 2017, 2019
-echo Error: Visual Studio 2017 or 2019 required
+:: Can't find VS 2019
+echo Error: Visual Studio 2019 required
 exit /b 1
 
 :VS2019
@@ -39,15 +39,6 @@ set __VSVersion=vs2019
 set __PlatformToolset=v142
 :: Set the environment for the native build
 call "%VS160COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" %__VCBuildArch%
-goto DoSetup
-
-
-:VS2017
-:: Setup vars for VS2017
-set __VSVersion=vs2017
-set __PlatformToolset=v141
-:: Set the environment for the native build
-call "%VS150COMNTOOLS%..\..\VC\Auxiliary\Build\vcvarsall.bat" %__VCBuildArch%
 goto DoSetup
 
 :DoSetup

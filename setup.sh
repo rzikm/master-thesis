@@ -2,10 +2,7 @@
 ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 MSQUIC_ARTIFACT_ROOT=$ROOT/artifacts/msquic
-
-NATIVE_ARTIFACT_ROOT=$ROOT/artifacts/native
-QUIC_NATIVE_SOURCE=$ROOT/src/dotnet-runtime/src/libraries/Native/AnyOS/QuicNative
-QUIC_NATIVE_BUILD_DIR="$ROOT/obj/QuicNative/"
+OPENSSL_ARTIFACT_ROOT=$ROOT/artifacts/openssl
 
 # parse args
 while [[ $# > 0 ]]; do
@@ -48,17 +45,17 @@ if [ ! -z "$msquic" ]; then
   cd -
 fi
 
+echo "Building custom OpenSSL"
+mkdir -p "$OPENSSL_ARTIFACT_ROOT"
+
+cd "$ROOT/extern/openssl"
+./config "--prefix=$OPENSSL_ARTIFACT_ROOT"
+make install_sw
+
+cd -
+
+
 echo "Restoring NuGet packages for dotnet runtime"
 pushd "$ROOT/src/dotnet-runtime"
 ./build.sh --restore
-popd
-
-echo "Building QuicNative"
-QUIC_NATIVE_BUILD_DIR="$ROOT/obj/QuicNative/"
-mkdir -p "$QUIC_NATIVE_BUILD_DIR"
-pushd "$QUIC_NATIVE_BUILD_DIR"
-
-cmake "$QUIC_NATIVE_SOURCE" "-DCMAKE_INSTALL_PREFIX=$NATIVE_ARTIFACT_ROOT/linux86_64"
-cmake --build . --parallel 3 --config Release --target install
-
 popd
