@@ -6,9 +6,11 @@ namespace Samples
 {
     class Program
     {
-        static Task Main(string[] args)
+        static async Task Main(string[] args)
         {
-            return SimpleClientAndServer.Run();
+            // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "1");
+            
+            await SimpleClientAndServer.Run();
         }
     }
 }
