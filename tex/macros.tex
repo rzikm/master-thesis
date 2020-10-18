@@ -174,13 +174,14 @@
   \endfigure{}
 }
 
-% macros for typesetting various code elements inside th text, TODO: add colors
+% macros for typesetting various code elements inside the text
 
 \definecolor{codecolorclass}{rgb}{0, 0.4, 0}
 \definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
 \definecolor{codecolornamespace}{gray}{0}
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
+\newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{#1}}}
 \newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
 \newcommand{\method}[1]{\textit{\texttt{#1}}}
@@ -266,3 +267,7 @@
 \newcommand{\QuicReader}{\class{Quic\allowbreak{}Reader}}
 \newcommand{\QuicWriter}{\class{Quic\allowbreak{}Writer}}
 \newcommand{\CryptoSeal}{\class{Crypto\allowbreak{}Seal}}
+\newcommand{\QuicStream}{\class{Quic\allowbreak{}Stream}}
+\newcommand{\QuicListener}{\class{Quic\allowbreak{}Listener}}
+\newcommand{\ReceiveStream}{\class{Receive\allowbreak{}Stream}}
+\newcommand{\SendStream}{\class{Send\allowbreak{}Stream}}

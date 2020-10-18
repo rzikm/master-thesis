@@ -108,14 +108,6 @@ The design intention is to allow writing automated tests that are able to inspec
 by the endpoint, and verify that they are consistent with the behavior defined by the QUIC
 specification.
 
-\subsection{Robustness?}
-
-\todo{probably can be removed, can be mentioned when parsing incoming packets}
-
-\subsection{Debugging?}
-
-\todo{consider qlog and quic-log formats}
-
 \section{Target \dotnet{} API}
 
 This section describes API that will be used to expose the QUIC implementation to other developers.
@@ -434,14 +426,15 @@ The connection background processing will need to process the following events:
 
 \end{itemize}
 
-\subsection{Incoming packet handling}
+Additionally, if the QUIC streams within the connection have some data to send, the
+\QuicSocketContext{} implementation should repeatedly let the connection send the data.
 
-\subsection{User request handling}
-\subsection{Timeout events}
-
-
-\section{Epoch handling}
-\subsection{Separation of epochs in protocol}
+On the server side, the implementation must be able to service a large number of parallel
+connections effectively. However, such a sophisticated server implementation would be complex and
+would greatly increase the scope of this thesis. For the prototype implementation developed by this
+thesis, we will use a simple single-threaded implementation on both server and client side. Our
+implementation will contain a simple loop and use the async/await model to asynchronously wait for
+one of the above-mentioned events.
 
 \section{Packet Protection}
 
@@ -581,41 +574,156 @@ next packet. For such a solution to be memory efficient, it would require a comp
 scheme to avoid needlessly, essentially implementing a custom memory allocator over a block of
 memory. The performance improvement of such a solution may be greatly outweighed by the development
 and maintenance costs. Therefore, until the cost of such a solution is justified by performance
-measurements, our implementation will use a two-copy approach: the first copy from the packet to
-internal stream buffers, the second copy from said buffers to the destination memory provided by the
-application.
+measurements, our implementation will use a two-copy approach: the first copy from the packet to an
+intermediate buffer, the second copy from the intermediate buffer to the destination memory provided
+by the application.
 
 \subsubsection{Packet Reordering and Data Deduplication}
 
 Unreliability of the UDP protocol can cause QUIC packets to be reordered or lost. Because of that,
 parts of the stream may be received multiple times, and the contents of \STREAM{} frames can
-arbitrarily overlap. It is therefore necessary to keep track which parts of the stream have been
-received and buffer only the newly received segments of the stream.
+arbitrarily overlap.
+
+Even though QUIC Flow control provides an upper limit on the data that needs to be buffered at any
+given moment, allocating one large buffer may be inefficient, as the entire buffer might not be
+needed at any given point in time. Our implementation therefore uses multiple smaller buffers and
+allocates only the necessary number of buffers that are needed to buffer currently received data. To
+reduce pressure on garbage collector, buffers that are no longer necessary are returned to a shared
+instance of \class{ArrayPool<byte>} class to avoid their frequent allocation.
+
+\subsubsection{Reading Data by Application Code}
+
+Because user code runs on a different thread from the internal \QuicConnection{} logic, there needs
+to be some synchronization involved. Our implementation uses the \class{Channel<>} class, which
+provides an efficient implementation of producer-consumer queue with support for asynchronous
+operations using the \class{ValueTask<>} type. Each time an incoming \STREAM{} frame allows a part
+of the stream to be delivered to the application, the relevant region of the buffer is queued into
+the \class{Channel<>} using the \class{Memory<byte>} type.
+
+\autoref{fig:03-receive-stream} Illustrates how all parts of the \ReceiveStream{} fit together.
+From the left, data from the incoming \STREAM{} frame are temporarily stored in pooled reordering
+buffers. Regions of memory containing deliverable data are then queued for delivery in the channel.
+From the channel, the memory regions are retrieved by the application thread and copied into the
+destination buffer provided by the application.
+
+\begin{myFigure}{fig:03-receive-stream}{Implementation of the receiving part of the stream}
+
+  \resizebox{\linewidth}{!}{\input{img/03-receive-stream.pdf_tex}}
+
+\end{myFigure}
+
+\subsubsection{Flow Control Considerations}
+
+QUIC Flow control limits for streams specify the maximum offset of data that an endpoint can send.
+An endpoint needs to update these limits after the data are delivered to the application. However,
+sending updated limits in every packet sent to the peer potentially wastes space in the packet. On
+the other hand, updating the limits too late would lead to the other endpoint being blocked and
+signal the fact using the \STREAMDATABLOCKED{} frame. In such state, the endpoint is unable to send
+more data until it receives an update via \MAXSTREAMDATA{} frame.
+
+As a reasonable compromise, our implementation sends a \MAXSTREAMDATA{} frame with updated limits
+once the sender uses more than half of the window sent in the last update.
+
+\subsection{Sending Part of the Stream}
+
+The sending part of a QUIC stream must keep track of state of all outbound data on the stream. Any
+part of the stream can be lost during transmission and the has to be retransmitted, and any part of
+the sent data can be acknowledged.
+
+\todo{these miniintros seem weird and duplicate things said in subsubsections}
+
+\subsubsection{Stream Data Buffering}
+
+Similarly to buffering received data, we will analyze how many times the data need to be copied
+before they are sent. The semantics of the \method{Write} and \method{WriteAsync} methods is that
+when the method completes, the provided memory can be reused. A single-copy approach in this case
+would require that the \method{Write} and \method{WriteAsync} methods complete only after the peer
+acknowledges that the contained data were received. In the best-case scenario would be a full
+round-trip time after the method call which would be very inefficient. Therefore our implementation
+will, as with the receiving part of the stream, use an intermediate buffer for storing the data.
+
+Our implementation will also use variable number of fixed-size buffers rented from a shared
+\class{ArrayPool<byte>} instance. These buffers will be used to store data that cannot be discarded
+yet, because the other endpoint did not acknowledge their reception.
+
+\subsubsection{Acknowledgement, Loss and Retransmission}
+
+Each byte that was written into the stream can be conceptually in three different states:
+
+\begin{itemize}
+
+  \litem{Pending} The byte needs to be sent to the peer in some future \STREAM{} frame.
+
+  \litem{In-flight} The byte has been sent, but it is uncertain if the containing packet was
+received.
+
+  \litem{Acknowledged} The packet containing the byte has been acknowledged by the other endpoint. It is no longer necessary to buffer this byte.
+
+\end{itemize}
+
+The transitions between these states are straightforward. The data transition from pending to
+in-flight by sending them via \STREAM{} frame. When the packet is deemed lost by the loss detection
+algorithm, the data transition back to pending, and if the packet has been acknowledged, the data
+transition to acknowledged. The state of the individual parts of the stream can be tracked by
+maintaining three sets of \textit{ranges} --- starts and ends of the blocks of data in the same state.
+
+\subsubsection{Writing Data by Application Code}
+
+Our implementation will, again, use \class{Channel<>} type to provide synchronization with the
+application thread. However, since \class{Channel<>} does not allow random access to the provided
+data, a separate list of buffers with yet unacknowledged data need to be maintained as well.
+
+\autoref{fig:03-send-stream} illustrates the process of writing data into the \SendStream{}. The
+data from the application are coming from the left, where they are written into a buffer which is
+queued in the synchronization channel. From the channel, the buffer is dequeued and placed in a list
+of retransmission buffers, where it stays until all data it contained are ackonwledged by the other
+endpoint.
+
+\begin{myFigure}{fig:03-send-stream}{Implementation of the sending part of the stream}
+
+  \resizebox{\linewidth}{!}{\input{img/03-send-stream.pdf_tex}}
+
+\end{myFigure}
 
 
+\subsection{Abort/Dispose Model for Streams}
 
-The \STREAM{} frames can
+The \QuicStream{} class implements the \interface{IDisposable} interface which should provide
+automatic closing of the stream when \QuicStream{} is used in a \keyword{using} statement or
+\keyword{using} block. This implies resetting writable part of the stream using \RESETSTREAM{} frame
+and requesting reset of the readable part of the stream using \STOPSENDING{} frame.
 
-\subsubsection{Reading data by user}
-\subsubsection{Flow control consideration}
+However, both these frames require an application-level error code. QUIC specification does not
+define any transport-level error codes for these stream operations. This has been established as an
+incorrect design and can be expected to change in the future iterations of the API design.
 
-\subsection{Outbound part}
+Leaving \interface{IDisposable} unimplemented would be misleading to users in the prototype
+implementation. Our implementation will, therefore, use error code 0 regardless of it's semantics in
+the application protocol, unless the stream has been explicitly closed by the application using the
+\method{AbortRead} or \method{AbortWrite} methods.
 
-\subsubsection{Buffering}
-\subsubsection{Acknowledgement, retransmission}
-\subsubsection{Flow control consideration}
+Another area where the QUIC API is not well defined is the behavior of pending \method{AcceptStream}
+call on \QuicConnection{} when the connection is closed. In case the connection has been closed
+gracefully from the application protocol's perspective, it would be better if this method didn't
+throw an exception, but returned \keyword{null} reference. However, the semantics of the error codes
+are, again, defined by the application protocol. Until the behavior of these methods in such
+scenarios is better defined, our implementation will throw
+\class{QuicConnectionAborted\allowbreak{}Exception} for all pending async calls.
 
-\subsection{Abort/Dispose model for streams}
-\subsection{Managing streams within connection}
-\subsection{Queue of streams to be updated}
+\subsection{Managing Streams within the Connection}
 
+In addition to keeping track of the internal stream states, the \QuicConnection{} implementation
+needs to track how many streams of each type are created and the total amount of data that is being
+sent or received in order to implement Flow control correctly.
 
-\section{Flow control}
+It is also necessary to keep track of all streams that have sendable data so that the relevant
+\QuicSocketContext{} knows to let the connection send more data.
+
+\section{Flow Control}
 
 \subsection{Connection level}
 \subsection{Stream level}
 \subsection{MaxStreams and API}
-
 
 \section{Recovery/Robustness}
 
@@ -625,11 +733,61 @@ The \STREAM{} frames can
 \subsection{Congestion window}
 \subsection{Interface for Congestion control algorithm}
 
-\section{Integration:}
+\section{Debuggability}
 
-\todo{should be after TLS because of OpenSSL dependency}
+QUIC is a very complex protocol and investigation of some issues may be very difficult. By stopping
+the application on a breakpoint, the developer inadvertently changes the behavior of the
+implementation, which makes interactive debugging of issues which span multiple round trips almost
+impossible.
 
-\subsection{Build as part of dotnet runtime}
-\subsection{Standalone build for easier evaluation}
+There are two possible ways of gaining better insight into the behavior of the connection ---
+externally inspecting the packets sent over the network, and producing verbose logs (called traces)
+by the implementation.
 
-\todo{Maybe remove altogether and move this to documentation}
+\subsection{Inspecting the Sent Packets}
+
+Inspecting the connection behavior by observing the packets sent over the network is a non-invasive
+way of diagnosing issues in any networking protocol. An example of a tool which can be used for this
+task is Wireshark \cite{web:wireshark} which also supports QUIC.
+
+However, since QUIC is always encrypted, inspecting QUIC packets via Wireshark is not
+straightforward as for other network protocols. Implementations must leak the encryption secrets
+used in the connection, e.g., in a log file, and these keys must be provided to Wireshark in order
+to successfully decrypt the packets.
+
+\subsection{Producing Traces from the Connection}
+
+A better insight into the behavior of the connection can be gained by emitting verbose logs which
+can be later analyzed, but such logs may be difficult to read and reason about. Fortunately, there
+are tools which can visualize individual events in the connection in a graphic format which is easy
+to understand. One of these tool is \textit{qvis} \cite{web:qvis} which is part of \textit{quiclog}
+suite \cite{githubquiclog}. The \textit{qvis} tool consumes logs in a JSON format, which can be
+either produced directly, or generated from implementation-specific log format or even from network
+packet captures created by Wireshark, provided that encryption secrets are logged elsewhere for the
+given connection.
+
+Although JSON format produces larger log files, it can be directly consumed by the \textit{qvis}
+tool without any further conversions. For this reason, we chose to use it in our implementation and
+will consider more terse logging options if producing the JSON format incurs too significant
+overhead.
+
+\section{Integration into .NET Runtime Codebase}
+
+The work of this thesis aims to be eventually mergeable into the \dotnet{} runtime codebase. As of
+writing this thesis, there already exists project for textit{System.Net.Quic.dll}. Therefore, the
+source code may be placed there directly without additional changes.
+
+There is, however, the issue with the \libopenssl{} dependency. Although it would be possible to
+build the required \libopenssl{} version together with other native parts of the \dotnet{} runtime,
+it would introduce multiple additional requirements on the installed tools. In order not to
+complicate the runtime build requirements, our implementation will expect the appropriate
+\libopenssl{} version to already present and available for loading.
+
+It can be useful to be able to use the QUIC implementation without the need of \libopenssl{}
+dependency. Because the \libopenssl{} implementation is used only for performing the TLS handshake,
+it is not difficult to replace the TLS implementation by a mock implementation that will work
+sufficiently when it is used on both sides of the connection. The mock TLS implementation allows the
+\libopenssl{} dependency to be completely optional, and is required only when testing interop with
+other QUIC implementations. Therefore, our implementation will first inspect if required
+\libopenssl{} version is available, and if it is not, then it will fallback to mock TLS
+implementation.
