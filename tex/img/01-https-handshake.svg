@@ -8,9 +8,9 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="131.97539mm"
-   height="68.766426mm"
-   viewBox="0 0 131.97539 68.766426"
+   width="131.78641mm"
+   height="67.550041mm"
+   viewBox="0 0 131.78641 67.550041"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
@@ -158,9 +158,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="7.9195959"
-     inkscape:cx="242.55807"
-     inkscape:cy="92.793347"
+     inkscape:zoom="1.4"
+     inkscape:cx="267.56395"
+     inkscape:cy="194.78075"
      inkscape:document-units="mm"
      inkscape:current-layer="layer2"
      inkscape:document-rotation="0"
@@ -168,7 +168,7 @@
      inkscape:snap-page="true"
      inkscape:window-width="1920"
      inkscape:window-height="1005"
-     inkscape:window-x="0"
+     inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
      fit-margin-top="0"
@@ -193,7 +193,7 @@
      id="layer1"
      sodipodi:insensitive="true"
      style="display:none"
-     transform="translate(-38.755524,-31.196224)">
+     transform="translate(-38.944512,-31.196224)">
     <image
        width="209.21008"
        height="287.82629"
@@ -209,7 +209,7 @@
      id="layer2"
      inkscape:label="Drawing"
      style="display:inline"
-     transform="translate(-38.755524,-31.196224)">
+     transform="translate(-38.944512,-31.196224)">
     <g
        id="g2195"
        transform="translate(-10.992516)">
@@ -249,7 +249,7 @@
     </g>
     <path
        style="fill:none;stroke:#800000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 154.19906,88.95607 c 2.69441,0.05997 0.0865,4.986221 2.59104,5.54534 -2.51849,0.79036 0.13762,5.3468 -2.58604,5.3289"
+       d="m 154.19906,89.08841 c 2.69441,0.05997 0.0865,3.705055 2.59104,4.264174 -2.51849,0.79036 0.13762,4.282074 -2.58604,4.264174"
        id="path2840"
        sodipodi:nodetypes="ccc" />
     <path
@@ -412,23 +412,18 @@
            id="tspan1895"
            x="104.08356"
            y="92.29583"
-           style="font-size:3.88056px;text-align:center;text-anchor:middle;fill:#800000;stroke-width:0.264583">HTTP</tspan></text>
+           style="font-size:3.88056px;text-align:center;text-anchor:middle;fill:#800000;stroke-width:0.264583">GET</tspan></text>
     </g>
-    <path
-       style="fill:#800000;stroke:#800000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1995)"
-       d="m 58.679359,95.369976 89.063581,2.414121"
-       id="path1991"
-       sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:4.58611px;line-height:1.25;font-family:sans-serif;fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.264583"
        x="158.84377"
-       y="95.852837"
+       y="95.013519"
        id="text2917"><tspan
          sodipodi:role="line"
          id="tspan2915"
          x="158.84377"
-         y="95.852837"
+         y="95.013519"
          style="font-weight:bold;font-size:4.58611px;fill:#800000;stroke-width:0.264583">HTTP</tspan></text>
     <text
        xml:space="preserve"

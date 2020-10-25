@@ -167,11 +167,19 @@
 \newcommand{\figureArgs}{} % dummy macro to be redefined, used to make caption go under the figure
 \newenvironment{myFigure}[2]{% [label, caption]
   \renewcommand{\figureArgs}{\caption{#2}\label{#1}}%
-  \figure[ht]{}
+  \figure[H]{}
   \centering
 }{ %
   \figureArgs{}
   \endfigure{}
+}
+\newenvironment{mySubFigure}[3]{% [width, label, caption]
+  \renewcommand{\figureArgs}{\caption{#3}\label{#2}}%
+  \subfigure[H]{#1}
+  \centering
+}{ %
+  \figureArgs{}
+  \endsubfigure{}
 }
 
 % macros for typesetting various code elements inside the text
@@ -237,6 +245,19 @@
 
 % checkmark
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+
+% colored bitboxes for the bytefield package
+\newcommand{\colorbitbox}[3]{%
+\rlap{\bitbox{#2}{\color{#1}\rule{\width}{\height}}}%
+\bitbox{#2}{#3}}
+\newcommand{\colorwordbox}[4]{%
+\rlap{\wordbox[#2]{#3}{\color{#1}\rule{\width}{\height}}}%
+\wordbox[#2]{#3}{#4}}
+
+% macro for typesetting transport parameters
+\newcommand{\quicTransportParameter}[1]{\texttt{#1}}
+\newcommand{\MaxAckDelay}{\quicTransportParameter{max\_ack\_delay}}
+\newcommand{\MaxIdleTimeout}{\quicTransportParameter{max\_idle\_timeout}}
 
 % macro for typesetting QUIC frame types
 \newcommand{\quicFrame}[1]{\texttt{#1}}

@@ -4,14 +4,13 @@ In this chapter, we analyze the protocol and select the necessary subset needed 
 pure \dotnet{} implementation. Afterwards, we design the architecture and outline the implementation
 \todo{this should be expanded once the chapter is written}
 
-\section{Protocol Features Selection}
+\section{Implemented Feature Subset Selection}
 
 The set of features to be implemented is guided by the goals we set in this thesis goals in the
 introduction chapter. For the purpose of feature selection, we can rephrase subset of the original
 goals into the following:
 
-\todo{the goals below are a convenient rephrasing and can't be mapped 1-to-1 to the goals stated in
-  the introduction, is that OK?}
+\todo{List which original goals imply these}
 
 \begin{enumerate}
 
@@ -87,7 +86,8 @@ As a general rule, the implementation will:
 
 \begin{itemize}
 
-    \litem{Avoid heap allocations} Although heap allocation is considered cheap, frequent
+    \litem{Avoid excessive heap allocations} Although heap allocation is considered cheap, frequent
+    \todo{rephrase? allocation is cheap, however, price is paid during garbage collection ....}
     allocations put pressure on the \dotnet{} garbage collector, leading to unnecessary stalls.
     Therefore, the amount of heap allocation on hot paths of the code executions should be
     minimized.
@@ -109,6 +109,8 @@ by the endpoint, and verify that they are consistent with the behavior defined b
 specification.
 
 \section{Target \dotnet{} API}
+
+\todo{emphasise that this API was designed by the .NET team and was already present there, we are only fulfilling the API}
 
 This section describes API that will be used to expose the QUIC implementation to other developers.
 As mentioned in the introduction chapter, the current design is a work-in-progress and is subject to
@@ -217,10 +219,14 @@ The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC
 \subsection{QuicStream Class}
 
 The \class{QuicStream} class represents a single stream in a QUIC connection. This class inherits
-from the abstract \class{Stream} class. The list below mentions only members specific for the \class{QuicStream} class, members from the \class{Stream} base class are omitted.
+from the abstract \class{Stream} class. The list below mentions only members specific for the
+\class{QuicStream} class, members from the \class{Stream} base class are omitted for brevity.
+\todo{mention that the omitted members include Read and ReadAsync}
 
 The class contains methods for both inbound and outbound streams. Invoking read methods on
 write-only stream will cause an exception to be thrown and vice versa.
+
+\todo
 
 \begin{description}
 
@@ -230,7 +236,7 @@ write-only stream will cause an exception to be thrown and vice versa.
 
     \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>} \todo{mention scatter/gather IO, 2:14m}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
 
     \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
 
@@ -260,15 +266,15 @@ The QUIC API can throw following exceptions:
 
 TLS handshake forms an integral part of the QUIC connection establishment. Because correct TLS
 implementation is crucial for ensuring the security of the resulting implementation, this thesis
-should avoid implementing TLS by itself. Instead, it should reuse some existing and well-tested
-implementation.
+should avoid implementing TLS algorithms by itself. Instead, it should reuse some existing and
+well-tested implementation.
 
 The novel way in which QUIC integrates with TLS requires specific functionality on the API of the
 TLS implementation. Below is a nonexhaustive list of operations the TLS library's API must provide:
 
 \begin{itemize}
 
-  \item Current state of te handshake
+  \item Current state of the handshake
 
   \item Temporary keys used to protect the handshake process
 
@@ -292,7 +298,7 @@ for short), which is part of the Windows operating system. On Linux and macOS sy
 \begin{description}
 
     \ditem{\libname{Secure Channel}} The \libschannel{} versions present in the latest Windows 10
-    builds support only TLS 1.2.  However, future near updates will implement also TLS 1.3. The
+    builds support only TLS 1.2.  However, future updates will implement also TLS 1.3. The
     \libschannel{} version with TLS 1.3 support can be obtained by installing an insider preview
     build of Windows 10.
 
@@ -307,8 +313,8 @@ for short), which is part of the Windows operating system. On Linux and macOS sy
     However, developers at Akamai maintain a fork of \libopenssl{} which adds the QUIC-enabling
     API~\cite{AkamaiOpensslGithub}. This modified version of \libopenssl{} is used by \libmsquic{}
     (on Linux) and other QUIC libraries \todo{mention them by name + link?: quiche}. It is possible
-    that the changes made by Akamai will be merged into \libopenssl{} for the 3.1.0 or later
-    releases.
+    that the changes made by Akamai will be merged into \libopenssl{} into the following 3.1.0, or
+    later releases.
 
 \end{description}
 
@@ -350,9 +356,9 @@ thread\footnote{To reduce verbosity, this text will be using term thread to mean
 \subsection{Public API}
 
 The target API is designed to use the \class{ValueTask} type designed for efficient asynchronous
-method implementation. Using this type, user code will start an asynchronous operation, that can be
-completed by a background thread servicing the connection. This way the user code cannot block the
-execution of the connection's background thread which could otherwise cause timeouts to be missed.
+methods. Using this type, user code will start an asynchronous operation, that can be completed by a
+background thread servicing the connection. This way the user code cannot block the execution of the
+connection's background thread which could otherwise cause timeouts to be missed.
 
 The implementation should make possible to use the \QuicConnection{} from multiple threads when
 it makes sense. For example, it can be useful to be able to process individual QUIC streams in
@@ -381,15 +387,17 @@ parallelism.
 \section{High-Level Architecture}
 
 Server implementation will need to be able to use a single IP address and port for conducting
-multiple QUIC connections. Also, during connection migration on clients. The connection will need to
-accept datagrams from multiple sockets at the same time. Although the prototype implementation will
-omit the connection migration feature, the architecture should allow it's implementation in the
-future.
+multiple QUIC connections. \todo{reedit following sentence} Also, during connection migration on
+clients, the connection will need to accept datagrams from multiple sockets at the same time.
+Although the prototype implementation will omit the connection migration feature, the architecture
+should allow it's implementation in the future.
 
 Instead of interacting with the underlying \class{Socket} instance from the \QuicConnection{} class
 directly, our implementation will introduce a new \QuicSocketContext{} class to perform the socket
 I/O and background processing. \autoref{fig:03-architecture} shows how the \QuicSocketContext{}
 class fits into the architecture.
+
+\todo{explain more: how it fits into the architecture}
 
 \begin{myFigure}{fig:03-architecture}{High-level background processing architecture.}
 
@@ -401,7 +409,7 @@ If necessary, the implementation of \QuicSocketContext{} class can be different 
 client endpoints. For example, server implementation may need to utilize multiple background
 processing threads to be able to handle large number of connections without degrading performance.
 
-\todo{mention future support for connection migration?}
+\todo{really! mention future support for connection migration?}
 
 Separation of I/O from \QuicConnection{} outlined in previous subsection also makes the
 implementation more testable. The interface between the \QuicSocketContext{} and \QuicConnection{}
@@ -428,6 +436,8 @@ The connection background processing will need to process the following events:
 
 Additionally, if the QUIC streams within the connection have some data to send, the
 \QuicSocketContext{} implementation should repeatedly let the connection send the data.
+
+\todo{if I don't manage to properly implement this part, then following paragraph needs to be expanded: 2020-10-22 27m}
 
 On the server side, the implementation must be able to service a large number of parallel
 connections effectively. However, such a sophisticated server implementation would be complex and
@@ -501,11 +511,12 @@ range of allowed values and incomplete or damaged packets.
 \subsection{QUIC Packet and Frame Representation}
 
 Some packets contain a large number of fields and, therefore, passing them around as individual
-variables would make the implementation unnecessarily verbose. Logically, the QUIC frames form
-coherent messages that should be represented by individual \dotnet{} types.
+variables would make the implementation harder to maintain. Logically, the QUIC frames form coherent
+messages that should be represented by individual \dotnet{} types.
 
-Representing QUIC frames as instances of individual classes would introduce a lot of allocation for
-every received QUIC packet. This thesis therefore models QUIC frames headers of QUIC packets as value types.
+Representing QUIC frames as instances of individual classes would introduce a lot of heap
+allocations for every received QUIC packet. This thesis therefore models QUIC frames headers of QUIC
+packets as value types.
 
 Payload of some frames may consist of large blocks of memory. Examples include \STREAM{} and
 \CRYPTO{} frames, which can fill the entire payload of the QUIC packet. Duplicating this block of
@@ -516,11 +527,16 @@ memory block, including memory allocated on stack using the \keyword{stackalloc}
 However, the \class{Span<T>} type is a \keyword{ref struct} --- a special kind of value type which can
 be stored only on program stack, or inside other \keyword{ref struct}s. One of the consequences of
 using \keyword{ref struct}s to represent QUIC frames is that it is impossible to create a collection
-containing all frames from the QUIC packet. All frames must be processed right after they are
-parsed. This limitation would greatly complicate writing tests for the \class{QuicConnection}
-behavior. Fortunately, this limitation can be overcome by also creating reference type versions of
-the frame types to be used in the testing framework. Even though this introduces duplication to the
-codebase, we believe that having allocation-free packet serialization justifies this decision.
+containing all frames from the QUIC packet \todo{explain why}. All frames must be processed right
+after they are parsed. This limitation would greatly complicate writing tests for the
+\class{QuicConnection} behavior \todo{again, why?}.
+
+\todo{this will need to be better explained see 2020-10-22, e.g. block of code testing for frame presence}
+
+Fortunately, this limitation can be overcome by
+also creating reference type versions of the frame types to be used in the testing framework. Even
+though this introduces duplication to the codebase, we believe that having allocation-free packet
+serialization justifies this decision.
 
 \subsection{QuicReader and QuicWriter}
 
@@ -532,7 +548,7 @@ are expected to be cached by the class that uses them.
 
 \todo{I feel big-endianity should be mentioned, but I can't find a good place for it} Like many
 other networking protocols, QUIC uses \textit{network order} of bytes, also called
-\textit{big-endian} order.
+\textit{big-endian} order. \todo{writin using methods on BitPrimitives class to handle endianity}
 
 \subsection{QUIC Primitives Encoding}
 
@@ -552,11 +568,13 @@ QUIC recognizes four types of streams. These streams can have sending part, rece
 The fact which endpoint initiated the stream controls only which flow control limits apply to that
 stream. Otherwise all streams are handled equally.
 
+\todo{Mention the names of the classes implementing the two directions of the stream}
+
 \subsection{Receiving Part of the Stream}
 
 The implementation of the receiving part of the stream must be able to buffer the received data in
 case the QUIC packets send by the peer were lost or reordered. It also needs to track the amount of
-buffered memory and how much data wad delivered to the application in order to correctly update flow
+buffered memory and how much data was delivered to the application in order to correctly update flow
 control limits for the peer.
 
 \subsubsection{Stream Data Buffering}
@@ -577,6 +595,12 @@ and maintenance costs. Therefore, until the cost of such a solution is justified
 measurements, our implementation will use a two-copy approach: the first copy from the packet to an
 intermediate buffer, the second copy from the intermediate buffer to the destination memory provided
 by the application.
+
+
+\todo{if we speak about doing some performance measurements, then they should be done and their
+  results presented in some following chapter}
+
+\todo{maybe forward reference to the measurements, see 2020-10-22: 40m}
 
 \subsubsection{Packet Reordering and Data Deduplication}
 
@@ -599,6 +623,16 @@ provides an efficient implementation of producer-consumer queue with support for
 operations using the \class{ValueTask<>} type. Each time an incoming \STREAM{} frame allows a part
 of the stream to be delivered to the application, the relevant region of the buffer is queued into
 the \class{Channel<>} using the \class{Memory<byte>} type.
+
+\todo{more of the descriptions of the}
+
+\todo{the image is hard to understand, it needs a more detailed description and a legend in the image so that the reader does not have to}
+
+\todo{create conventions for the images and colors, document them in a legend}
+
+\todo{consider organizing the layers vertically in the image}
+
+\todo{even though I explain the buffering etc earlier, I need to describe the image}
 
 \autoref{fig:03-receive-stream} Illustrates how all parts of the \ReceiveStream{} fit together.
 From the left, data from the incoming \STREAM{} frame are temporarily stored in pooled reordering
@@ -623,6 +657,7 @@ more data until it receives an update via \MAXSTREAMDATA{} frame.
 
 As a reasonable compromise, our implementation sends a \MAXSTREAMDATA{} frame with updated limits
 once the sender uses more than half of the window sent in the last update.
+\todo{why, we say that it is a compromise, but don't explain the decision}
 
 \subsection{Sending Part of the Stream}
 
@@ -636,11 +671,13 @@ the sent data can be acknowledged.
 
 Similarly to buffering received data, we will analyze how many times the data need to be copied
 before they are sent. The semantics of the \method{Write} and \method{WriteAsync} methods is that
-when the method completes, the provided memory can be reused. A single-copy approach in this case
-would require that the \method{Write} and \method{WriteAsync} methods complete only after the peer
-acknowledges that the contained data were received. In the best-case scenario would be a full
-round-trip time after the method call which would be very inefficient. Therefore our implementation
-will, as with the receiving part of the stream, use an intermediate buffer for storing the data.
+when the method completes, the provided memory can be reused. \todo{see question from PJ on
+  2020-10-22 1h about multiple parallel ValueTasks and completing when the data are acknowledged} A
+single-copy approach in this case would require that the \method{Write} and \method{WriteAsync}
+methods complete only after the peer acknowledges that the contained data were received. In the
+best-case scenario that would take a full round-trip which would be very inefficient. Therefore our
+implementation will, as with the receiving part of the stream, use an intermediate buffer for
+storing the data.
 
 Our implementation will also use variable number of fixed-size buffers rented from a shared
 \class{ArrayPool<byte>} instance. These buffers will be used to store data that cannot be discarded
@@ -678,6 +715,9 @@ data from the application are coming from the left, where they are written into 
 queued in the synchronization channel. From the channel, the buffer is dequeued and placed in a list
 of retransmission buffers, where it stays until all data it contained are ackonwledged by the other
 endpoint.
+
+\todo{why can't I gather-send from the buffers? because I need to encrypt, potentially more than
+  once if the data gets lost}
 
 \begin{myFigure}{fig:03-send-stream}{Implementation of the sending part of the stream}
 
@@ -768,13 +808,13 @@ given connection.
 
 Although JSON format produces larger log files, it can be directly consumed by the \textit{qvis}
 tool without any further conversions. For this reason, we chose to use it in our implementation and
-will consider more terse logging options if producing the JSON format incurs too significant
+will consider more \todo{different word} terse logging options if producing the JSON format incurs too significant
 overhead.
 
 \section{Integration into .NET Runtime Codebase}
 
 The work of this thesis aims to be eventually mergeable into the \dotnet{} runtime codebase. As of
-writing this thesis, there already exists project for textit{System.Net.Quic.dll}. Therefore, the
+writing this thesis, there already exists project for \textit{System.Net.Quic.dll}. Therefore, the
 source code may be placed there directly without additional changes.
 
 There is, however, the issue with the \libopenssl{} dependency. Although it would be possible to
