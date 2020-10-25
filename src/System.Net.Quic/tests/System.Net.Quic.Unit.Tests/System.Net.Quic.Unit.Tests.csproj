@@ -5,6 +5,7 @@
     <RootNamespace>System.Net.Quic.Tests</RootNamespace>
     <LangVersion>8</LangVersion>
     <Platforms>AnyCPU</Platforms>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

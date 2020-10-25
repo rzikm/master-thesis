@@ -71,11 +71,19 @@ namespace PublicApiBenchmarks
 
         private async Task QuicStreamServer()
         {
-            await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+            try
             {
-                var connection = await QuicListener.AcceptConnectionAsync();
-                await QuicStreamServer(connection);
-                connection.Dispose();
+                await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+                {
+                    var connection = await QuicListener.AcceptConnectionAsync();
+                    await QuicStreamServer(connection);
+                    connection.Dispose();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
         }
 
@@ -97,13 +105,21 @@ namespace PublicApiBenchmarks
 
         private async Task SslStreamServer()
         {
-            await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+            try
             {
-                using var client = await TcpListener.AcceptTcpClientAsync();
-                await using var stream = new SslStream(client.GetStream(), false);
-                var cert = new X509Certificate2(CertPfx);
-                await stream.AuthenticateAsServerAsync(cert);
-                await SslStreamServer(stream);
+                await foreach (var _ in _connectionSignalChannel.Reader.ReadAllAsync())
+                {
+                    using var client = await TcpListener.AcceptTcpClientAsync();
+                    await using var stream = new SslStream(client.GetStream(), false);
+                    var cert = new X509Certificate2(CertPfx);
+                    await stream.AuthenticateAsServerAsync(cert);
+                    await SslStreamServer(stream);
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
         }
 
