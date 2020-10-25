@@ -182,11 +182,16 @@
   \endsubfigure{}
 }
 
+% typesetting binary and other values
+\newcommand{\binary}[1]{0x#1}
+
 % macros for typesetting various code elements inside the text
 
 \definecolor{codecolorclass}{rgb}{0, 0.4, 0}
 \definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
 \definecolor{codecolornamespace}{gray}{0}
+
+\definecolor{bytefieldunused}{gray}{0.8}
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
