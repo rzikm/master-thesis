@@ -13,10 +13,7 @@ more detailed description of the protocol's individual parts.
 \section{Introduction}
 
 QUIC protocol provides reliable and secure transport of multiple streams of data over a single
-connection. QUIC is implemented on top of UDP, which provides only unreliable transfer of datagrams.
-In addition to stream multiplexing, QUIC also implements loss recovery, congestion control,
-transport security, and other features known from TCP or TLS protocols. QUIC provides following
-services:
+connection. QUIC provides following services:
 
 \begin{itemize}
 
@@ -29,6 +26,10 @@ services:
   \item Connection migration and resilience to NAT rebinding
 
 \end{itemize}
+
+QUIC is implemented on top of UDP, which provides only unreliable transfer of datagrams. Therefore,
+in addition to stream multiplexing, QUIC also implements loss recovery, congestion control,
+transport security, and other features known from TCP or TLS protocols.
 
 \subsection{Basic Concepts}
 
@@ -74,9 +75,10 @@ QUIC-TRANSPORT~\cite{draft-ietf-quic-transport} specification document.
 
 \subsection{Notational Conventions}
 
-Binary constants in hexadecimal use network byte order (big-endian) and are prefixed by 0x. Leading
-zeros may be omitted. For example, \binary{FE} represents decimal number 254 and \binary{2}
-represents decimal number 2.
+Numeric constants in hexadecimal always use network byte order (big-endian) and are prefixed by 0x.
+In case of constants of non-conventional integer sizes, such as 2-bit integers used in packet
+fields, the notation will omit unnecessary leading zeros. For example, \binary{FE} represents
+decimal number 254 and \binary{2} represents decimal number 2.
 
 This chapter contains graphical diagrams of several QUIC elements such as QUIC packets. In those
 schematics, individual fields include length information as follows:
@@ -98,14 +100,17 @@ schematics, individual fields include length information as follows:
 \subsection{Connection ID}
 
 Traditional network protocols use the combination of remote endpoint IP address and port to identify
-a connection. QUIC uses a dedicated Connection ID identifier. This in essence enables migrating the
-connection to different network paths, e.g. from cellular data to Wi-Fi network.
+a connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
+enables migrating the connection to different network paths and interfaces, e.g. from cellular data
+to a Wi-Fi network.
 
 Connection IDs are opaque byte sequences between 8 to 20 bytes in length. Each endpoint in a QUIC
-connection independently selects Connection IDs it will use to identify the QUIC connection. These
-Connection IDs are placed in the QUIC packet header to specify the recipient of the packet. Each
-endpoint can use multiple Connection IDs to refer to the same QUIC connection. The first pair of
-Connection IDs is exchanged during connection establishment, and additional connection IDs can be
+connection independently selects Connection IDs it will use to identify the QUIC connection. Each
+QUIC packet contains a field containing the Connection ID selected by the recipient which is used to
+associate incoming QUIC packets with an existing connection.
+
+Each endpoint can use multiple Connection IDs to refer to the same QUIC connection. The first pair
+of Connection IDs is exchanged during connection establishment, and additional connection IDs can be
 issued independently by each endpoint throughout the connection. The additional Connection IDs are
 primarily used when migrating the connection to a new network path to prevent network traffic
 correlation by external observers.
@@ -121,8 +126,7 @@ new connection attempt, otherwise the packet is discarded.
 
 \input{img/02-socket-multiplexing.pdf_tex}
 
-\todo{it is uncertain what the vertical line means, it is not sure it is a boundary. perhaps use
-  arrows under the Server label to make it more obvious}
+\todo{Check if the image is more clear now}
 
 \end{myFigure}
 
@@ -134,10 +138,10 @@ variable-length integer encoding and packet number encoding.
 
 \subsubsection{Variable-Length Integer Encoding}\label{sec:variable-length-encoding}
 
-Almost all numerical values are encoded using a variable-length integer encoding. This encoding uses
-the first byte's two most significant bits to encode whether the value is encoded as 1, 2, 4, or
-8-byte integer. This encoding supports only positive numbers. The ranges available for individual
-encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
+Almost all numeric values stored in QUIC packets are encoded using a \textit{variable-length integer
+  encoding}. This encoding uses the first byte's two most significant bits to encode whether the
+value is encoded as 1, 2, 4, or 8-byte integer. This encoding supports only positive numbers. The
+ranges available for individual encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
 
 \begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths}
   {ccr}
@@ -153,24 +157,29 @@ the shortest encoding necessary to represent the given number.
 
 \subsubsection{Packet Number Encoding}\label{sec:packet-number-encoding}
 
-\todo{totally unintelligible, rewrite}
+Most of the packets used in QUIC are numbered. The value of the packet number participates in the
+process of packet encryption and decryption. And the specific encoding used by QUIC makes it harder
+for the network traffic observers to guess the exact packet number.
 
-Packet numbers in the QUIC packet headers use a very specific encoding which both saves space in the
-packet header and improves security of the protocol. The packet number is truncated, and only up to
-4 least significant bytes are stored in the packet header.
+The packet number encoding leverages the fact that the packet numbers received by an endpoint form a
+mostly ascending sequence with occasional reordering or gaps due to network unreliability. The
+packet number of a newly received packet is, therefore, close to that of the previously received
+packet. Using the encoding described in this section, QUIC sends only a lower part of the packet
+number which the receiver uses to reconstruct the whole packet number.
 
-The number of bytes that is determined by the gap between the packet number of the packet being
-sent, and the highest packet number the peer has acknowledged. In order for the other endpoint to be
-able to correctly decode the packet number, the number of bytes used to encode the packet number
-must be sufficient to be able to represent at least twice the difference between the current packet
-number and the highest packet number acknowledged by the peer.
+When determining how many bytes of the packet number need to be included in the packet, the sender
+uses the value of the highest acknowledged packet number. The encoding length must use enough bytes
+to be able to represent at least twice the difference between the current packet number and the
+highest acknowledged number.
 
-When decoding the packet number, the endpoint uses the knowledge of highest previously received
-packet number to correctly decode the packet number.
-
-\todo{provide examples?, also check this next time}
-
-\todo{illustrate only the basic concept, reference detailed pseudocode in RFC}
+As an example, consider following situation: as sender prepares to send packet \binary{4417}, its
+highest acknowledged packet number is \binary{43a0}. The difference between the two numbers is
+\binary{77} which is still small enough to require only the least significant byte (\binary{17}) to
+be sent in the packet. Suppose that by the time the packet arrives at the receiver, its highest
+received packet number is \binary{43f5}. Based on the encoded packet number length, the whole packet
+number must be from the range \binary{4375}--\binary{4475}. The only number from this range which
+matches the least significant byte sent in the packet is \binary{4417} which is the correct packet
+number.
 
 \section{QUIC Packets}
 
