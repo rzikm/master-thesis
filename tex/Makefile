@@ -1,15 +1,15 @@
-export TEXINPUTS=../tex//:
+TEX_DIR=${CURDIR}
+TEX_SRC=$(wildcard $(TEX_DIR)/*.tex)
 
-IMGDIR=img
-
-IMAGES_SRC=$(wildcard $(IMGDIR)/*.svg)
-IMAGES_OUT=$(patsubst %.svg, %.pdf_tex, $(IMAGES_SRC))
-IMAGES_PDF=$(patsubst %.svg, %.pdf, $(IMAGES_SRC))
+IMG_DIR=img
+IMG_SRC=$(wildcard $(IMG_DIR)/*.svg)
+IMG_OUT=$(patsubst %.svg, %.pdf_tex, $(IMG_SRC))
+IMG_PDF=$(patsubst %.svg, %.pdf, $(IMG_SRC))
 
 all: thesis.pdf abstract.pdf
 
 # LaTeX must be run multiple times to get references right
-thesis.pdf: thesis.tex $(wildcard *.tex) bibliography.bib thesis.xmpdata $(IMAGES_OUT)
+thesis.pdf: $(TEX_DIR)/thesis.tex $(TEX_SRC) bibliography.bib thesis.xmpdata $(IMG_OUT)
 	pdflatex $<
 	bibtex thesis
 	pdflatex $<
@@ -18,12 +18,12 @@ thesis.pdf: thesis.tex $(wildcard *.tex) bibliography.bib thesis.xmpdata $(IMAGE
 abstract.pdf: abstract.tex abstract.xmpdata
 	pdflatex $<
 
-$(IMGDIR)/%.pdf_tex: $(IMGDIR)/%.svg
+$(IMGDIR)/%.pdf_tex: $(IMG_DIR)/%.svg
 	inkscape --export-filename $(patsubst %.svg, %.pdf, $<) --export-latex $<
 
-images: $(IMAGES_OUT)
+images: $(IMG_OUT)
 
 clean:
 	rm -f *.log *.dvi *.aux *.toc *.lof *.lot *.out *.bbl *.blg *.xmpi
 	rm -f thesis.pdf abstract.pdf
-	rm -f $(IMAGES_PDF) $(IMAGES_OUT)
+	rm -f $(IMG_PDF) $(IMG_OUT)
