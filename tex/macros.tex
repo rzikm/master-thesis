@@ -151,8 +151,8 @@
 \newcommand\litem[1]{\item{\textit{#1}}:}
 
 % special item for description lists to make the description go on the next line
-\newcommand\ditem[1]{\item[#1] \leavevmode \\}
-\newcommand\ditemWithComment[2]{\item[#1] \hfill \textit{(#2)} \leavevmode \\}
+\newcommand\ditem[1]{\pagebreak[3] \item[#1] \leavevmode \\ }
+\newcommand\ditemWithComment[2]{\pagebreak[3] \item[#1] \hfill \textit{(#2)} \leavevmode \\}
 
 % macro for typesetting library names
 \newcommand\libname[1]{\texttt{\itshape#1}}
@@ -234,7 +234,7 @@
 
 % environment setting common attributes of tables
 \newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]
-  \table[ht]
+  \table[H]
   #1
   \caption{#3}\label{#2}% for tables, the caption goes to the top
   \centering
