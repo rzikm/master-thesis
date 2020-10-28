@@ -57,6 +57,7 @@
 \usepackage{tikz}           % for drawing (checkmark etc)
 \usepackage{bytefield}      % packet structure
 \usepackage{float}          % better positioning of figures
+\usepackage{filecontents}   % for auto creating of .xmpdata file
 
 %% Graphics path (for some reason needed on windows)
 \graphicspath{{img/}}
@@ -98,8 +99,8 @@ Dedication.
 }
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
-\def\Abstract{%
-Abstract. TODO last.
+\edef\Abstract{%
+TODO: do the abstract last%
 }
 
 % 3 to 5 keywords (recommended), each enclosed in curly braces
@@ -116,6 +117,34 @@ Abstract. TODO last.
 %% make \autoref use section instead of subsection and subsubsection
 \let\subsectionautorefname\sectionautorefname
 \let\subsubsectionautorefname\sectionautorefname
+
+%% generate thesis.xmpdata file
+%% see https://tex.stackexchange.com/questions/534035/macros-commands-inside-a-filecontents-environment-does-not-expand
+%% for the \filecontentsspecials magic
+
+\def\filecontentsspecials#1#2#3{
+  \global\let\ltxspecials\dospecials
+  \gdef\dospecials{\ltxspecials
+    \catcode`#1=0
+    \catcode`#2=1
+    \catcode`#3=2
+    \global\let\dospecials\ltxspecials
+  }
+}
+\filecontentsspecials|[]
+\begin{filecontents}[overwrite]{\jobname.xmpdata}
+\Author{|ThesisAuthor}
+\Title{|ThesisTitle}
+\Keywords{QUIC\sep .NET\sep network protocol}
+\Subject{|Abstract}
+\Publisher{Charles University}
+\end{filecontents}
+
+%% also generate abstract.txt so that it can be included from the abstract.tex file
+\filecontentsspecials|[]
+\begin{filecontents}[overwrite]{abstract.txt}
+|Abstract
+\end{filecontents}
 
 % Definitions of macros (see description inside)
 \include{macros}

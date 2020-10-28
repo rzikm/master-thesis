@@ -9,13 +9,15 @@ IMG_PDF=$(patsubst %.svg, %.pdf, $(IMG_SRC))
 all: thesis.pdf abstract.pdf
 
 # LaTeX must be run multiple times to get references right
-thesis.pdf: $(TEX_DIR)/thesis.tex $(TEX_SRC) bibliography.bib thesis.xmpdata $(IMG_OUT)
+thesis.pdf: $(TEX_DIR)/thesis.tex $(TEX_SRC) bibliography.bib $(IMG_OUT)
 	pdflatex $<
 	bibtex thesis
 	pdflatex $<
 	pdflatex $<
 
-abstract.pdf: abstract.tex abstract.xmpdata
+abstract.txt: thesis.pdf
+
+abstract.pdf: abstract.tex abstract.xmpdata abstract.txt
 	pdflatex $<
 
 $(IMGDIR)/%.pdf_tex: $(IMG_DIR)/%.svg
@@ -25,5 +27,6 @@ images: $(IMG_OUT)
 
 clean:
 	rm -f *.log *.dvi *.aux *.toc *.lof *.lot *.out *.bbl *.blg *.xmpi
-	rm -f thesis.pdf abstract.pdf
+	rm -f thesis.pdf abstract.pdf abstract.txt
+	rm -f thesis.xmpdata
 	rm -f $(IMG_PDF) $(IMG_OUT)

@@ -370,3 +370,5 @@ src/coreclr/src/System.Private.CoreLib/common
 /tex/img/*.pdf_tex
 /tex/bibliography.bib.bak
 /tex/bibliography.bib.sav
+/tex/abstract.txt
+tex/thesis.xmpdata
