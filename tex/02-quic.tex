@@ -35,7 +35,7 @@ transport security, and other features known from TCP or TLS protocols.
 
 Throughout this chapter, and later when analysing the QUIC protocol specification, this text will
 use several terms in a very specific meaning. This meaning is the same as defined in the
-QUIC-TRANSPORT~\cite{draft-ietf-quic-transport} specification document.
+main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
 
 \todo{again, following list is almost verbatim from RFC}
 
@@ -80,14 +80,14 @@ In case of constants of non-conventional integer sizes, such as 2-bit integers u
 fields, the notation will omit unnecessary leading zeros. For example, \binary{FE} represents
 decimal number 254 and \binary{2} represents decimal number 2.
 
-This chapter contains graphical diagrams of several QUIC elements such as QUIC packets. In those
+This chapter contains graphical diagrams of several elements such as QUIC packets. In those
 schematics, individual fields include length information as follows:
 
 \begin{itemize}
 
   \litem{X (A)} Indicates that X is A bits long.
 
-  \litem{X (i)} Indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:variable-length-encoding}.
+  \litem{X (i)} Indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
 
   \litem{X (A..B)} Indicates that X can be any length from A to B, either of these limits can be omitted to indicate minimum size of zero, or no upper size limit, respectively.
 
@@ -97,46 +97,13 @@ schematics, individual fields include length information as follows:
 
 \end{itemize}
 
-\subsection{Connection ID}
-
-Traditional network protocols use the combination of remote endpoint IP address and port to identify
-a connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
-enables migrating the connection to different network paths and interfaces, e.g. from cellular data
-to a Wi-Fi network.
-
-Connection IDs are opaque byte sequences between 8 to 20 bytes in length. Each endpoint in a QUIC
-connection independently selects Connection IDs it will use to identify the QUIC connection. Each
-QUIC packet contains a field containing the Connection ID selected by the recipient which is used to
-associate incoming QUIC packets with an existing connection.
-
-Each endpoint can use multiple Connection IDs to refer to the same QUIC connection. The first pair
-of Connection IDs is exchanged during connection establishment, and additional connection IDs can be
-issued independently by each endpoint throughout the connection. The additional Connection IDs are
-primarily used when migrating the connection to a new network path to prevent network traffic
-correlation by external observers.
-
-\autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
-from client connections. Each packet contains a Destination Connection ID field (DCID for short),
-which contains the Connection ID used by the recipient endpoint. Server maintains a table mapping
-between Destination Connection IDs and the corresponding connections, and dispatches the incoming
-packets accordingly. If a packet cannot be associated with an existing connection, then it may be a
-new connection attempt, otherwise the packet is discarded.
-
-\begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
-
-\input{img/02-socket-multiplexing.pdf_tex}
-
-\todo{Check if the image is more clear now}
-
-\end{myFigure}
-
-\subsection{Wire Encoding}\label{sec:wire-encoding}
+\subsection{Wire Encoding}\label{sec:02-wire-encoding}
 
 The process of encoding QUIC packets to be sent via the network is optimized for size. All values
 sent over the network are encoded in big endian order. There are two nontrivial encodings used:
 variable-length integer encoding and packet number encoding.
 
-\subsubsection{Variable-Length Integer Encoding}\label{sec:variable-length-encoding}
+\subsubsection{Variable-Length Integer Encoding}\label{sec:02-variable-length-encoding}
 
 Almost all numeric values stored in QUIC packets are encoded using a \textit{variable-length integer
   encoding}. This encoding uses the first byte's two most significant bits to encode whether the
@@ -155,17 +122,17 @@ ranges available for individual encoding lengths are listed in \autoref{tab:02-q
 In order to optimize the size of QUIC packets, the implementations are encouraged to always choose
 the shortest encoding necessary to represent the given number.
 
-\subsubsection{Packet Number Encoding}\label{sec:packet-number-encoding}
+\subsubsection{Packet Number Encoding}\label{sec:02-packet-number-encoding}
 
-Most of the packets used in QUIC are numbered. The value of the packet number participates in the
-process of packet encryption and decryption. And the specific encoding used by QUIC makes it harder
-for the network traffic observers to guess the exact packet number.
+\todo{check this for legibility}
 
-The packet number encoding leverages the fact that the packet numbers received by an endpoint form a
-mostly ascending sequence with occasional reordering or gaps due to network unreliability. The
-packet number of a newly received packet is, therefore, close to that of the previously received
-packet. Using the encoding described in this section, QUIC sends only a lower part of the packet
-number which the receiver uses to reconstruct the whole packet number.
+Packets in QUIC are sequentially numbered and, therefore, packet numbers received by an endpoint
+form a mostly ascending sequence with occasional reordering or gaps due to network unreliability.
+This causes the packet number of a newly received packet to be close to that of the previously
+received packet. QUIC leverages this fact by sending only the lower bytes of the packet number. The
+number of bytes sent is variable between one to four bytes and is always chosen so that the receiver
+can reconstruct the original packet number using the previously received packet numbers and the
+bytes from the arriving packet.
 
 When determining how many bytes of the packet number need to be included in the packet, the sender
 uses the value of the highest acknowledged packet number. The encoding length must use enough bytes
@@ -174,52 +141,51 @@ highest acknowledged number.
 
 As an example, consider following situation: as sender prepares to send packet \binary{4417}, its
 highest acknowledged packet number is \binary{43a0}. The difference between the two numbers is
-\binary{77} which is still small enough to require only the least significant byte (\binary{17}) to
-be sent in the packet. Suppose that by the time the packet arrives at the receiver, its highest
-received packet number is \binary{43f5}. Based on the encoded packet number length, the whole packet
-number must be from the range \binary{4375}--\binary{4475}. The only number from this range which
-matches the least significant byte sent in the packet is \binary{4417} which is the correct packet
-number.
+\binary{77} which is still small enough to require only the least significant byte (\binary{17}) of
+the packet number to be sent in the packet. Suppose that by the time the packet arrives at the
+receiver, its highest received packet number is \binary{43f5}. Based on the encoded packet number
+length, the deconstructed packet number must be from the range \binary{4375}--\binary{4475}. The only
+number from this range which matches the least significant byte sent in the packet is \binary{4417}
+which is the correct packet number.
 
 \section{QUIC Packets}
 
-\todo{Find place for this (coalescing)}
-As in other protocols, QUIC allows communication between two endpoints: client and server. In QUIC
-connection, endpoints exchange \textit{QUIC packets} enclosed in UDP datagrams. A single UDP
+In QUIC connection, endpoints exchange \textit{QUIC packets} enclosed in UDP datagrams. A single UDP
 datagram can contain multiple packets, although in most cases they contain only one. Packing
-multiple QUIC packets in a single UDP datagram is called \textit{coalescing}. A single QUIC packet
-cannot span multiple UDP datagrams.
+multiple QUIC packets into a single UDP datagram is called \textit{coalescing}. A single QUIC packet
+cannot span multiple UDP datagrams. QUIC uses a total of six different packet types:
 
-QUIC packets sent in the UDP datagram are the smallest processable unit of QUIC\@. There is a total
-of six different packet types:
+\todo{The order of the packet here now matches the subsubsections later, but I think different order here might be better}
 
 \begin{enumerate}
 
-  \litem{Initial \textnormal{and} Handshake} used during connection establishment;
-
-  \litem{1-RTT} main packet type used throughout the lifetime of QUIC connection;
-
   \litem{Version Negotiation} sent by the server when the client tries to establish a connection
-  using with QUIC version unsupported by the server;
+  with QUIC version that is not supported by the server;
+
+  \litem{Retry} optionally used by servers for Client Address Validation \todo{forward reference
+  address validation} when establishing new connections;
+
+  \litem{Initial} used to initiate a new connection and exchange the initial information;
+
+  \litem{Handshake} used during the connection handshake;
 
   \litem{0-RTT} when TLS 1.3 0-RTT mode of operation is enabled, 0-RTT packets carry \textit{early
-  data} --- application data sent before the TLS handshake is complete to reduce latency; and
+  data} --- application data that is sent before the TLS handshake is complete in order to reduce
+  latency; and
 
-  \litem{Retry} optionally used by servers for client's address validation when establishing new
-  connections.
+  \litem{1-RTT} main packet type used throughout the lifetime of QUIC connection. 1-RTT and 0-RTT
+  packets are the only packet types which carry application data.
 
 \end{enumerate}
 
 Version Negotiation and Retry packets are sent as one-time responses in special scenarios and are
-not individually numbered. In fact QUIC is designed in a way that lets the server send these packets
-without maintaining any state for the connection. Once the connection is established, these packets
-are no longer used.
+not individually numbered. QUIC is designed in a way that lets the server send these packets without
+maintaining any state for the connection. These packets are not used in an established connection.
 
-Packets of the other types --- Initial, Handshake, 0-RTT and 1-RTT --- are individually numbered.
-However, the packet numbers do not use a single number sequence as is the case with TCP packets.
-QUIC organizes packets of the aforementioned four types into three separate \textit{packet number
-  spaces}, and each packet number space uses a separate number sequence starting from 0. These
-packet number spaces are:
+Packets of the other types --- Initial, Handshake, 0-RTT and 1-RTT --- are individually numbered. The
+packet numbers do not form a single sequence, as is the case with TCP packets. Instead, QUIC
+organizes these packets into three separate \textit{packet number spaces}, and uses a separate
+sequence of numbers for each packet number space. These packet number spaces are:
 
 \begin{enumerate}
 
@@ -241,29 +207,30 @@ acknowledgements and parts of streams sent by the application.
 
 Each packet type has a header and a payload. QUIC tries to optimize the packet encoding in order to
 maximize the amount of application data that can be sent in a single UDP datagram. Therefore, two
-types of packet headers exist. All packets except 1-RTT packets use the \textit{long header} which
-contains Version and both Source Connection ID and Destination Connection ID fields. On the other
-hand, \textit{short header} --- used by only the 1-RTT packets --- contains only the Destination
-Connection ID fields. The type of the header is specified by the most significant bit of the first
-byte in the packet --- the \textit{Header Form} bit. The second most significant bit --- the
-\textit{Fixed Bit} --- is always set to 1 in valid QUIC packets.
+types of packet headers exist. 1-RTT packets use a \textit{short header} and all other packet types
+use the \textit{long header}. The short header contains only a subset of fields present in the long
+header and omits data which are relevant only during connection establishment, like protocol version
+identifier.
+
+The type of the header is specified by the most significant bit of the first byte in the packet ---
+the \textit{Header Form} bit. The second most significant bit --- the \textit{Fixed Bit} --- is always
+set to 1 in valid QUIC packets. Following sections describe the structure of the rest of the packet
+for individual packet types.
 
 \newcommand{\longFieldHeight}{1}
 
 \subsection{Long Packet Header}
 
-Long headers contain information that is necessary for the connection establishment. As already
-mentioned, it includes both the Source and Destination Connection IDs. It also contains Version and
-Packet Type fields. A few leftover bits of the header are reserved for type-specific information.
-The structure of the long header is illustrated in \autoref{fig:02-long-header}.
+Long headers contain information that is necessary for the connection establishment. It includes
+both the Source and Destination Connection IDs. It also contains \textit{Version} and \textit{Packet
+  Type} fields. A few leftover bits of the header are reserved for type-specific information. The
+structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
 \begin{myFigure}{fig:02-long-header}{Long packet header structure}
 
-  \todo{place Notational conventions to the chapter beginning?}
-
   \begin{bytefield}[bitwidth=2.5em]{8}
     \bitheader{0-7} \\
-    \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T} & \bitbox{4}{Type Specific Bits} \\
+    \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \bitbox{4}{Type Specific Bits (4)} \\
     \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
     \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
     \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (..) } \\
@@ -280,9 +247,9 @@ The semantics of the individual fields of the long header is as follows:
 \begin{description}
 
     \ditem{Header Form Bit} used to distinguish between packets with so called \textit{long header}
-    and \textit{short header} format
+    and \textit{short header} format. In case of the long header packets. the form bit is set to \binary{1}.
 
-    \ditem{Fixed Bit}  A bit that is always set to 1 in valid packets.
+    \ditem{Fixed Bit} A bit that is always set to \binary{1} in valid QUIC packets.
 
     \ditem{Packet Type} Discriminator of the packet type. the possible values are listed in \autoref{tab:02-packet-type}.
 
@@ -295,8 +262,9 @@ The semantics of the individual fields of the long header is as follows:
   Retry        & \binary{3} \\
 \end{myTable}
 
-    \ditem{Version} Indicates which version of QUIC is in use and determines how rest of the
-    protocol fields are interpreted.
+    \ditem{Version} Indicates which version of QUIC is in use. Location of this field will be
+    the same across all QUIC versions However, the structure of the rest of the packet may be different
+    in future versions of QUIC.
 
     \ditem{Destination Connection ID Length} Length of the Destination Connection ID field.
 
@@ -306,7 +274,7 @@ The semantics of the individual fields of the long header is as follows:
 
     \ditem{Source Connection ID} The Connection ID issued by the sender of the packet.
 
-    \ditem{Reserved Bits} Bits reserved for use in the next QUIC versions. In the initial QUIC
+    \ditem{Reserved Bits} Bits reserved for use in the future QUIC versions. In the initial QUIC
     version, these bits must be set to 0.
 
 \end{description}
@@ -314,13 +282,14 @@ The semantics of the individual fields of the long header is as follows:
 \subsection{Version Negotiation Packet}
 
 The Version Negotiation packet is sent by the server when it receives a long header packet
-specifying an unsupported version. As an exception to other long header packets, Version Negotiation
-packet is not specified by the Packet Type field in the header, but special value \binary{00000000}
-in the Version field. After the header, the packet contains a list of supported versions, each one
-listed as 32-bit integer in big-endian. Also, since future QUIC versions may allow larger Connection
-IDs than 20 bytes, a valid Version Negotiation packet can contain up to 255-byte Connection IDs. The
-structure of the Version Negotiation packet is illustrated in
-\autoref{fig:02-version-negotiation-packet}.
+requesting a version of QUIC unsupported by the server. As an exception to other long header
+packets, Version Negotiation packet is not discriminated by a specific value in the Packet Type
+field in the header, but by a special value \binary{00000000} in the Version field.
+
+After the header, the packet contains a list of supported versions, each one listed as 32-bit
+integer in big-endian. Also, since future QUIC versions may allow larger Connection IDs than 20
+bytes, a valid Version Negotiation packet can contain up to 255-byte Connection IDs. The structure
+of the Version Negotiation packet is illustrated in \autoref{fig:02-version-negotiation-packet}.
 
 \begin{myFigure}{fig:02-version-negotiation-packet}{Version Negotiation packet structure}
 
@@ -343,12 +312,15 @@ structure of the Version Negotiation packet is illustrated in
 
 \end{myFigure}
 
+The identifier of the initial QUIC version is \binary{00000001}. There are also special identifiers
+for draft versions of the protocol valid only until the QUIC specification is finalized.
+
 \subsection{Retry Packet}
 
-Retry packets are distinguished by value 3 (11 in binary) in the \textit{Packet Type} field of the
-long header. Retry packets are sent by a server as part of the optional \textit{Address Validation}
-mechanism used to protect against traffic amplification attack. The structure of the packet is
-illustrated in \autoref{fig:02-retry-packet}.
+Retry packets are distinguished by value \binary{3} in the \textit{Packet Type} field of the long
+header. Retry packets are sent by a server as part of the optional \textit{Address Validation}
+mechanism used to protect against traffic amplification attack. \todo{forward ref to address
+  validation?} The structure of the packet is illustrated in \autoref{fig:02-retry-packet}.
 
 \begin{myFigure}{fig:02-retry-packet}{Retry packet structure}
 
@@ -374,23 +346,28 @@ The semantics of the fields specific to the Retry packet are:
 
 \begin{description}
 
-    \ditem{Retry Token} Contains an opaque token generated by the server. This token must be echoed back in an Initial packet during next connection attempt.
+    \ditem{Retry Token} Contains an opaque token generated by the server. This token must be
+    echoed back in an Initial packet during next connection attempt. The contents of the token must be
+    difficult to guess by the attacker and verifyable in a stateless manner (i.e. without saving it in
+    memory for future comparisons).
 
-    \ditem{Retry Integrity Tag} Tag used to check the integrity of the packet.
+    \ditem{Retry Integrity Tag} Tag used to check the integrity of the packet. For the details on
+    how the ingegrity tag is calculated, refer to the TLS integration
+    specification~\cite[Section~5.8]{draft-ietf-quic-tls}.
 
 \end{description}
 
-
 \subsection{Initial, Handshake and 0-RTT Packets}
 
-Initial, Handshake and 0-RTT are almost identical in structure. All three types use the
+Initial, Handshake and 0-RTT packets are almost identical in structure. All three types use the
 \textit{Type-Specific Bits} from the long header to store \textit{Reserved Bits} and the
 \textit{Packet Number Length}. After the long packet header, these packets contain the
-\textit{Length} field, \textit{Packet Number} field and the actual payload consisting of QUIC
-frames. The only exception to this structure is the Initial packet, which contains two additional
-fields just after the long header: \textit{Token Length} and \textit{Token}, which are used to carry
-the Retry Token from the Retry packet, in case Address Validation is performed. The structure of
-these three packets is illustrated in \autoref{fig:02-initial-handshake-0rtt-packets}.
+\textit{Length} field containing the packet length, \textit{Packet Number} field and the actual
+payload consisting of QUIC frames. The only exception to this structure is the Initial packet, which
+contains two additional fields just after the long header: \textit{Token Length} and \textit{Token},
+which are used to carry the Retry Token from the Retry packet in case Address Validation is
+requested by the server. The structure of these three packets is illustrated in
+\autoref{fig:02-initial-handshake-0rtt-packets}.
 
 \begin{myFigure}{fig:02-initial-handshake-0rtt-packets}{Structure of the Initial, Handshake, and 0-RTT packets}
 
@@ -411,6 +388,7 @@ these three packets is illustrated in \autoref{fig:02-initial-handshake-0rtt-pac
     \wordbox[tlrb]{1}{Length (i)} \\
     \wordbox[tlrb]{1}{Packet Number (8..32)} \\
     \wordbox[tlrb]{\longFieldHeight}{Packet Payload (..)} \\
+    \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
   \end{bytefield}
 
   H = Header Form, F = Fixed Bit, T = Packet Type,\\
@@ -427,32 +405,37 @@ The semantics of the new fields in these packets are:
     \ditemWithComment{Token}{Initial only} Contains an opaque token if the server provided
     one in the Retry packet as part of Address Validation.
 
-    \ditem{Reserved Bits} Bits reserved for use in the next QUIC versions. In the initial QUIC
+    \ditem{Reserved Bits} Bits reserved for use in the future QUIC versions. In the initial QUIC
     version, these bits must be set to 0.
 
     \ditem{Packet Number Length} The length of the encoding used for the packet number.
 
-    \ditem{Packet Number} The sequence number of this packet in the respective packet number space.
-    This field uses a special encoding which is described in \autoref{sec:packet-number-encoding}.
-
     \ditem{Length} The length of the remainder of the packet. This includes the Packet Number,
     the payload of the packet, and --- for encrypted packets --- the AEAD integrity tag.
 
+    \ditem{Packet Number} The sequence number of this packet in the respective packet number space.
+    This field uses a special encoding which is described in \autoref{sec:02-packet-number-encoding}.
+
+    \ditem{Packet Payload} Serialized sequence of QUIC frames.
+
+    \ditem{Integrity Tag} Opaque checksum produced by the AEAD cipher during packet encryption.
+    Packet encryption is described in detail in \autoref{sec:02-packet-protection}.
+
 \end{description}
 
-\subsection{1-RTT Packets}
+\subsection{1-RTT Packet}
 
 1-RTT packets are the only packet that uses the short header to make more space for application data
 in the UDP datagram. Besides the Header Form, Fixed, Reserved Bits and Packet Number Length fields
 which have the same meaning as in the long header, short header contains \textit{Spin Bit} and
-\textit{Key Phase Bit}.
+\textit{Key Phase Bit} fields.
 
 1-RTT packets can be sent only after the connection has been successfully established. This implies
 that connection IDs used for the connection by both endpoints are already known, and there is no
 need to repeat the Source Connection ID or specify the length of the Destination Connection ID.
-1-RTT packets also lack the Length field. It is assumed that they fill the rest of the UDP datagram.
-Therefore, after the short header, only the Packet Number field and the QUIC frame payload follows.
-The structure of the 1-RTT frame is illustrated in \autoref{fig:02-1rtt-packet}.
+1-RTT packets also lack the Length field. It is assumed that 1-RTT packets fill the rest of the UDP
+datagram. Therefore, after the short header, only the Packet Number field and the QUIC frame payload
+follows. The structure of the 1-RTT frame is illustrated in \autoref{fig:02-1rtt-packet}.
 
 \begin{myFigure}{fig:02-1rtt-packet}{1-RTT packet structure}
 
@@ -464,6 +447,7 @@ The structure of the 1-RTT frame is illustrated in \autoref{fig:02-1rtt-packet}.
     \end{rightwordgroup} \\
     \wordbox[tlrb]{1}{Packet Number (8..32)} \\
     \wordbox[tlrb]{\longFieldHeight}{Packet Payload (..)} \\
+    \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
   \end{bytefield}
 
   H = Header Form, F = Fixed Bit, S = Spin Bit, \\
@@ -535,76 +519,127 @@ frame types, whether they are ack-eliciting and in which packets they can be sen
 
 \section{QUIC Connection}
 
-In the overview section, we mentioned that QUIC endpoints use Connection IDs to identify connections
-and that they exchange UDP datagrams with QUIC packets containing QUIC frames.
+\todo{expand this part} This section describes the details of connection lifetime.
 
-\subsection{Issuing Connection IDs}
+\subsection{Connection ID}
 
-\todo{again, very dense and hard to understand, pick a main idea and explain it there.}
+Traditional network protocols use the combination of remote endpoint IP address and port to identify
+the connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
+enables migrating the connection to different network paths and interfaces, e.g. from cellular data
+to a Wi-Fi network, because the connection identity does not depend on the peer's IP address.
 
-\todo{Don't be afraid to use longer paragraphs}
+Connection IDs are opaque byte sequences between 8 to 20 bytes in length. Each endpoint in a QUIC
+connection independently selects Connection IDs it will use to identify the QUIC connection. These
+Connection IDs are then used to populate the Source Connection ID and Destination Connection ID of
+the QUIC packets.
 
-The primary function of a connection ID is to ensure that changes in addressing at lower network
-layers (UDP, IP) do not cause packets for a QUIC connection to be delivered to a wrong endpoint.
+The first pair of Connection IDs is exchanged during connection establishment. Additional Connection
+IDs can be issued independently by each endpoint during the lifetime of the connection. These
+additional Connection IDs are primarily used when migrating the connection to a new network path.
+QUIC requires that the same Connection ID be used only on one network path. When migrating a
+connection, the endpoints must start using different Connection ID for sending packets to prevent
+correlation of the network traffic by external observers.
 
-Endpoints in the connection select Connection IDs for the other endpoint to use when sending
-packets. There can be more than one Connection ID identifying the connection for the endpoint.
-During the connection lifetime, each endpoint can issue additional Connection IDs, or retire
-connection IDs issued by the other endpoint.
+Connection IDs can be also retired by an endpoint. By retiring a Connection ID, the endpoint
+communicates that it will no longer use the Connection ID, and the other endpoint should drop any
+incoming packets that use it. Retiring a Connection ID serves as a request to the peer to issue a
+new Connection ID as a replacement.
 
-By retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID,
-and the other endpoint should drop any incoming packets that use it. Retiring a Connection ID serves
-as a request to the peer to issue a new Connection ID as a replacement.
+Alternatively, endpoints can use a zero-length Connection ID. In that case, the connection identity
+is tied to the IP address and port of the remote endpoint. Using zero-length Connection ID saves
+space in the sent datagrams, but imposes several limitations on the connection. For example, if an
+endpoint uses a zero-length Connection ID, it cannot issue additional connection IDs and, therefore,
+it cannot migrate a connection to a new local address.
 
-Each Connection ID is bound to local and destination addresses. During connection migration, the
-endpoints must start using different Connection ID to prevent correlation of the network traffic.
+\subsection{Matching Packets to Connections}
+
+\todo{breakdown by client and server}
+
+\autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
+from client connections. Each packet contains a Destination Connection ID field (DCID for short),
+which contains the Connection ID used by the recipient endpoint. Server maintains a table mapping
+between Destination Connection IDs and the corresponding connections, and dispatches the incoming
+packets accordingly. If a packet cannot be associated with an existing connection, then it may be a
+new connection attempt, otherwise the packet is discarded.
+
+\begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
+
+\input{img/02-socket-multiplexing.pdf_tex}
+
+\todo{Check if the image is more clear now}
+
+\end{myFigure}
+
+\subsection{QUIC Transport Parameters}\label{sec:02-transport-parameters}
+
+QUIC has several options for parameterizing the connection. These are called \textit{Transport
+  Parameters} and they essentially represent constraints for the other endpoint. Each endpoint sets
+the transport parameters for the other endpoint. QUIC leverages the extensibility of the TLS
+protocol to exchange transport parameters during the connection handshake.
+
+\todo{should I mention them by name? e.g. I mention max\_idle\_timeout later}
+Example transport parameters are:
+
+\begin{itemize}
+
+  \item Initial flow control limits
+
+  \item Whether connection migration is allowed
+
+  \item Maximum delay before sending an acknowledgment for ack-eliciting packets
+
+  \item Maximum idle timeout before the connection is silently closed
+
+  \item Maximum size of a UDP packet the endpoint is willing to receive
+
+\end{itemize}
+
+Many of the parameters have a default value, which is used when the given transport parameter is not
+sent. Other transport parameters are mandatory. The exhaustive list of the transport parameters can be found in the core transport specification~\cite[Section~7.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Establishment}
 
-A QUIC connection is considered established when the TLS handshake completes. By then, both peers
-have derived the necessary protection keys and can receive 1-RTT frames with application data.
+In order to initiate a new connection, clients sends an Initial packet to the server, which
+initiates the handshake process. After the handshake completes, both peers have derived protection
+keys necessary to send and receive 1-RTT packets with application data.
 
-An example handshake flow is illustrated in \autoref{fig:02-example-handshake-flow}. The figure also
-lists the contents of the \CRYPTO{} frames sent. However, this is only for illustrative purposes
-because QUIC does not interpret the \CRYPTO{} frames' contents.
-
+An example handshake flow is illustrated in \autoref{fig:02-example-handshake-flow}. The figure
+shows client and server endpoints exchanging UDP datagrams with QUIC packets. For illustration, we
+list the contents of the individual QUIC frames. The figure also lists contents of the \CRYPTO{}
+frames sent. However, these are only for illustrative purposes because QUIC does not interpret the
+\CRYPTO{} frames' contents.
 
 \begin{myFigure} {fig:02-example-handshake-flow} {Example QUIC handshake flow}
 
   \resizebox{\linewidth}{!}{\input{img/02-handshake-flow.pdf_tex}}
 
-\todo{add an explicit legend for this image (and maybe for others as well), add some background colors to make explicit what is a packet header and what is data, see recording 43m}
-
-\todo{maybe separate explanation for the main packets and then mention acks, that could make the
-  explanation simpler to understan, 46m}
-
 \end{myFigure}
 
-In its first datagram, the client sends an Initial packet with a single \CRYPTO{} frame containing the
-\textit{Client Hello} TLS message.
-
-\todo{I am using different textual object in text and in the figure, don't be afraid to use
-  ``ACK(0)'' directly in paragraph. see 45m}
+In its first datagram, the client sends an Initial packet with initial information consisting of a
+single \CRYPTO{}(CH) frame. This frame contains the \textit{Client Hello} TLS message.
 
 The server replies with a datagram containing three coalesced QUIC packets. The first is an Initial
-packet that acknowledges the client's Initial packet, and a \CRYPTO{} frame with a \textit{Server
-  Hello} message. The contents of Client Hello and Server Hello messages are used by TLS to derive
-Handshake protection keys. The server advances the TLS handshake further by sending another
-\CRYPTO{} frame in the Handshake packet. The server also has enough information to derive also the
-1-RTT keys, so it can also start sending data on Stream 1 using the \STREAM{} frame in a 1-RTT
-packet.
+packet that acknowledges the client's Initial packet using the \ACK{}(0) frame, and a \CRYPTO{}(SH)
+frame with a \textit{Server Hello} message. The contents of Client Hello and Server Hello messages
+are used by TLS to derive Handshake protection keys. The server advances the TLS handshake further
+by sending another \CRYPTO{} frame in the Handshake packet. The server also has enough information
+to derive also the 1-RTT keys, so it can also start sending data on Stream 1 using the \STREAM{}(1,
+``...'') frame in a 1-RTT packet.
 
-Because the server's Initial packet contained an ack-eliciting \CRYPTO{} frame, the client needs to
-respond with another Initial frame with an ACK frame. The client can now derive the Handshake keys,
-enabling him to process the server's Handshake packet. The Handshake packet needs to be separately
-acknowledged by an \ACK{} frame, and a reply from the TLS layer must be sent using another \CRYPTO{}
-frame. From the information in the server's Handshake packet's \CRYPTO{} frame, the client derives
-1-RTT protection keys and processes the server's 1-RTT packet. In addition to sending an \ACK{}
-frame for the server's 1-RTT packet, the client can now start sending application data on stream 0
-using a \STREAM{} frame.
+Because the server's Initial packet contained an ack-eliciting \CRYPTO{}(SH) frame, the client needs
+to acknowledge it by sending an Initial frame with an \ACK{}(0) frame. The client can posesses both
+Client and Server Hello mesages and can derive the Handshake keys, enabling him to process the
+server's Handshake packet. The Handshake packet needs to be separately acknowledged by another
+\ACK{}(0) frame, and a reply from the TLS layer must be sent using another \CRYPTO{} frame. From the
+information in the server's Handshake packet's \CRYPTO{} frame, the client derives 1-RTT protection
+keys and processes the server's 1-RTT packet. In addition to sending an \ACK{}(0) frame for the
+server's 1-RTT packet, the client can now start sending application data on stream 0 using a
+\STREAM{}(0, ``...'') frame.
 
 After server detects that Handshake has successfully completed, it sends a \HANDSHAKEDONE{} frame to
 communicate the fact to the client.
+
+\todo{retry? or do it as part of Security section?}
 
 \subsection{Connection Termination}
 
@@ -660,32 +695,7 @@ in response to receiving a packet that it cannot associate with an active connec
 
 In such cases, the endpoint sends a specially crafted packet that ends with a Stateless Reset Token
 associated with his Connection ID\@. The Stateless Reset Token requirements are quite complex, and
-we encourage readers to read the full specification if they are interested in details. \todo{include
-reference to the appropriate section?}
-
-\subsection{QUIC Transport Parameters}\label{sec:02-transport-parameters}
-
-QUIC leverages the extensibility of the TLS handshake to also exchange specific parameters for the
-connections. Many of the parameters have a default value, which is used when the given transport
-parameter is not sent. However, some transport parameters are mandatory in some cases. Example
-information set through transport parameters is:
-
-\begin{itemize}
-
-  \item Initial flow control limits
-
-  \item Whether connection migration is allowed
-
-  \item Maximum delay before sending an acknowledgment for ack-eliciting packets
-
-  \item Maximum idle timeout before the connection is silently closed
-
-  \item Maximum size of a UDP packet the endpoint is willing to receive
-
-\end{itemize}
-
-\todo{ mention that there is some exhaustive list of existing transport parameters }
-
+we encourage readers to read the full specification if they are interested in details~\cite[Section~10.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Migration}
 
@@ -862,8 +872,7 @@ timeout (see \autoref{sec:idle-timeout})
 
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The selection of the congestion control algorithm is left on
-the implementation. As an example, The QUIC-RECOVERY specification document describes a congestion
-control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm.
+the implementation. As an example, The QUIC specification document for loss detection and recovery~\cite[Section~7]{draft-ietf-quic-recovery} describes a congestion control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm.
 
 \section{Security}
 
@@ -897,7 +906,7 @@ value of the hostname.
 A custom TLS extension is used by QUIC to exchange transport parameters during the handshake. The
 transport parameters are described in \autoref{sec:02-transport-parameters}.
 
-\subsection{Packet Protection}\label{sec:packet-protection}
+\subsection{Packet Protection}\label{sec:02-packet-protection}
 
 All QUIC packets of type Initial, Handshake, 1-RTT and 0-RTT are encrypted to ensure integrity and
 confidentiality of the transmitted data. Negotiation of the cryptographic ciphers and the encryption
@@ -1065,8 +1074,9 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
 \subsubsection{Updating 1-RTT Protection Keys}\label{sec:02-key-update}
 
 Some AEAD functions have limits for how many packets can be encrypted using the same keys. Analysis
-in the specification document shows that updating the protection keys after sending at most
-$2^{23}$ packets provides the same confidentiality level as a standard TLS connection~\cite{draft-ietf-quic-tls}.
+in the specification document shows that updating the protection keys after sending at most $2^{23}$
+packets provides the same confidentiality level as a standard TLS
+connection~\cite[Appendix~B]{draft-ietf-quic-tls}.
 
 The key update is signalled by flipping a \textit{Key Phase} bit in the 1-RTT packet header. And
 after observing the change in the \textit{Key Phase}, an endpoint derives new secret and $key$ and
