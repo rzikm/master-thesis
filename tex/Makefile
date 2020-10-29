@@ -20,7 +20,7 @@ abstract.txt: thesis.pdf
 abstract.pdf: abstract.tex abstract.xmpdata abstract.txt
 	pdflatex $<
 
-$(IMGDIR)/%.pdf_tex: $(IMG_DIR)/%.svg
+$(IMG_DIR)/%.pdf_tex: $(IMG_DIR)/%.svg
 	inkscape --export-filename $(patsubst %.svg, %.pdf, $<) --export-latex $<
 
 images: $(IMG_OUT)
