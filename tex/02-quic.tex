@@ -315,7 +315,7 @@ of the Version Negotiation packet is illustrated in \autoref{fig:02-version-nego
 The identifier of the initial QUIC version is \binary{00000001}. There are also special identifiers
 for draft versions of the protocol valid only until the QUIC specification is finalized.
 
-\subsection{Retry Packet}
+\subsection{Retry Packet}\label{sec:02-retry-packet}
 
 Retry packets are distinguished by value \binary{3} in the \textit{Packet Type} field of the long
 header. Retry packets are sent by a server as part of the optional \textit{Address Validation}
@@ -801,11 +801,14 @@ numbered streams of the same stream type.
 
 Streams can be closed either gracefully or abortively. Graceful stream close is signaled by a
 \textit{Fin} bit in the \STREAM{} frame, signaling that data carried by this packet are the last
-part of the stream. Abortive stream close is achieved using the \RESETSTREAM{} frame and, therefore,
-this action is also reffered to as \textit{resetting the stream}. Streams can be only reset by the
-sender. Receiver can request abortive stream close by sending a \STOPSENDING{} frame if it no longer
-wishes to receive data on that stream. Both \RESETSTREAM{} and \STOPSENDING{} frames carry an
-application-level error code, that is then read by the application using QUIC.
+part of the stream. The stream is gracefully closed once all stream data is confirmed received by
+the other endpoint.
+
+Abortive stream close is achieved using the \RESETSTREAM{} frame and, therefore, this action is also
+reffered to as \textit{resetting the stream}. Streams can be reset only by the sender. Receiver can
+request abortive stream close by sending a \STOPSENDING{} frame if it no longer wishes to receive
+data on that stream. Both \RESETSTREAM{} and \STOPSENDING{} frames carry an application-level error
+code, that is then read by the application using QUIC.
 
 After the stream is closed, it's Stream ID cannot be reused. Instead, the next available Stream ID
 must be used. QUIC uses the variable-length integer encoding (see
@@ -1097,6 +1100,7 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
       \wordbox[tlrb]{1}{Length (i)} \\
       \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
       \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
     \end{bytefield}
 
   \end{mySubFigure}
@@ -1114,6 +1118,7 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
       \end{rightwordgroup} \\
       \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
       \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
     \end{bytefield}
 
   \end{mySubFigure}
@@ -1142,10 +1147,36 @@ $iv$ keys using the HKDF-Expand-Label function:
 Because the \textit{Key Phase} bit is protected by header protection, the $hp$ key must remain
 unchanged to ensure that the other endpoint can correctly remove the header protection.
 
-\subsection{Address Validation}\label{sec:02-address-validation}
+\subsection{Client Address Validation}\label{sec:02-address-validation}
 
-\todo{write this}
+After receiving the first Initial packet from a new client, server can request address validation by
+sending a Retry packet (see \autoref{sec:02-retry-packet}). The Retry packet carries a token which
+must be echoed back to the server in all following Initial packets. As long as an attacker cannot
+generate a valid token for its address and the client is able to return that token, this exchange
+proves to the server that the client has received the token.
 
-However, a change in the endpoint's address can still happen due to, e.g., NAT rebinding. In that case, the new network address must be validated using the \PATHCHALLENGE{} and \PATHRESPONSE{} frames.
+\autoref{fig:02-client-address-validation-flow} illustrates the use of Retry packet to valididate
+client address during connection establishment. By default, clients do not fill the Token field of
+the Initial packet. The server rejects the initial connection attempt and issues a Retry Token
+(denoted ``ABCD'' in the figure). Client then tries again with another Initial with the provided
+token and the server proceeds with the usual handshake.
+
+\begin{myFigure}{fig:02-client-address-validatin-flow}{Client address validation using a Retry packet.}
+
+\resizebox{\linewidth}{!}{\input{img/02-client-address-validation-flow.pdf_tex}}
+
+\end{myFigure}
 
 \subsection{Path Validation}\label{sec:02-path-validation}
+
+QUIC is layered on top of UDP which is a connection-less protocol. This means that changes in
+endpoint address can also happen without active migration on the endpoint's part, e.g., because of
+NAT rebinding along the network path.
+
+The endpoint address may also be spoofed by the other endpoint in an attempt to perform
+\textit{traffic amplification attack} against the spoofed address. For this reason, the amount of
+data sent to the new endpoint address must be limited until path validation determines that the
+address belongs to the endpoint. This path validation is performed by sending a \textit{probing
+  packet} containing a \PATHCHALLENGE{} frame with an unpredictable token. The other endpoint must
+echo the token back in a \PATHRESPONSE{} frame. After that the new address is considered validated
+and the sending rate restrictions are lifted.

@@ -249,17 +249,18 @@
     </marker>
   </defs>
   <sodipodi:namedview
+     inkscape:snap-global="true"
      id="base"
      pagecolor="#ffffff"
      bordercolor="#666666"
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8284272"
-     inkscape:cx="133.02512"
-     inkscape:cy="263.04461"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="179.25743"
+     inkscape:cy="246.57101"
      inkscape:document-units="mm"
-     inkscape:current-layer="g1301"
+     inkscape:current-layer="g1187"
      inkscape:document-rotation="0"
      showgrid="false"
      inkscape:window-width="1920"
@@ -1056,7 +1057,7 @@
            style="font-style:italic;text-align:center;text-anchor:middle;stroke-width:0.264583"
            y="121.54519"
            x="150.70314"
-           sodipodi:role="line">switching to the new network path</tspan></text>
+           sodipodi:role="line">switching to the new address</tspan></text>
     </g>
     <path
        id="path1357"
