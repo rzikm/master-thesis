@@ -279,7 +279,7 @@ The semantics of the individual fields of the long header is as follows:
 
 \end{description}
 
-\subsection{Version Negotiation Packet}
+\subsection{Version Negotiation Packet}\label{sec:02-version-negotiation-packet}
 
 The Version Negotiation packet is sent by the server when it receives a long header packet
 requesting a version of QUIC unsupported by the server. As an exception to other long header
@@ -553,14 +553,14 @@ it cannot migrate a connection to a new local address.
 
 \subsection{Matching Packets to Connections}
 
-\todo{breakdown by client and server}
+When a packet arrives to an endpoint, it needs to be associated with an existing connection, or ---
+for servers --- potentially initiate a new connection. If packet contains a non-zero-length Connection
+ID in the DCID field, the Connection ID is used to find an existing connection. If the packet uses a zero-length conneciton id, then the local and remote addresses determine the target connection.
 
 \autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
-from client connections. Each packet contains a Destination Connection ID field (DCID for short),
-which contains the Connection ID used by the recipient endpoint. Server maintains a table mapping
-between Destination Connection IDs and the corresponding connections, and dispatches the incoming
-packets accordingly. If a packet cannot be associated with an existing connection, then it may be a
-new connection attempt, otherwise the packet is discarded.
+from client connections. Server maintains a table mapping between DCIDs corresponding connections,
+and dispatches the incoming packets accordingly. If a packet cannot be associated with an existing
+connection, then it may be a new connection attempt, otherwise the packet is discarded.
 
 \begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
 
@@ -569,6 +569,30 @@ new connection attempt, otherwise the packet is discarded.
 \todo{Check if the image is more clear now}
 
 \end{myFigure}
+
+In case the packet cannot be associated with an existing connections, client endpoints simply ingore
+the packet. Server, on the other hand, check the packet type and version of the protocol it
+requires. For valid Initial packets with supported verions, server proceeds with the handshake as
+described in the previous section. For invalid Initial packets, the server responds with an Initial
+packet containing a \CONNECTIONCLOSE{} frame signaling the refusal of the connection.
+
+In case the client packet requests an unsupported QUIC version, server replies with a Version
+Negotiation packet (described in \autoref{sec:02-version-negotiation-packet}). After receiving such
+a packet, the client can try again using one of the supported versions. Figure
+\autoref{fig:02-version-negotiation-flow} illustrates such an exchange. In the figure, the client
+tries to establish connection using an unsupported version denoted by X. Server then replies with
+Version Negotiation packet listing versions 1,2, and 3. Client the tries to establish connection
+again using the version 1.
+
+\begin{myFigure}{fig:02-version-negotiation-flow}{Example Version Negotiation packet exchange}
+
+\resizebox{\linewidth}{!}{\input{img/02-version-negotiation-flow.pdf_tex}}
+
+\end{myFigure}
+
+Lastly, the server may choose to send a Stateless Reset (see later in
+\autoref{sec:02-stateless-reset}) for any other packet that cannot be matched to an existing
+connection.
 
 \subsection{QUIC Transport Parameters}\label{sec:02-transport-parameters}
 
@@ -611,7 +635,7 @@ frames sent. However, these are only for illustrative purposes because QUIC does
 
 \begin{myFigure} {fig:02-example-handshake-flow} {Example QUIC handshake flow}
 
-  \resizebox{\linewidth}{!}{\input{img/02-handshake-flow.pdf_tex}}
+\resizebox{\linewidth}{!}{\input{img/02-handshake-flow.pdf_tex}}
 
 \end{myFigure}
 
@@ -666,28 +690,27 @@ In order to prevent timeouts, endpoints can send a \PING{} or another ack-elicit
 the liveness of the connection. However, sending \PING{} frames should be initiated by the
 application protocol, not QUIC implementation, to prevent unnecessary network traffic.
 
-\subsubsection{Immediate close}
+\subsubsection{Immediate Close}
 
 An immediate close can be initiated both by QUIC implementation and by the application protocol.
-Either endpoint can initiate an immediate close by sending a \CONNECTIONCLOSE{} frame. This causes
-all streams to become closed immediately.
+Either endpoint can initiate an immediate close by sending a \CONNECTIONCLOSE{} frame. By sending a
+\CONNECTIONCLOSE{} frame, the peer enters a \textit{closing state}, in which it includes the
+\CONNECTIONCLOSE{} frame in all packets it sends in reply to incoming packets. The closing state is
+received also if the endpoint receives a \CONNECTIONCLOSE{} frame from the peer. In that case the
+endpoint also echoes the \CONNECTIONCLOSE{} frame back to the other endpoint.
 
-By sending a \CONNECTIONCLOSE{} frame, the peer enters a closing state, in which it includes the
-\CONNECTIONCLOSE{} frame in all packets it sends in reply to incoming packets.
-
-Upon receiving a \CONNECTIONCLOSE{}, the peer should once echo the \CONNECTIONCLOSE{} back to the
-peer and enter the closing state.
-
-The closing state lasts until the endpoint is sure the other endpoint is also in the closing state
-(e.g., until it also receives \CONNECTIONCLOSE{}), or until a closing timeout expires. The closing
-timeout period is calculated from the current estimate of the round-trip time of the connection.
+The closing state lasts until the endpoint is sure the other endpoint is also in the closing state ---
+e.g., until it also receives \CONNECTIONCLOSE{} --- or until a \textit{closing timeout} expires. The
+closing timeout period is calculated from the current estimate of the round-trip time of the
+connection.
 
 The \CONNECTIONCLOSE{} frame carries an error code and, optionally, a human-readable error phrase.
 When initiated by QUIC, the error codes semantics defined by the QUIC specification. However, when
 initiated by the application protocol, the semantics of all possible error code values sent in the
-frame are defined by the application protocol itself.
+frame are defined by the application protocol itself. This implies that the implementations must
+require an error code when closing the connection and do not provide a default error code value.
 
-\subsubsection{Stateless reset}
+\subsubsection{Stateless Reset}\label{sec:02-stateless-reset}
 
 A stateless reset is an option of last resort for an endpoint that does not have access to the state
 of a connection, possibly resulting from a crash or outage. An endpoint may send a stateless reset
@@ -699,7 +722,39 @@ we encourage readers to read the full specification if they are interested in de
 
 \subsection{Connection Migration}
 
-\todo{Write this section}
+A novel feature of QUIC is the ability to migrate connections to a different network path. This is
+enabled by using a dedicated Connection ID, instead of using the endpoint's address to identify the
+connection. In the initial QUIC versio, only client endpoints can migrate the connection to a
+different address.
+
+Prior to migrating a connection, the endpoint can optionally check the reachability of the other
+endpoint using the process called \textit{path validation}. Path validation consists of exchanging
+\textit{probing packets}, and is described in \autoref{sec:02-path-validation}.
+
+If the path is validated, the endpoint can migrate the connection by starting to send packets from
+the mew local address. After server receives the first non-probing packet from the new client's
+address, it starts sending all future packets to that new address.
+
+In order to prevent network traffic being correlated by the outside observers, QUIC requires each
+Connection ID to be used for only one combination of local and remote endpoint addresses. Therefore,
+when connection is migrated, both endpoints must switch to using different Connection IDs.
+
+The connection migration process is illustrated in \autoref{fig:02-connection-migration-flow}.
+Client and servers use Connection IDs \textbf{C1} and \textbf{S1}, respectively. Client first probes
+the reachability of the server with a probing packet containing a \PATHCHALLENGE{} frame. Because
+this packet is sent from a different local address, it uses a different Connection ID (\textbf{S2})
+that was issued previously by the server. Likewise, server uses different Connection ID \textbf{C2}
+to reply with a packet containing a \PATHRESPONSE{} frame, confirming the reachability from the
+clients new local address. After that, client migrates the connection by sending all packets via the
+new local address. After receiving next non-probing packet from the new address, server switches to
+the new client's address as well. Connection IDs \textbf{C1} and \textbf{S1} are no longer used in
+the rest of the connection and can be retired later.
+
+\begin{myFigure}{fig:02-connection-migration-flow}{Flow of packets during connection migration}
+
+\resizebox{\linewidth}{!}{\input{img/02-connection-migration-flow.pdf_tex}}
+
+\end{myFigure}
 
 \section{QUIC Streams}
 
@@ -714,7 +769,7 @@ pack two streams into frames such that those streams are transported in parallel
 
 \end{myFigure}
 
-\subsection{Types of Streams}
+\subsection{Streams Types}
 
 Streams transported by QUIC can be either unidirectional or bidirectional. Unidirectional streams
 carry data from the initiator to its peer, and bidirectional streams carry data in both directions.
@@ -731,37 +786,33 @@ associated encoding is summarized in \autoref{tab:02-stream-id-type-map}.
   Server-Initiated, Unidirectional & \binary{3} \\
 \end{myTable}
 
-\todo{maybe get rid of this sentence}
-For example, client-initiated unidirectional streams have Stream IDs 2, 6, 10, and so on.
-
-The Stream
-ID is encoded using the variable-length integer encoding and, therefore, can range from 0 to
-$2^{62}-1$. However, endpoints must use the next lowest Stream ID for the given stream type when
-opening a new stream.
-
 Bidirectional streams can be viewed as the combination of two unidirectional streams. After opening
 the stream, each direction of the stream behaves as separate inbound and outbound unidirectional
-streams. This implies that the reading and writing part of the stream can be closed independently of
-each other.
+streams. This implies that the sending and receiving part of the stream can be closed independently
+of each other.
 
-\todo{don't use so many names for the same concept, use sending/receiving instead of reading/writing
-  and inbound/outbound}
+\subsection{Stream Lifetime}
 
-\todo{mention that streams id are not recycled, that makes the range of stream id make more sense,
-  64m}
+Opening a stream does no require any special action. Streams are opened simply by sending the first
+\STREAM{} frame carrying data for that stream. However, streams of a particular type can be opened
+only in ascending order of their Stream IDs. For example, stream with ID 2 must be opened before
+opening stream 6. Sending data for higher numbered streams will automatically open all lower
+numbered streams of the same stream type.
 
-\todo{Stream lifetime section: how are they created, how can they be closed}
+Streams can be closed either gracefully or abortively. Graceful stream close is signaled by a
+\textit{Fin} bit in the \STREAM{} frame, signaling that data carried by this packet are the last
+part of the stream. Abortive stream close is achieved using the \RESETSTREAM{} frame and, therefore,
+this action is also reffered to as \textit{resetting the stream}. Streams can be only reset by the
+sender. Receiver can request abortive stream close by sending a \STOPSENDING{} frame if it no longer
+wishes to receive data on that stream. Both \RESETSTREAM{} and \STOPSENDING{} frames carry an
+application-level error code, that is then read by the application using QUIC.
 
-Streams are opened simply by sending the first \STREAM{} frame for that stream. The endpoint sending
-data on the stream can close the stream either gracefully by specifying that all data have been
-written or by abruptly terminating the stream using \RESETSTREAM{} frame. The abrupt termination is
-also referred to as \textit{resetting the stream}. The endpoint receiving the stream can request a
-stream reset using the \STOPSENDING{} frame if it no longer wishes to receive data on that stream.
-Abrupt termination of the stream requires specifying an application-level error code that is
-communicated to the peer.
+After the stream is closed, it's Stream ID cannot be reused. Instead, the next available Stream ID
+must be used. QUIC uses the variable-length integer encoding (see
+\autoref{sec:02-variable-length-encoding}) and, therefore, there is no shortage of available stream
+IDs, which range from 0 to $2^{62}-1$.
 
-Implementations should provide a way for application protocols to specify the relative priority of
-streams.
+\subsection{Required Operations on Streams}
 
 The implementation should provide the following operations on sending part of the stream:
 
@@ -775,7 +826,7 @@ The implementation should provide the following operations on sending part of th
 
 \end{itemize}
 
-On receiving part of the stream, application protocols need to be able to:
+On receiving part of the stream, application protocols must to be able to:
 
 \begin{itemize}
 
@@ -808,10 +859,8 @@ communicated to the peer using three types of frames:
 
 Endpoints can only increase the flow control limits. Their peers must ignore any attempts to
 decrease the flow control limits to ensure consistency when two consecutive QUIC packets with flow
-control updates are reordered during transit.
-
-In case the peer violates any of the control flow limits mentioned above, the QUIC implementation
-must immediately terminate the connection.
+control updates are reordered during transit. In case the peer violates any of the control flow
+limits mentioned above, the QUIC implementation must immediately terminate the connection.
 
 \section{Loss Detection and Recovery}
 
@@ -1093,4 +1142,10 @@ $iv$ keys using the HKDF-Expand-Label function:
 Because the \textit{Key Phase} bit is protected by header protection, the $hp$ key must remain
 unchanged to ensure that the other endpoint can correctly remove the header protection.
 
-\subsection{Address Validation}
+\subsection{Address Validation}\label{sec:02-address-validation}
+
+\todo{write this}
+
+However, a change in the endpoint's address can still happen due to, e.g., NAT rebinding. In that case, the new network address must be validated using the \PATHCHALLENGE{} and \PATHRESPONSE{} frames.
+
+\subsection{Path Validation}\label{sec:02-path-validation}
