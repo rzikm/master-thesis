@@ -43,8 +43,8 @@ namespace PublicApiBenchmarks
                 // AddDiagnoser(ThreadingDiagnoser.Default);
                 
                 // AddDiagnoser(QuicDiagnoser.Default);
-                AddJob(Job.InProcess.WithIterationCount(30));
-                // AddJob(Job.InProcess);
+                // AddJob(Job.InProcess.WithIterationCount(30));
+                AddJob(Job.InProcess);
                 
                 // AddJob(Job.Default);
             }

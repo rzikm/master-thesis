@@ -12,20 +12,40 @@ namespace DevSandbox.QuicTracer
     {
         private readonly ChannelReader<QuicEvent> _eventReader;
 
+        private readonly Dictionary<string, ConnectionContext> _connections =
+            new Dictionary<string, ConnectionContext>();
+
+        public QuicPacketLogger(ChannelReader<QuicEvent> eventReader)
+        {
+            _eventReader = eventReader;
+        }
+
+        public async Task Start()
+        {
+            await foreach (var e in _eventReader.ReadAllAsync().ConfigureAwait(false))
+            {
+                if (!_connections.TryGetValue(e.Connection, out var connection))
+                    _connections[e.Connection] = connection = new ConnectionContext(e.Connection);
+
+                connection.OnEvent(e);
+            }
+        }
+
         private class ConnectionContext
         {
-            public string Connection { get; }
-            public bool _isServer = true;
+            public readonly List<QuicEvent> _delayedEvents = new List<QuicEvent>();
 
             public readonly EventHarnessCtx _localCtx = new EventHarnessCtx();
             public readonly EventHarnessCtx _remoteCtx = new EventHarnessCtx();
-            public readonly List<QuicEvent> _delayedEvents = new List<QuicEvent>();
+            public bool _isServer = true;
             public int _secretsCount;
 
             public ConnectionContext(string connection)
             {
                 Connection = connection;
             }
+
+            public string Connection { get; }
 
             private void ProcessQuicEvent(QuicEvent e)
             {
@@ -62,9 +82,9 @@ namespace DevSandbox.QuicTracer
                 var packets = PacketBase.ParseMany(e.Datagram, _localCtx);
 
                 Console.WriteLine($"[{e.Timestamp:ss.ffff}] {Connection} Recv: ");
-                foreach (PacketBase packet in packets)
+                foreach (var packet in packets)
                 {
-                    int i = packet.PacketType switch
+                    var i = packet.PacketType switch
                     {
                         PacketType.Initial => 0,
                         PacketType.Handshake => 1,
@@ -75,20 +95,21 @@ namespace DevSandbox.QuicTracer
                     _localCtx._packetNumbers[i] = Math.Max(_localCtx._packetNumbers[i], packet.PacketNumber);
 
                     if (!_isServer &&
-                        packet.PacketType == PacketType.Initial && 
-                        _remoteCtx.ConnectionIdCollection.Find(((InitialPacket)packet).SourceConnectionId) == null)
-                    {
+                        packet.PacketType == PacketType.Initial &&
+                        _remoteCtx.ConnectionIdCollection.Find(((InitialPacket) packet).SourceConnectionId) == null)
                         _remoteCtx.ConnectionIdCollection.Add(
-                            new ConnectionId(((InitialPacket)packet).SourceConnectionId, 1,
+                            new ConnectionId(((InitialPacket) packet).SourceConnectionId, 1,
                                 StatelessResetToken.Random()));
-                    }
 
                     if (_isServer && packet.PacketType == PacketType.Initial &&
                         _localCtx.ConnectionIdCollection.FindBySequenceNumber(0) == null)
                     {
-                        _localCtx.ConnectionIdCollection.Add(new ConnectionId(packet.DestinationConnectionId, 0, StatelessResetToken.Random()));
-                        _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(((InitialPacket)packet).SourceConnectionId, 0, StatelessResetToken.Random()));
+                        _localCtx.ConnectionIdCollection.Add(new ConnectionId(packet.DestinationConnectionId, 0,
+                            StatelessResetToken.Random()));
+                        _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(
+                            ((InitialPacket) packet).SourceConnectionId, 0, StatelessResetToken.Random()));
                     }
+
                     Console.WriteLine(packet);
                 }
 
@@ -100,9 +121,9 @@ namespace DevSandbox.QuicTracer
                 var packets = PacketBase.ParseMany(e.Datagram, _remoteCtx);
 
                 Console.WriteLine($"[{e.Timestamp:ss.ffff}] {Connection} Sent: ");
-                foreach (PacketBase packet in packets)
+                foreach (var packet in packets)
                 {
-                    int i = packet.PacketType switch
+                    var i = packet.PacketType switch
                     {
                         PacketType.Initial => 0,
                         PacketType.Handshake => 1,
@@ -121,8 +142,10 @@ namespace DevSandbox.QuicTracer
             private void OnNewConnection(NewConnectionEvent e)
             {
                 _isServer = false;
-                _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(e.DestinationConnectionId, 0, StatelessResetToken.Random()));
-                _localCtx.ConnectionIdCollection.Add(new ConnectionId(e.SourceConnectionId, 0, StatelessResetToken.Random()));
+                _remoteCtx.ConnectionIdCollection.Add(new ConnectionId(e.DestinationConnectionId, 0,
+                    StatelessResetToken.Random()));
+                _localCtx.ConnectionIdCollection.Add(new ConnectionId(e.SourceConnectionId, 0,
+                    StatelessResetToken.Random()));
             }
 
             public void OnEvent(QuicEvent e)
@@ -132,10 +155,7 @@ namespace DevSandbox.QuicTracer
                     ProcessQuicEvent(e);
                     _secretsCount++;
 
-                    foreach (var delayedEvent in _delayedEvents)
-                    {
-                        ProcessQuicEvent(delayedEvent);
-                    }
+                    foreach (var delayedEvent in _delayedEvents) ProcessQuicEvent(delayedEvent);
 
                     _delayedEvents.Clear();
                 }
@@ -150,35 +170,12 @@ namespace DevSandbox.QuicTracer
             }
         }
 
-        private Dictionary<string, ConnectionContext> _connections = new Dictionary<string, ConnectionContext>();
-
-        public QuicPacketLogger(ChannelReader<QuicEvent> eventReader)
-        {
-            _eventReader = eventReader;
-        }
-
-        public async Task Start()
-        {
-            await foreach (var e in _eventReader.ReadAllAsync().ConfigureAwait(false))
-            {
-                if (!_connections.TryGetValue(e.Connection, out var connection))
-                {
-                    _connections[e.Connection] = connection = new ConnectionContext(e.Connection);
-                }
-
-                connection.OnEvent(e);
-            }
-        }
-
         private class EventHarnessCtx : ITestHarnessContext
         {
-            List<(CryptoSeal read, CryptoSeal write)> _seals = new List<(CryptoSeal read, CryptoSeal write)>();
-            public readonly long[] _packetNumbers = { 0, 0, 0 };
+            public readonly long[] _packetNumbers = {0, 0, 0};
 
-            public void AddEncryptionSecrets(CryptoSeal read, CryptoSeal write)
-            {
-                _seals.Add((read, write));
-            }
+            private readonly List<(CryptoSeal read, CryptoSeal write)> _seals =
+                new List<(CryptoSeal read, CryptoSeal write)>();
 
             public CryptoSeal GetRecvSeal(PacketType packetType)
             {
@@ -190,6 +187,18 @@ namespace DevSandbox.QuicTracer
                 return _seals[GetPacketSpaceIndex(packetType)].write;
             }
 
+            public ConnectionIdCollection ConnectionIdCollection { get; } = new ConnectionIdCollection();
+
+            public long GetPacketNumber(PacketType packetType)
+            {
+                return _packetNumbers[GetPacketSpaceIndex(packetType)];
+            }
+
+            public void AddEncryptionSecrets(CryptoSeal read, CryptoSeal write)
+            {
+                _seals.Add((read, write));
+            }
+
             private int GetPacketSpaceIndex(PacketType packetType)
             {
                 return packetType switch
@@ -197,14 +206,8 @@ namespace DevSandbox.QuicTracer
                     PacketType.Initial => 0,
                     PacketType.Handshake => 1,
                     PacketType.OneRtt => 2,
-                    _ => throw new ArgumentOutOfRangeException(nameof(packetType), packetType, null),
+                    _ => throw new ArgumentOutOfRangeException(nameof(packetType), packetType, null)
                 };
-            }
-
-            public ConnectionIdCollection ConnectionIdCollection { get; } = new ConnectionIdCollection();
-            public long GetPacketNumber(PacketType packetType)
-            {
-                return _packetNumbers[GetPacketSpaceIndex(packetType)];
             }
         }
     }

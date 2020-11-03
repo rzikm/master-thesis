@@ -13,32 +13,32 @@ namespace Samples
     /// </summary>
     public class SimpleClientAndServer
     {
-        // private const int DataSizeBytes = 64* 1024 * 1024;
-        private const int DataSizeBytes = 1024 * 1024;
+        private const int DataSizeBytes = 64 * 1024 * 1024;
 
-        static IPEndPoint GetEndpoint(string host, int port)
+        private static readonly IPEndPoint serverEndpoint = GetEndpoint("localhost", 5000);
+        // private const int DataSizeBytes = 1024 * 1024;
+
+        private static IPEndPoint GetEndpoint(string host, int port)
         {
-            IPHostEntry ipHostInfo = Dns.GetHostEntry(host);
-            IPAddress ipAddress = ipHostInfo.AddressList[0];
+            var ipHostInfo = Dns.GetHostEntry(host);
+            var ipAddress = ipHostInfo.AddressList[0];
             return new IPEndPoint(ipAddress, port);
         }
 
-        static IPEndPoint serverEndpoint = GetEndpoint("localhost", 5000);
-
-        static async Task Server(CancellationToken cancellationToken)
+        private static async Task Server(CancellationToken cancellationToken)
         {
             try
             {
-                Console.WriteLine($@"Starting listener");
-                using var listener = new QuicListener(new QuicListenerOptions()
+                Console.WriteLine(@"Starting listener");
+                using var listener = new QuicListener(new QuicListenerOptions
                 {
                     ListenEndPoint = serverEndpoint,
-                    ServerAuthenticationOptions = new SslServerAuthenticationOptions()
+                    ServerAuthenticationOptions = new SslServerAuthenticationOptions
                     {
-                        ApplicationProtocols = new List<SslApplicationProtocol>()
+                        ApplicationProtocols = new List<SslApplicationProtocol>
                         {
                             new SslApplicationProtocol("sample")
-                        },
+                        }
                     },
                     CertificateFilePath = "Certs/cert.crt",
                     PrivateKeyFilePath = "Certs/cert.key"
@@ -55,15 +55,12 @@ namespace Samples
                 var stream = connection.OpenUnidirectionalStream();
 
                 Console.WriteLine($"Writing {DataSizeBytes} bytes of data");
-                byte[] buffer = new byte[1024 * 16];
+                var buffer = new byte[1024 * 16];
 
                 // write known data so that we can assert it on the other size
-                for (int i = 0; i < buffer.Length; i++)
-                {
-                    buffer[i] = (byte) i;
-                }
+                for (var i = 0; i < buffer.Length; i++) buffer[i] = (byte) i;
 
-                int written = 0;
+                var written = 0;
 
                 while (written < DataSizeBytes)
                 {
@@ -97,9 +94,9 @@ namespace Samples
             try
             {
                 Console.WriteLine("Creating client connection");
-                using var client = new QuicConnection(serverEndpoint, new SslClientAuthenticationOptions()
+                using var client = new QuicConnection(serverEndpoint, new SslClientAuthenticationOptions
                 {
-                    ApplicationProtocols = new List<SslApplicationProtocol>()
+                    ApplicationProtocols = new List<SslApplicationProtocol>
                     {
                         new SslApplicationProtocol("sample")
                     },
@@ -113,37 +110,30 @@ namespace Samples
                 var stream = await client.AcceptStreamAsync(cancellationToken).ConfigureAwait(false);
 
                 Console.WriteLine("Stream received, pulling data");
-                byte[] buffer = new byte[1024 * 16];
+                var buffer = new byte[1024 * 16];
 
-                int total = 0;
+                var total = 0;
                 int recv;
                 do
                 {
                     recv = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
 
-                    for (int i = 0; i < recv; i++)
-                    {
+                    for (var i = 0; i < recv; i++)
                         if (buffer[i] != (byte) (total + i))
-                        {
                             throw new InvalidOperationException("Data corrupted");
-                        }
-                    }
 
                     total += recv;
                 } while (recv > 0);
 
-                if (total > DataSizeBytes)
-                {
-                    throw new InvalidOperationException("Received unexpectedly more data");
-                }
+                if (total > DataSizeBytes) throw new InvalidOperationException("Received unexpectedly more data");
 
-                Console.WriteLine($"Received all bytes");
+                Console.WriteLine("Received all bytes");
 
                 await stream.DisposeAsync().ConfigureAwait(false);
-                Console.WriteLine($"Client stream disposed");
+                Console.WriteLine("Client stream disposed");
 
                 client.Dispose();
-                Console.WriteLine($"Client connection disposed");
+                Console.WriteLine("Client connection disposed");
             }
             catch (Exception e)
             {
@@ -155,7 +145,7 @@ namespace Samples
 
         public static async Task Run()
         {
-            CancellationTokenSource cts = new CancellationTokenSource();
+            var cts = new CancellationTokenSource();
             var serverTask = Task.Run(() => Server(cts.Token));
             var clientTask = Task.Run(() => Client(cts.Token));
 

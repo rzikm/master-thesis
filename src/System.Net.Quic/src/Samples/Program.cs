@@ -1,15 +1,13 @@
-﻿using System;
-using System.Threading.Tasks;
-using TestServer;
+﻿using System.Threading.Tasks;
 
 namespace Samples
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "1");
-            
+            // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "console");
+
             await SimpleClientAndServer.Run();
         }
     }

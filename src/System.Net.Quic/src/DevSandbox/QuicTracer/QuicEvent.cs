@@ -20,16 +20,16 @@ namespace DevSandbox.QuicTracer
     [DataContract]
     internal class SetEncryptionSecretsEvent : QuicEvent
     {
-        [DataMember] public byte[] ReadSecret { get; set; }
-        [DataMember] public byte[] WriteSecret { get; set; }
-        [DataMember] public TlsCipherSuite CipherSuite { get; set; }
-
         public enum EncryptionLevel
         {
             Initial,
             Handshake,
-            Application, // keep in sync with actual names
+            Application // keep in sync with actual names
         }
+
+        [DataMember] public byte[] ReadSecret { get; set; }
+        [DataMember] public byte[] WriteSecret { get; set; }
+        [DataMember] public TlsCipherSuite CipherSuite { get; set; }
 
         [DataMember] public EncryptionLevel Level { get; set; }
     }

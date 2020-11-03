@@ -18,10 +18,10 @@ namespace DevSandbox.QuicTracer
         private const int DatagramSentId = SetEncryptionSecretsId + 1;
         private const int DatagramRecvId = DatagramSentId + 1;
 
-        private EventSource _quicEventSource;
-
         private readonly Channel<QuicEvent> _eventChannel =
             Channel.CreateUnbounded<QuicEvent>(new UnboundedChannelOptions {SingleReader = true, SingleWriter = true});
+
+        private EventSource _quicEventSource;
 
         public ChannelReader<QuicEvent> EventReader => _eventChannel.Reader;
 
@@ -42,15 +42,15 @@ namespace DevSandbox.QuicTracer
                 switch (eventData.EventId)
                 {
                     case ConnectClientStart:
-                        e = new NewConnectionEvent()
+                        e = new NewConnectionEvent
                         {
                             Connection = (string) eventData.Payload[0],
                             SourceConnectionId = (byte[]) eventData.Payload[1],
-                            DestinationConnectionId = (byte[]) eventData.Payload[2],
+                            DestinationConnectionId = (byte[]) eventData.Payload[2]
                         };
                         break;
                     case SetEncryptionSecretsId:
-                        e = new SetEncryptionSecretsEvent()
+                        e = new SetEncryptionSecretsEvent
                         {
                             Connection = (string) eventData.Payload[0],
                             Level = Enum.Parse<SetEncryptionSecretsEvent.EncryptionLevel>(eventData.Payload[1]
@@ -61,14 +61,14 @@ namespace DevSandbox.QuicTracer
                         };
                         break;
                     case DatagramSentId:
-                        e = new DatagramSentEvent()
+                        e = new DatagramSentEvent
                         {
                             Connection = (string) eventData.Payload[0],
                             Datagram = (byte[]) eventData.Payload[1]
                         };
                         break;
                     case DatagramRecvId:
-                        e = new DatagramRecvEvent()
+                        e = new DatagramRecvEvent
                         {
                             Connection = (string) eventData.Payload[0],
                             Datagram = (byte[]) eventData.Payload[1]

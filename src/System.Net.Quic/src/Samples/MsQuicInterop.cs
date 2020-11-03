@@ -17,10 +17,10 @@ namespace TestServer
             // port 4567 is hardcoded in msquicsample executable
             var serverAddress = IPEndPoint.Parse("127.0.0.1:4567");
 
-            using QuicConnection connection = new QuicConnection(serverAddress,
-                new SslClientAuthenticationOptions()
+            using var connection = new QuicConnection(serverAddress,
+                new SslClientAuthenticationOptions
                 {
-                    ApplicationProtocols = new List<SslApplicationProtocol>()
+                    ApplicationProtocols = new List<SslApplicationProtocol>
                     {
                         // make sure we report the same protocol
                         new SslApplicationProtocol("sample")
@@ -31,12 +31,12 @@ namespace TestServer
 
             await using var stream = connection.OpenBidirectionalStream();
 
-            byte[] buffer = new byte[1024];
+            var buffer = new byte[1024];
             new Random().NextBytes(buffer);
             await stream.WriteAsync(buffer);
             await stream.ShutdownWriteCompleted();
 
-            int totalRead = 0;
+            var totalRead = 0;
             int read;
             do
             {
