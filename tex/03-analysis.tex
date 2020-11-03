@@ -10,15 +10,15 @@ The set of features to be implemented is guided by the goals we set in this thes
 introduction chapter. For the purpose of feature selection, we can rephrase subset of the original
 goals into the following:
 
-\todo{List which original goals imply these}
+\todo{List which original goals imply these (check this)}
 
 \begin{enumerate}
 
   \item Support basic data transport, enabling some experimentation with QUIC as the transport for
-    application layer protocols.
+    application layer protocols. \textit{(goals 1 and 2)}
 
   \item Enable performance measurements that are representative of the potential full QUIC
-    implementation.
+    implementation. \textit{(goals 1 and 3)}
 
 \end{enumerate}
 
@@ -86,11 +86,10 @@ As a general rule, the implementation will:
 
 \begin{itemize}
 
-    \litem{Avoid excessive heap allocations} Although heap allocation is considered cheap, frequent
-    \todo{rephrase? allocation is cheap, however, price is paid during garbage collection ....}
-    allocations put pressure on the \dotnet{} garbage collector, leading to unnecessary stalls.
-    Therefore, the amount of heap allocation on hot paths of the code executions should be
-    minimized.
+    \litem{Avoid excessive heap allocations} Although heap allocation is cheap in \dotnet{} thanks
+    to the garbage collector, allocating large number of objects may lead to frequent garbage
+    collections. Each collection introduces a small stall into the program. Therefore,
+    heap allocations on hot paths of the code executions should be minimized.
 
     \litem{Prefer return codes over exceptions} Throwing an exception is an expensive operation, and
     their frequent use would have negative impact on the performance.
@@ -110,12 +109,13 @@ specification.
 
 \section{Target \dotnet{} API}
 
-\todo{emphasise that this API was designed by the .NET team and was already present there, we are only fulfilling the API}
+\todo{check this paragraph}
 
-This section describes API that will be used to expose the QUIC implementation to other developers.
-As mentioned in the introduction chapter, the current design is a work-in-progress and is subject to
-change in the future. All of the mentioned classes are located in the \namespace{System.Net.Quic}
-namespace.
+This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
+other developers. This thesis will use this API to allow swapping underlying implementation between
+this thesis implementation and the \libmsquic{}-based implementation. As mentioned in the
+introduction chapter, the current design is a work-in-progress and is subject to change in the
+future. All of the mentioned classes are located in the \namespace{System.Net.Quic} namespace.
 
 \subsection{QuicListener Class}
 
@@ -218,25 +218,38 @@ The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC
 
 \subsection{QuicStream Class}
 
-The \class{QuicStream} class represents a single stream in a QUIC connection. This class inherits
-from the abstract \class{Stream} class. The list below mentions only members specific for the
-\class{QuicStream} class, members from the \class{Stream} base class are omitted for brevity.
-\todo{mention that the omitted members include Read and ReadAsync}
+The \QuicStream{} class represents a single stream in a QUIC connection and derives from the
+abstract \class{Stream} class. The \class{Stream} class is a bidirectional stream abstraction and
+since not all QUIC streams are bidirectional, user should check if the specific \QuicStream{}
+instance supports supports the operation by inspecting the \method{CanRead} and \method{CanWrite}
+properties. Invoking read methods on write-only (i.e. unidirectional sending) stream will cause an
+exception to be thrown and vice versa.
 
-The class contains methods for both inbound and outbound streams. Invoking read methods on
-write-only stream will cause an exception to be thrown and vice versa.
-
-\todo
+The list below mentions the members specific for the \class{QuicStream} class and some important
+members inherited from the \class{Stream} class.
 
 \begin{description}
 
     \ditemproperty{long}{StreamId}{\propget} The Stream ID\@.
 
+    \ditemproperty{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
+
+    \ditemproperty{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
+
     \ditemmethod{void}{AbortRead}{long} Aborts the receiving part of the stream with the provided error code.
 
     \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>} \todo{mention scatter/gather IO, 2:14m}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethod{int}{Read}{Span<byte>} Reads the content
+    of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
+
+    \ditemmethod{ValueTask<int>}{ReadAsync}{Memory<byte>, CancellationToken} Reads the content
+    of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
+
+    \ditemmethod{void}{Write}{Span<byte>} Writes the content
+    of the provided buffer into the stream, returns when the data have been buffered internally.
+
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. \todo{mention scatter/gather IO}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
 
     \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
 
@@ -264,6 +277,8 @@ The QUIC API can throw following exceptions:
 
 \section{TLS Implementation}
 
+\todo{this section might be beter moved until later}
+
 TLS handshake forms an integral part of the QUIC connection establishment. Because correct TLS
 implementation is crucial for ensuring the security of the resulting implementation, this thesis
 should avoid implementing TLS algorithms by itself. Instead, it should reuse some existing and
@@ -290,6 +305,8 @@ TLS implementation. Below is a nonexhaustive list of operations the TLS library'
 
 \subsection{TLS 1.3 Support in \dotnet{}}
 
+\todo{this is a single subsection of the parent section, either remove the heading or introduce more sections}
+
 The \dotnet{} runtime libraries use different native libraries to provide TLS functionality on
 different operating systems. On Windows, \libname{Secure Channel}~\cite{Schannel} (\libschannel{}
 for short), which is part of the Windows operating system. On Linux and macOS systems, the
@@ -297,7 +314,8 @@ for short), which is part of the Windows operating system. On Linux and macOS sy
 
 \begin{description}
 
-    \ditem{\libname{Secure Channel}} The \libschannel{} versions present in the latest Windows 10
+    \ditem{\libname{Secure Channel}}
+    The \libschannel{} versions present in the latest Windows 10
     builds support only TLS 1.2.  However, future updates will implement also TLS 1.3. The
     \libschannel{} version with TLS 1.3 support can be obtained by installing an insider preview
     build of Windows 10.
@@ -312,9 +330,9 @@ for short), which is part of the Windows operating system. On Linux and macOS sy
 
     However, developers at Akamai maintain a fork of \libopenssl{} which adds the QUIC-enabling
     API~\cite{AkamaiOpensslGithub}. This modified version of \libopenssl{} is used by \libmsquic{}
-    (on Linux) and other QUIC libraries \todo{mention them by name + link?: quiche}. It is possible
-    that the changes made by Akamai will be merged into \libopenssl{} into the following 3.1.0, or
-    later releases.
+    (on Linux) and some other QUIC libraries like \libname{quiche} from
+    Cloudflare~\cite{quicheGithub}. It is possible that the changes made by Akamai will be merged
+    into \libopenssl{} into the following 3.1.0, or later releases.
 
 \end{description}
 
@@ -325,7 +343,6 @@ prototype implementation would severely impact cross-platform availability.
 The \libopenssl{} library and supports all platforms supported by \dotnet{}, and could therefore be
 used to implement TLS integration into QUIC in a platform-compatible manner. This solution, however,
 has some drawbacks:
-
 
 \begin{itemize}
 
@@ -345,19 +362,104 @@ This thesis will therefore integrate with the forked \libopenssl{} library from 
 library is written in C, it has to be integrated to the build process to be build together with the
 native code of the \dotnet{} runtime.
 
-\section{Threading model}
+\section{High-Level Architecture}
 
-Implementation of the QUIC connection requires some background processing for handling timeouts and
-reacting to incoming packets. Together with user threads, there will be more than one
-thread\footnote{To reduce verbosity, this text will be using term thread to mean both code executing on a
-  dedicated \class{Thread} or code running on the thread-pool using the \class{Task} type and
-  \dotnet{} async/await model.} accessing the internal state of the connection.
+\todo{this section was completely rewritten}
 
-\subsection{Public API}
+The \QuicConnection{} implementation will require some sort of background processing
+thread\footnote{To reduce verbosity, this text will be using term \textit{thread} to mean both code
+  executing on a dedicated \class{Thread} instance or code running on the thread-pool thread using
+  the \class{Task} abstraction and the \dotnet{} async/await model.} to be able to send
+acknowledgements for incoming packets and resending data after being determined lost due to a
+timeout. Because the correctness of a multithreaded code is hard to test, our implementation of
+\QuicConnection{} will not interact with the underlying \Socket{} instance directly. Instead,
+the implementation will provide an internal interace for exchanging the datagrams to be
+sent/received. The actual sending of these datagrams will be handled by a separate class we named
+\QuicSocketContext{}. By separating the socket I/O from the connection logic implementation, we can
+write unit tests that inspect the contents of the sent datagrams and assert that their contents
+conform to the protocol specification.
 
-The target API is designed to use the \class{ValueTask} type designed for efficient asynchronous
-methods. Using this type, user code will start an asynchronous operation, that can be completed by a
-background thread servicing the connection. This way the user code cannot block the execution of the
+On the server's side, the \QuicSocketContext{} class will also handle any stateless packet
+processing, such as sending Retry and Version Negotiation packet. It will be also responsible for
+matching packets to the appropriate \QuicConnection{} instances and queueing new connections to \QuicListener{} to be read by the application. \autoref{fig:03-architecture} illustrates the relationship between \QuicSocketContext{}, \QuicConnection{} and \QuicListener{} classes.
+
+\begin{myFigure}{fig:03-architecture}{High-level background processing architecture.}
+
+  \input{img/03-architecture.pdf_tex}
+
+\end{myFigure}
+
+\subsection{Servicing the Socket}
+
+The \QuicSocketContext{} class will implement the necessary background processing management. Its
+responsibilies are:
+
+\begin{itemize}
+
+  \item routing incoming datagrams from \Socket{} to the proper \QuicConnection{}
+  instance;
+
+  \item calling timeout handlers after a timeout set by the connection expires; and
+
+  \item sending outgoing datagrams provided by the \QuicConnection{}.
+
+\end{itemize}
+
+For performance reasons, it may be better to process timouts and sending of the datagrams on one
+thread, and processing of received datagrams on another thread. However, the cost of synchronization
+of the shared state may outweigh the performance gain. Our prototype implementation will use a
+single thread to service both types of events, but will allow for the possibility of future experimentation with separate threads for sending and receiving.
+
+\subsubsection{Processing Multiple Connections in Parallel}
+
+For client connections, the background processing provided by the \QuicSocketContext{} class needs
+to service only a single connection. However, on the server's side, there can be multiple
+connections receiving datagrams from the same socket, and therefore being served by the samce
+\QuicSocketContext{} instance. Servicing multiple \QuicConnection{} instances by only one thread
+could limit the server's throughput.
+
+To allow parallel processing of multiple QUIC connections on serers, each \QuicConnection{} should
+have a dedicated thread for background processing. Our implementation separates the per-connection
+logic into separate \QuicConnectionContext{} class. The \QuicSocketContext{} class will be,
+therefore, directly responsible only for stateless packet processing like sending Version
+Negotiation for incoming packets with unsupported versions. Packets belonging to existing
+connections will be quequed for processing by the appropriate \QuicConnectionContext{} instance. A
+possible runtime structure of the \QuicSocketContext{} servicing three separate connections is
+illustrated in \autoref{fig:03-socket-context-architecture}.
+
+\begin{myFigure}{fig:03-socket-context-architecture}{Architecture of the server-side background processing.}
+  \todo{draw a figure}
+\end{myFigure}
+
+\subsubsection{Accessing the Socket Object}
+
+Introduction of \QuicConnectionContext{} solved possible performance bottlenecks for servers, but it
+introduces a complication in the \Socket{} access. Ideally, Each thread would call the
+\method{ReceiveFromAsync} method on the \Socket{} with the known remote endpoint address. This
+naive approach would work, considering that we plan to omit support for connection migration.
+However, as mentioned in \autoref{sec:02-path-validation}, the endpoint can change its address also
+due to NAT rebinding. In that case, the connection would be eventually terminated due to the idle
+timeout (see \autoref{sec:02-idle-timeout}).
+
+Therefore, our implementation will use a separate thread to receive all UDP datagrams, and queue
+them into a \class{Channel<>} instance of the appropriate \QuicConnectionContext{} based on the
+value of the DCID field of the packet header.
+
+\subsubsection{Future Connection Migration Support}
+
+Lastly, we need to review the architecture for possible support for connection migration. Thanks to
+the \QuicConnectionContext{} not depending directly on a particular \Socket{} instance, it is
+conceiveable that a single \QuicConnectionContext{} instance could be part of two
+\QuicSocketContext{}s --- one for the old endpoint address, and the other for the new one. Use of the
+\class{Channel<>} class already ensures that the incoming datagrams could be queued concurrently by
+both \QuicSocketContext{} instances. The only modification needed on the architecture level would be
+selecting the right \Socket{} from which the outgoing datagrams should be sent.
+
+\subsection{Public API Threading model}
+
+The target API is uses the \class{ValueTask} type designed for efficient asynchronous methods. Using
+this type, user code will start an asynchronous operation, that can be completed by a background
+thread servicing the connection. This way the user code cannot block the execution of the
 connection's background thread which could otherwise cause timeouts to be missed.
 
 The implementation should make possible to use the \QuicConnection{} from multiple threads when
@@ -367,7 +469,7 @@ the API:
 
 \begin{itemize}
 
-  \item Individual streams can be accessed concurrently. However, a single stream can be
+  \item Individual streams can be used concurrently. However, a single stream can be
     accessed only by one thread at a time.
 
   \item Accepting/opening new streams on a connection can be done concurrently from multiple threads.
@@ -377,78 +479,10 @@ the API:
 
 \end{itemize}
 
-\subsection{Internal Connection State}
-
-To reduce the need for internal synchronization as much as possible in the \QuicConnection{}
-implementation, our implementation will allow only a single thread to access the internal connection
-state. The cost of synchronization of multi-threaded access would likely outweigh the benefits of
-parallelism.
-
-\section{High-Level Architecture}
-
-Server implementation will need to be able to use a single IP address and port for conducting
-multiple QUIC connections. \todo{reedit following sentence} Also, during connection migration on
-clients, the connection will need to accept datagrams from multiple sockets at the same time.
-Although the prototype implementation will omit the connection migration feature, the architecture
-should allow it's implementation in the future.
-
-Instead of interacting with the underlying \class{Socket} instance from the \QuicConnection{} class
-directly, our implementation will introduce a new \QuicSocketContext{} class to perform the socket
-I/O and background processing. \autoref{fig:03-architecture} shows how the \QuicSocketContext{}
-class fits into the architecture.
-
-\todo{explain more: how it fits into the architecture}
-
-\begin{myFigure}{fig:03-architecture}{High-level background processing architecture.}
-
-  \input{img/03-architecture.pdf_tex}
-
-\end{myFigure}
-
-If necessary, the implementation of \QuicSocketContext{} class can be different for server and
-client endpoints. For example, server implementation may need to utilize multiple background
-processing threads to be able to handle large number of connections without degrading performance.
-
-\todo{really! mention future support for connection migration?}
-
-Separation of I/O from \QuicConnection{} outlined in previous subsection also makes the
-implementation more testable. The interface between the \QuicSocketContext{} and \QuicConnection{}
-will consists of passing buffers with received UDP datagrams and datagrams to be sent.
-
-Therefore, automated tests can inspect the contents of the sent datagrams and inject specially
-crafted datagrams to provoke behavior to be tested. The testing code can also manually step time to
-make the tests deterministic.
-
-\section{QuicSocketContext Implementation}
-
-The connection background processing will need to process the following events:
-
-\begin{itemize}
-
-  \item An incoming UDP datagram has arrived on the socket.
-
-  \item User has performed some action that potentially requires sending UDP datagrams to the other
-    endpoint. This includes e.g. writing data to a stream or aborting a stream.
-
-  \item A timeout has expired, this includes e.g. timeout for loss detection.
-
-\end{itemize}
-
-Additionally, if the QUIC streams within the connection have some data to send, the
-\QuicSocketContext{} implementation should repeatedly let the connection send the data.
-
-\todo{if I don't manage to properly implement this part, then following paragraph needs to be expanded: 2020-10-22 27m}
-
-On the server side, the implementation must be able to service a large number of parallel
-connections effectively. However, such a sophisticated server implementation would be complex and
-would greatly increase the scope of this thesis. For the prototype implementation developed by this
-thesis, we will use a simple single-threaded implementation on both server and client side. Our
-implementation will contain a simple loop and use the async/await model to asynchronously wait for
-one of the above-mentioned events.
 
 \section{Packet Protection}
 
-As described in \autoref{sec:packet-protection}, the packet encryption consists of two phases ---
+As described in \autoref{sec:02-packet-protection}, the packet encryption consists of two phases ---
 payload protection and header protection. The combined process requires following inputs:
 
 \begin{itemize}
@@ -554,7 +588,7 @@ other networking protocols, QUIC uses \textit{network order} of bytes, also call
 
 There are two primitives used in QUIC packet encoding that require nontrivial encoding. The first
 one being variable-length integer encoding, the other one being packet number encoding. Both of
-these encodings are described in \autoref{sec:wire-encoding}.
+these encodings are described in \autoref{sec:02-wire-encoding}.
 
 \todo{this feels like there should be more in this subsection}
 

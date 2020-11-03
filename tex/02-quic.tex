@@ -679,7 +679,7 @@ QUIC connection can be terminated in three ways:
 
 \end{itemize}
 
-\subsubsection{Idle Timeout}\label{sec:idle-timeout}
+\subsubsection{Idle Timeout}\label{sec:02-idle-timeout}
 
 If idle timeout is enabled, the endpoint silently closes the connection if it does not receive a
 packet from the peer for a specified time period. Each peer may advertise a timeout period using the
@@ -920,7 +920,7 @@ following packet that can be acknowledged. To avoid possible deadlocks in such s
 endpoint sends up to two ack-eliciting \textit{probe packets} if it does not receive a packet from a
 peer in a period called \textit{probe timeout} (PTO for short). The PTO duration doubles each time
 probe packets are sent until either a reply is received or the connection is terminated due to idle
-timeout (see \autoref{sec:idle-timeout})
+timeout (see \autoref{sec:02-idle-timeout})
 
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The selection of the congestion control algorithm is left on
