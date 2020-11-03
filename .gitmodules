@@ -1,6 +1,6 @@
 [submodule "dotnet-runtime"]
 	path = src/dotnet-runtime
-	url = https://github.com/rzikm/dotnet-runtime.git
+	url = https://github.com/rzikm/runtimelab.git
 	branch = master-managed-quic
 [submodule "extern/msquic"]
 	path = extern/msquic
