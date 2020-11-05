@@ -58,10 +58,14 @@
 \usepackage{bytefield}      % packet structure
 \usepackage{float}          % better positioning of figures
 \usepackage{filecontents}   % for auto creating of .xmpdata file
+% \usepackage[newfloat]{minted}% code listings
+\usepackage{listings}       % code listings
 
-%% Graphics path (for some reason needed on windows)
+%%% src: https://tex.stackexchange.com/questions/57353/how-to-get-caption-above-listing-with-minted
+\captionsetup[listing]{position=top}
+
+%%% Graphics path (for some reason needed on windows)
 \graphicspath{{img/}}
-
 
 %%% Basic information on the thesis
 
@@ -173,6 +177,9 @@ TODO: do the abstract last%
 %%% Tables used in the thesis (consider if this is needed)
 %%% In mathematical theses, it could be better to move the list of tables to the beginning of the thesis.
 \listoftables
+
+%%% Code listings used in the thesis (consider if this is needed)
+% \listoflistings
 
 %%% Abbreviations used in the thesis, if any, including their explanation
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.

@@ -102,11 +102,6 @@
 \rightline{$\qedsymbol$}
 }
 
-%%% An environment for typesetting of program code and input/output
-%%% of programs. (Requires the fancyvrb package -- fancy verbatim.)
-
-\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small, frame=single}
-
 %%% The field of all real and natural numbers
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
@@ -173,6 +168,7 @@
   \figureArgs{}
   \endfigure{}
 }
+
 \newenvironment{mySubFigure}[3]{% [width, label, caption]
   \renewcommand{\figureArgs}{\caption{#3}\label{#2}}%
   \subfigure[H]{#1}
@@ -182,14 +178,88 @@
   \endsubfigure{}
 }
 
+% environment setting common attributes of tables
+\newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]
+  \table[H]
+  #1
+  \caption{#3}\label{#2}% for tables, the caption goes to the top
+  \centering
+  \tabular{#4}
+  \toprule
+  #5 \\
+  \midrule
+}{ %
+  \bottomrule
+  \endtabular{}
+  \endtable{}
+}
+
+% used VS like colors
+% \usemintedstyle{vs}
+% custom environment for our code listings
+%
+\definecolor{codecolorclass}{rgb}{0, 0.4, 0}
+\definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
+\definecolor{codecolornamespace}{gray}{0}
+\definecolor{codecolorcomment}{rgb}{0, 0.5, 0}
+\definecolor{codecolorstring}{rgb}{0.64, 0.08, 0.08}
+
+% allow adding known classes to the listings for better syntax highlight
+% https://tex.stackexchange.com/questions/172048/how-can-i-define-a-custom-class-of-keywords-in-listings
+\makeatletter
+\lst@InstallKeywords k{types}{typestyle}\slshape{typestyle}{}ld
+\makeatother
+
+\lstnewenvironment{myListing}[2]{% [label, caption]
+  \lstset{
+    caption={#2},
+    label={#1},
+    language=[Sharp]C,
+    showspaces=false,
+    showtabs=false,
+    breaklines=true,
+    showstringspaces=false,
+    breakatwhitespace=true,
+    frame=bt,
+    columns=fullflexible,
+    numbers=left,
+    numberstyle=\tiny,
+    escapeinside={(*@}{@*)},
+    commentstyle=\color{codecolorcomment},
+    keywordstyle=\color{codecolorkeyword}\bfseries,
+    stringstyle=\color{codecolorstring},
+    typestyle=\color{codecolorclass},
+    basicstyle=\ttfamily\footnotesize,
+    morekeywords={
+      abstract, event, new, struct,
+      as, explicit, null, switch,
+      base, extern, object, this,
+      bool, false, operator, throw,
+      break, finally, out, true,
+      byte, fixed, override, try,
+      case, float, params, typeof,
+      catch, for, private, uint,
+      char, foreach, protected, ulong,
+      checked, goto, public, unchecked,
+      class, if, readonly, unsafe,
+      const, implicit, ref, ushort,
+      continue, in, return, using,
+      decimal, int, sbyte, virtual,
+      default, interface, sealed, volatile,
+      delegate, internal, short, void,
+      do, is, sizeof, while,
+      double, lock, stackalloc,
+      else, long, static,
+      enum, namespace, string, var},
+    types={Assert, Datagram, OneRttPacket, StreamFrame}
+  }
+}{%
+}
+
 % typesetting binary and other values
 \newcommand{\binary}[1]{0x#1}
 
 % macros for typesetting various code elements inside the text
-
-\definecolor{codecolorclass}{rgb}{0, 0.4, 0}
-\definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
-\definecolor{codecolornamespace}{gray}{0}
 
 \definecolor{bytefieldunused}{gray}{0.8}
 
@@ -231,22 +301,6 @@
 
 \newcommand{\ditemproperty}[3]% type, name, get/set
   {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2} #3}}}
-
-% environment setting common attributes of tables
-\newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]
-  \table[H]
-  #1
-  \caption{#3}\label{#2}% for tables, the caption goes to the top
-  \centering
-  \tabular{#4}
-  \toprule
-  #5 \\
-  \midrule
-}{ %
-  \bottomrule
-  \endtabular{}
-  \endtable{}
-}
 
 % checkmark
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}

@@ -10,8 +10,6 @@ The set of features to be implemented is guided by the goals we set in this thes
 introduction chapter. For the purpose of feature selection, we can rephrase subset of the original
 goals into the following:
 
-\todo{List which original goals imply these (check this)}
-
 \begin{enumerate}
 
   \item Support basic data transport, enabling some experimentation with QUIC as the transport for
@@ -108,8 +106,6 @@ by the endpoint, and verify that they are consistent with the behavior defined b
 specification.
 
 \section{Target \dotnet{} API}
-
-\todo{check this paragraph}
 
 This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
 other developers. This thesis will use this API to allow swapping underlying implementation between
@@ -249,7 +245,7 @@ members inherited from the \class{Stream} class.
     \ditemmethod{void}{Write}{Span<byte>} Writes the content
     of the provided buffer into the stream, returns when the data have been buffered internally.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. \todo{mention scatter/gather IO}. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
 
     \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
 
@@ -372,7 +368,7 @@ thread\footnote{To reduce verbosity, this text will be using term \textit{thread
   the \class{Task} abstraction and the \dotnet{} async/await model.} to be able to send
 acknowledgements for incoming packets and resending data after being determined lost due to a
 timeout. Because the correctness of a multithreaded code is hard to test, our implementation of
-\QuicConnection{} will not interact with the underlying \Socket{} instance directly. Instead,
+\QuicConnection{} will not interface with the underlying \Socket{} instance directly. Instead,
 the implementation will provide an internal interace for exchanging the datagrams to be
 sent/received. The actual sending of these datagrams will be handled by a separate class we named
 \QuicSocketContext{}. By separating the socket I/O from the connection logic implementation, we can
@@ -408,13 +404,14 @@ responsibilies are:
 For performance reasons, it may be better to process timouts and sending of the datagrams on one
 thread, and processing of received datagrams on another thread. However, the cost of synchronization
 of the shared state may outweigh the performance gain. Our prototype implementation will use a
-single thread to service both types of events, but will allow for the possibility of future experimentation with separate threads for sending and receiving.
+single thread to service both types of events, but will allow for the possibility of future
+experimentation with separate threads for sending and receiving.
 
 \subsubsection{Processing Multiple Connections in Parallel}
 
 For client connections, the background processing provided by the \QuicSocketContext{} class needs
 to service only a single connection. However, on the server's side, there can be multiple
-connections receiving datagrams from the same socket, and therefore being served by the samce
+connections receiving datagrams from the same socket, and therefore being served by the
 \QuicSocketContext{} instance. Servicing multiple \QuicConnection{} instances by only one thread
 could limit the server's throughput.
 
@@ -453,11 +450,12 @@ conceiveable that a single \QuicConnectionContext{} instance could be part of tw
 \QuicSocketContext{}s --- one for the old endpoint address, and the other for the new one. Use of the
 \class{Channel<>} class already ensures that the incoming datagrams could be queued concurrently by
 both \QuicSocketContext{} instances. The only modification needed on the architecture level would be
-selecting the right \Socket{} from which the outgoing datagrams should be sent.
+allowing the \QuicConnectionContext{} to select the right \Socket{} from which the outgoing
+datagrams should be sent.
 
 \subsection{Public API Threading model}
 
-The target API is uses the \class{ValueTask} type designed for efficient asynchronous methods. Using
+The target API uses the \class{ValueTask} type designed for efficient asynchronous methods. Using
 this type, user code will start an asynchronous operation, that can be completed by a background
 thread servicing the connection. This way the user code cannot block the execution of the
 connection's background thread which could otherwise cause timeouts to be missed.
@@ -547,23 +545,50 @@ range of allowed values and incomplete or damaged packets.
 Some packets contain a large number of fields and, therefore, passing them around as individual
 variables would make the implementation harder to maintain. Logically, the QUIC frames form coherent
 messages that should be represented by individual \dotnet{} types.
-
+\todo{check if the paragraph should be split there}
 Representing QUIC frames as instances of individual classes would introduce a lot of heap
 allocations for every received QUIC packet. This thesis therefore models QUIC frames headers of QUIC
 packets as value types.
 
 Payload of some frames may consist of large blocks of memory. Examples include \STREAM{} and
 \CRYPTO{} frames, which can fill the entire payload of the QUIC packet. Duplicating this block of
-memory would be another unnecessary memory allocation. Recent versions of \dotnet{} \todo{which
-  one?} introduced the \class{Span<T>} type which can be used to efficiently reference arbitrary
-memory block, including memory allocated on stack using the \keyword{stackalloc} keyword.
+memory would be another unnecessary memory allocation. \dotnet{}~2.1 introduced the \class{Span<T>}
+type which can be used to efficiently reference arbitrary memory block, including memory allocated
+on stack using the \keyword{stackalloc} keyword.
 
 However, the \class{Span<T>} type is a \keyword{ref struct} --- a special kind of value type which can
-be stored only on program stack, or inside other \keyword{ref struct}s. One of the consequences of
-using \keyword{ref struct}s to represent QUIC frames is that it is impossible to create a collection
-containing all frames from the QUIC packet \todo{explain why}. All frames must be processed right
-after they are parsed. This limitation would greatly complicate writing tests for the
-\class{QuicConnection} behavior \todo{again, why?}.
+be stored only on program stack, or inside other \keyword{ref struct}s. These limitations prevent
+using \keyword{ref struct}s --- among others --- as class fields or as generic type parameters, e.g. for
+\class{Func<>} delegate. This can greatly complicate the code inspecting the packets in automated
+tests, as it is impossible to create a \class{List<>} containing all frames from a particular QUIC
+packet or a \class{Predicate<>} delegate from a lambda checking the contents of a specific frame.
+However, such usecases are highly desirable. Consider code in \autoref{lst:03-desired-unit-test}
+that could be used to check if the datagram contains a 1-RTT packet with a particular \STREAM{}
+frame. The code uses \textit{Fluent API} helper methods to keep the testing code short and easy to
+understand.
+
+\begin{myListing}{lst:03-desired-unit-test}{Desired unit test}
+  public void MyFunction() {
+    byte[] datagram = /* raw data from QuicConnection */;
+    Datagram parsedDatagram = ParseDatagram(datagram);
+    parsedDatagram.ShouldContainSinglePacket<OneRttPacket>(packet => {
+      packet.ShouldContainFrame<StreamFrame>(frame => {
+        Assert.Equal(1, frame.StreamId);
+        Assert.Equal(0, frame.Offset);
+        Assert.Equal(new byte[]{1, 2, 3, 4}, frame.Data);
+        Assert.Equal(false, frame.Fin);
+      });
+    });
+  }
+\end{myListing}
+
+keep our implementation easily testable, the ability to specify the packet or frame properties
+declaratively would be greatly desirable. Consider following code snippet, which could succintly
+
+be  One of the consequences of using \keyword{ref struct}s to represent QUIC frames is
+that it is impossible to create a collection containing all frames from the QUIC packet
+\todo{explain why}. All frames must be processed right after they are parsed. This limitation would
+greatly complicate writing tests for the \class{QuicConnection} behavior \todo{again, why?}.
 
 \todo{this will need to be better explained see 2020-10-22, e.g. block of code testing for frame presence}
 

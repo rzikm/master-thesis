@@ -42,43 +42,37 @@ main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
 \begin{description}
 
   \ditem{QUIC packet}  A complete processable unit of QUIC that can be
-    encapsulated in a UDP datagram.  Multiple QUIC packets can be
-    encapsulated in a single UDP datagram.
+  encapsulated in a UDP datagram.  Multiple QUIC packets can be
+  encapsulated in a single UDP datagram.
 
   \ditem{Out-of-order packet}  A packet that does not arrive directly after the packet that was
-    sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
-    lost or delayed, or if the sender intentionally skips a packet number.
+  sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
+  lost or delayed, or if the sender intentionally skips a packet number.
 
-   \ditem{Endpoint}  An entity that can participate in a QUIC connection by
-      generating, receiving, and processing QUIC packets.  There are
-      only two types of endpoint in QUIC: client and server.
+  \ditem{Endpoint}  An entity that can participate in a QUIC connection by
+  generating, receiving, and processing QUIC packets.  There are
+  only two types of endpoint in QUIC: client and server.
 
-   \ditem{Client}  The endpoint initiating a QUIC connection.
+  \ditem{Client}  The endpoint initiating a QUIC connection.
 
-   \ditem{Server}  The endpoint accepting incoming QUIC connections.
+  \ditem{Server}  The endpoint accepting incoming QUIC connections.
 
   \ditem{Address}  When used without qualification, the tuple of IP version,
-    IP address, UDP protocol, and UDP port number that represents one
-    end of a network path.
+  IP address, and UDP port number that represents one end of a network path.
 
   \ditem{Connection ID}  An opaque identifier that is used to identify a QUIC
-    connection at an endpoint.  Each endpoint sets a value for its
-    peer to include in packets sent towards the endpoint.
+  connection at an endpoint.  Each endpoint sets a value for its
+  peer to include in packets sent towards the endpoint.
 
   \ditem{Stream}  A unidirectional or bidirectional channel of ordered bytes
-    within a QUIC connection.  A QUIC connection can carry multiple
-    simultaneous streams.
+  within a QUIC connection.  A QUIC connection can carry multiple
+  simultaneous streams.
 
   \ditem{Application}  An entity that uses QUIC to send and receive data.
 
 \end{description}
 
 \subsection{Notational Conventions}
-
-Numeric constants in hexadecimal always use network byte order (big-endian) and are prefixed by 0x.
-In case of constants of non-conventional integer sizes, such as 2-bit integers used in packet
-fields, the notation will omit unnecessary leading zeros. For example, \binary{FE} represents
-decimal number 254 and \binary{2} represents decimal number 2.
 
 This chapter contains graphical diagrams of several elements such as QUIC packets. In those
 schematics, individual fields include length information as follows:
@@ -87,7 +81,7 @@ schematics, individual fields include length information as follows:
 
   \litem{X (A)} Indicates that X is A bits long.
 
-  \litem{X (i)} Indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
+  \litem{X (i)} \todo{it is not certain that i is not a placeholder. maybe explicitly state X followed by (i).} Indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
 
   \litem{X (A..B)} Indicates that X can be any length from A to B, either of these limits can be omitted to indicate minimum size of zero, or no upper size limit, respectively.
 
@@ -109,6 +103,8 @@ Almost all numeric values stored in QUIC packets are encoded using a \textit{var
   encoding}. This encoding uses the first byte's two most significant bits to encode whether the
 value is encoded as 1, 2, 4, or 8-byte integer. This encoding supports only positive numbers. The
 ranges available for individual encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
+
+\todo{don't use hexadecimals for this, use bit constants (00)}
 
 \begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths}
   {ccr}
@@ -155,15 +151,12 @@ datagram can contain multiple packets, although in most cases they contain only 
 multiple QUIC packets into a single UDP datagram is called \textit{coalescing}. A single QUIC packet
 cannot span multiple UDP datagrams. QUIC uses a total of six different packet types:
 
-\todo{The order of the packet here now matches the subsubsections later, but I think different order here might be better}
-
 \begin{enumerate}
 
   \litem{Version Negotiation} sent by the server when the client tries to establish a connection
   with QUIC version that is not supported by the server;
 
-  \litem{Retry} optionally used by servers for Client Address Validation \todo{forward reference
-  address validation} when establishing new connections;
+  \litem{Retry} optionally used by servers for Client Address Validation  when establishing new connections. Address validation is described in \autoref{sec:02-address-validation};
 
   \litem{Initial} used to initiate a new connection and exchange the initial information;
 
@@ -226,6 +219,8 @@ both the Source and Destination Connection IDs. It also contains \textit{Version
   Type} fields. A few leftover bits of the header are reserved for type-specific information. The
 structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
+\todo{don't use the bit numbers, because now it seems that e.g. Version is also 8 bits}
+
 \begin{myFigure}{fig:02-long-header}{Long packet header structure}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
@@ -240,18 +235,23 @@ structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
   H = Header Form, F = Fixed Bit, T = Packet Type
 
+\todo{Use these also in the list later}
+
 \end{myFigure}
 
 The semantics of the individual fields of the long header is as follows:
 
+
 \begin{description}
 
-    \ditem{Header Form Bit} used to distinguish between packets with so called \textit{long header}
+    \ditem{Header Form (H)} Used to distinguish between packets with so called \textit{long header}
     and \textit{short header} format. In case of the long header packets. the form bit is set to \binary{1}.
 
-    \ditem{Fixed Bit} A bit that is always set to \binary{1} in valid QUIC packets.
+    \ditem{Fixed Bit (F)} A bit that is always set to \binary{1} in valid QUIC packets.
 
-    \ditem{Packet Type} Discriminator of the packet type. the possible values are listed in \autoref{tab:02-packet-type}.
+    \ditem{Packet Type (T)} Discriminator of the packet type. the possible values are listed in \autoref{tab:02-packet-type}.
+
+        \todo{dont use hexadecimal, use binary}
 
 \begin{myTable}{tab:02-packet-type}{Values of the Packet Type field in long packet header}
   {cc}
@@ -405,10 +405,10 @@ The semantics of the new fields in these packets are:
     \ditemWithComment{Token}{Initial only} Contains an opaque token if the server provided
     one in the Retry packet as part of Address Validation.
 
-    \ditem{Reserved Bits} Bits reserved for use in the future QUIC versions. In the initial QUIC
+    \ditem{Reserved Bits (R)} Bits reserved for use in the future QUIC versions. In the initial QUIC
     version, these bits must be set to 0.
 
-    \ditem{Packet Number Length} The length of the encoding used for the packet number.
+    \ditem{Packet Number Length (L)} The length of the encoding used for the packet number.
 
     \ditem{Length} The length of the remainder of the packet. This includes the Packet Number,
     the payload of the packet, and --- for encrypted packets --- the AEAD integrity tag.
@@ -514,9 +514,6 @@ frame types, whether they are ack-eliciting and in which packets they can be sen
   \HANDSHAKEDONE{}      & \checkmark{}           &         &           &       & \checkmark{}          \\
 \end{myTable}
 
-\todo{Short description of each packet type and what it is used for?}
-
-
 \section{QUIC Connection}
 
 \todo{expand this part} This section describes the details of connection lifetime.
@@ -566,8 +563,6 @@ connection, then it may be a new connection attempt, otherwise the packet is dis
 
 \input{img/02-socket-multiplexing.pdf_tex}
 
-\todo{Check if the image is more clear now}
-
 \end{myFigure}
 
 In case the packet cannot be associated with an existing connections, client endpoints simply ingore
@@ -600,9 +595,6 @@ QUIC has several options for parameterizing the connection. These are called \te
   Parameters} and they essentially represent constraints for the other endpoint. Each endpoint sets
 the transport parameters for the other endpoint. QUIC leverages the extensibility of the TLS
 protocol to exchange transport parameters during the connection handshake.
-
-\todo{should I mention them by name? e.g. I mention max\_idle\_timeout later}
-Example transport parameters are:
 
 \begin{itemize}
 
@@ -663,8 +655,6 @@ server's 1-RTT packet, the client can now start sending application data on stre
 After server detects that Handshake has successfully completed, it sends a \HANDSHAKEDONE{} frame to
 communicate the fact to the client.
 
-\todo{retry? or do it as part of Security section?}
-
 \subsection{Connection Termination}
 
 QUIC connection can be terminated in three ways:
@@ -724,16 +714,16 @@ we encourage readers to read the full specification if they are interested in de
 
 A novel feature of QUIC is the ability to migrate connections to a different network path. This is
 enabled by using a dedicated Connection ID, instead of using the endpoint's address to identify the
-connection. In the initial QUIC versio, only client endpoints can migrate the connection to a
+connection. In the initial QUIC version, only client endpoints can migrate the connection to a
 different address.
 
 Prior to migrating a connection, the endpoint can optionally check the reachability of the other
 endpoint using the process called \textit{path validation}. Path validation consists of exchanging
 \textit{probing packets}, and is described in \autoref{sec:02-path-validation}.
 
-If the path is validated, the endpoint can migrate the connection by starting to send packets from
-the mew local address. After server receives the first non-probing packet from the new client's
-address, it starts sending all future packets to that new address.
+The migration istelf is initiated sIf the path is validated, the endpoint can migrate the connection
+by starting to send packets from the mew local address. After server receives the first non-probing
+packet from the new client's address, it starts sending all future packets to that new address.
 
 In order to prevent network traffic being correlated by the outside observers, QUIC requires each
 Connection ID to be used for only one combination of local and remote endpoint addresses. Therefore,
@@ -749,6 +739,8 @@ clients new local address. After that, client migrates the connection by sending
 new local address. After receiving next non-probing packet from the new address, server switches to
 the new client's address as well. Connection IDs \textbf{C1} and \textbf{S1} are no longer used in
 the rest of the connection and can be retired later.
+
+\todo{mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
 
 \begin{myFigure}{fig:02-connection-migration-flow}{Flow of packets during connection migration}
 
@@ -776,6 +768,8 @@ carry data from the initiator to its peer, and bidirectional streams carry data 
 Both client and server can open new streams. QUIC recognizes four types of streams, and the type of
 the stream is encoded in the two least significant bits of the Stream ID. The stream types and their
 associated encoding is summarized in \autoref{tab:02-stream-id-type-map}.
+
+\todo{again, use bits instead of hexadecimal constants}
 
 \begin{myTable} {tab:02-stream-id-type-map} {Mapping of QUIC Stream types to Stream ID bits}
   {cc}
@@ -890,6 +884,8 @@ infers that packet 2 never reached the receiver and retransmits the payload \tex
 The server does not have to retransmit the \ACK{} for packet 1 because it was already sent in packet
 3 which was already acknowledged by the client. Therefore, packet 4 includes ACK only for packet 2.
 
+\todo{redraw with the same notation as other datagram flows}
+
 \begin{myFigure}{fig:02-packet-loss-example}{Loss detection and retransmission example}
 
 \input{img/02-retransmission-example.pdf_tex}
@@ -939,7 +935,7 @@ Instead of designing a new handshake protocol, QUIC offloads the encryption nego
 protocol (more precisely, TLS version 1.3). The low-level messages used in TLS, such as
 \textit{Server Hello} and \textit{Client Hello} are transported by QUIC inside \CRYPTO{} frames and
 passed to a TLS implementation on the other side. This way, QUIC is able to offer the same
-confidentiality level as conventional TLS connections.
+confidentiality level as conventional TLS connections. \todo{backreference to the handshake flow, where Crypto frames were used}
 
 The TLS protocol is extensible, among the standard extensions which are also used by QUIC are
 Application Level Protocol Negotiation~\cite{rfc7301} (ALPN for short) and Server Name
@@ -1161,7 +1157,7 @@ the Initial packet. The server rejects the initial connection attempt and issues
 (denoted ``ABCD'' in the figure). Client then tries again with another Initial with the provided
 token and the server proceeds with the usual handshake.
 
-\begin{myFigure}{fig:02-client-address-validatin-flow}{Client address validation using a Retry packet.}
+\begin{myFigure}{fig:02-client-address-validation-flow}{Client address validation using a Retry packet.}
 
 \resizebox{\linewidth}{!}{\input{img/02-client-address-validation-flow.pdf_tex}}
 
