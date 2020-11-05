@@ -271,93 +271,6 @@ The QUIC API can throw following exceptions:
 
 \end{description}
 
-\section{TLS Implementation}
-
-\todo{this section might be beter moved until later}
-
-TLS handshake forms an integral part of the QUIC connection establishment. Because correct TLS
-implementation is crucial for ensuring the security of the resulting implementation, this thesis
-should avoid implementing TLS algorithms by itself. Instead, it should reuse some existing and
-well-tested implementation.
-
-The novel way in which QUIC integrates with TLS requires specific functionality on the API of the
-TLS implementation. Below is a nonexhaustive list of operations the TLS library's API must provide:
-
-\begin{itemize}
-
-  \item Current state of the handshake
-
-  \item Temporary keys used to protect the handshake process
-
-  \item Raw unencrypted TLS messages to be sent to the other endpoint
-
-  \item Negotiated cipher
-
-  \item Specifying protocols used for ALPN
-
-  \item Specifying custom TLS extension to exchange QUIC transport parameters
-
-\end{itemize}
-
-\subsection{TLS 1.3 Support in \dotnet{}}
-
-\todo{this is a single subsection of the parent section, either remove the heading or introduce more sections}
-
-The \dotnet{} runtime libraries use different native libraries to provide TLS functionality on
-different operating systems. On Windows, \libname{Secure Channel}~\cite{Schannel} (\libschannel{}
-for short), which is part of the Windows operating system. On Linux and macOS systems, the
-\libopenssl{} library~\cite{OpenSSLWeb} is used.
-
-\begin{description}
-
-    \ditem{\libname{Secure Channel}}
-    The \libschannel{} versions present in the latest Windows 10
-    builds support only TLS 1.2.  However, future updates will implement also TLS 1.3. The
-    \libschannel{} version with TLS 1.3 support can be obtained by installing an insider preview
-    build of Windows 10.
-
-    The \libmsquic{} library uses \libschannel{} library when compiled for Windows. Therefore, we
-    assume that \libschannel{} exposes the necessary API for our managed QUIC implementation.
-
-    \ditem{\libopenssl{}}
-    None of the released versions of \libopenssl{} library expose necessary API for integration
-    with QUIC, and there are no plans to include such API in the next \libopenssl{} 3.0.0
-    release~\cite{OpensslBlogNoQuic}.
-
-    However, developers at Akamai maintain a fork of \libopenssl{} which adds the QUIC-enabling
-    API~\cite{AkamaiOpensslGithub}. This modified version of \libopenssl{} is used by \libmsquic{}
-    (on Linux) and some other QUIC libraries like \libname{quiche} from
-    Cloudflare~\cite{quicheGithub}. It is possible that the changes made by Akamai will be merged
-    into \libopenssl{} into the following 3.1.0, or later releases.
-
-\end{description}
-
-In conclusion, the APIs required for our QUIC implementation are currently only accessible in only
-the preview versions of Windows 10. Relying solely on \libschannel{} for TLS 1.3 support in our
-prototype implementation would severely impact cross-platform availability.
-
-The \libopenssl{} library and supports all platforms supported by \dotnet{}, and could therefore be
-used to implement TLS integration into QUIC in a platform-compatible manner. This solution, however,
-has some drawbacks:
-
-\begin{itemize}
-
-  \item Modified \libopenssl{} binary must be distributed with \dotnet{} runtime.
-
-  \item Only limited integration with X.509 certificates is possible because the
-    \class{X509Certificate} class implementation will be using different binary ---
-    \libname{CryptoAPI} on Windows, unmodified \libopenssl{} on Linux and macOS.
-
-\end{itemize}
-
-These drawbacks are acceptable for the prototype implementation, and will be eliminated once the
-modified \libopenssl{} is replaced with \libschannel{} integration for Windows, and mainstream
-version of \libopenssl{} once the support for QUIC is released.
-
-This thesis will therefore integrate with the forked \libopenssl{} library from Akamai. Because the
-library is written in C, it has to be integrated to the build process to be build together with the
-native code of the \dotnet{} runtime.
-
 \section{High-Level Architecture}
 
 \todo{this section was completely rewritten}
@@ -476,57 +389,6 @@ the API:
     starting and aborting the connection.
 
 \end{itemize}
-
-
-\section{Packet Protection}
-
-As described in \autoref{sec:02-packet-protection}, the packet encryption consists of two phases ---
-payload protection and header protection. The combined process requires following inputs:
-
-\begin{itemize}
-
-  \item Keys derived from the protection secrets (as explained in
-  \autoref{sec:02-encryption-key-derivation})
-
-  \item Negotiated cipher
-
-  \item Packet number (for encryption), or expected packet number (for decryption)
-
-  \item The QUIC packet to encrypt or decrypt
-
-\end{itemize}
-
-The cipher is negotiated once and cannot be changed during the lifetime of the connection. Keys for
-the protection can be changed only for the 1-RTT packets using the process of \textit{key update}
-(see \autoref{sec:02-key-update}), which can be expected to be relatively infrequent. The rest of
-the inputs change with every packet. Therefore, our implementation encapsulates the packet
-protection implementation in a \class{CryptoSeal} class, which does not depend on the rest of the
-QUIC implementation.
-
-The process of receiving packets requires intermediate validation of the header fields. The
-individual steps --- header protection and payload protection --- must be therefore exposed separately.
-Also, the protection should happen in-place to avoid unnecessary allocations and copying of the
-packets.
-
-An important consideration needs to be made for performing the actual encryption/decryption once all
-inputs to the AEAD have been gathered. \dotnet{} does not contain an implementation of the CHACHA
-family of ciphers. Because the implementation can work without it by instructing TLS library to not
-allow its negotiation, the prototype implementation of QUIC will not support this kind of cipher.
-The other ciphers are based on the AES family of ciphers, which are supported by \dotnet{}, but
-individual classes implementing these ciphers do not share a common interface. Our implementation
-therefore wraps the concrete AES implementations in classes derived from an abstract
-\class{CryptoSealAlgorithm} class defining a common interface required by \CryptoSeal{}.
-\autoref{fig:03-crypto-seal} illustrates how the \CryptoSeal{} and \class{CryptoSealAlgorithm}
-classes are connected.
-
-\begin{myFigure}{fig:03-crypto-seal}{Relationship between CryptoSeal and CryptoSealAlgorithm classes}
-
-  \resizebox{\linewidth}{!}{\input{img/03-crypto-seal.pdf_tex}}
-
-\end{myFigure}
-
-Key update can be implemented by replacing the existing instance of the
-\CryptoSeal{} class with the new one with the updated protection secret.
 
 \section{Packet Serialization/Deserialization}
 
@@ -817,6 +679,141 @@ sent or received in order to implement Flow control correctly.
 
 It is also necessary to keep track of all streams that have sendable data so that the relevant
 \QuicSocketContext{} knows to let the connection send more data.
+
+\section{TLS Implementation}
+
+TLS handshake forms an integral part of the QUIC connection establishment. Because correct TLS
+implementation is crucial for ensuring the security of the resulting implementation, this thesis
+should avoid implementing TLS algorithms by itself. Instead, it should reuse some existing and
+well-tested implementation.
+
+The novel way in which QUIC integrates with TLS requires specific functionality on the API of the
+TLS implementation. Below is a nonexhaustive list of operations the TLS library's API must provide:
+
+\begin{itemize}
+
+  \item Current state of the handshake
+
+  \item Temporary keys used to protect the handshake process
+
+  \item Raw unencrypted TLS messages to be sent to the other endpoint
+
+  \item Negotiated cipher
+
+  \item Specifying protocols used for ALPN
+
+  \item Specifying custom TLS extension to exchange QUIC transport parameters
+
+\end{itemize}
+
+\subsection{TLS 1.3 Support in \dotnet{}}
+
+\todo{this is a single subsection of the parent section, either remove the heading or introduce more sections}
+
+The \dotnet{} runtime libraries use different native libraries to provide TLS functionality on
+different operating systems. On Windows, \libname{Secure Channel}~\cite{Schannel} (\libschannel{}
+for short), which is part of the Windows operating system. On Linux and macOS systems, the
+\libopenssl{} library~\cite{OpenSSLWeb} is used.
+
+\begin{description}
+
+    \ditem{\libname{Secure Channel}}
+    The \libschannel{} versions present in the latest Windows 10
+    builds support only TLS 1.2.  However, future updates will implement also TLS 1.3. The
+    \libschannel{} version with TLS 1.3 support can be obtained by installing an insider preview
+    build of Windows 10.
+
+    The \libmsquic{} library uses \libschannel{} library when compiled for Windows. Therefore, we
+    assume that \libschannel{} exposes the necessary API for our managed QUIC implementation.
+
+    \ditem{\libopenssl{}}
+    None of the released versions of \libopenssl{} library expose necessary API for integration
+    with QUIC, and there are no plans to include such API in the next \libopenssl{} 3.0.0
+    release~\cite{OpensslBlogNoQuic}.
+
+    However, developers at Akamai maintain a fork of \libopenssl{} which adds the QUIC-enabling
+    API~\cite{AkamaiOpensslGithub}. This modified version of \libopenssl{} is used by \libmsquic{}
+    (on Linux) and some other QUIC libraries like \libname{quiche} from
+    Cloudflare~\cite{quicheGithub}. It is possible that the changes made by Akamai will be merged
+    into \libopenssl{} into the following 3.1.0, or later releases.
+
+\end{description}
+
+In conclusion, the APIs required for our QUIC implementation are currently only accessible in only
+the preview versions of Windows 10. Relying solely on \libschannel{} for TLS 1.3 support in our
+prototype implementation would severely impact cross-platform availability.
+
+The \libopenssl{} library and supports all platforms supported by \dotnet{}, and could therefore be
+used to implement TLS integration into QUIC in a platform-compatible manner. This solution, however,
+has some drawbacks:
+
+\begin{itemize}
+
+  \item Modified \libopenssl{} binary must be distributed with \dotnet{} runtime.
+
+  \item Only limited integration with X.509 certificates is possible because the
+    \class{X509Certificate} class implementation will be using different binary ---
+    \libname{CryptoAPI} on Windows, unmodified \libopenssl{} on Linux and macOS.
+
+\end{itemize}
+
+These drawbacks are acceptable for the prototype implementation, and will be eliminated once the
+modified \libopenssl{} is replaced with \libschannel{} integration for Windows, and mainstream
+version of \libopenssl{} once the support for QUIC is released.
+
+This thesis will therefore integrate with the forked \libopenssl{} library from Akamai. Because the
+library is written in C, it has to be integrated to the build process to be build together with the
+native code of the \dotnet{} runtime.
+
+\section{Packet Protection}
+
+As described in \autoref{sec:02-packet-protection}, the packet encryption consists of two phases ---
+payload protection and header protection. The combined process requires following inputs:
+
+\begin{itemize}
+
+  \item Keys derived from the protection secrets (as explained in
+  \autoref{sec:02-encryption-key-derivation})
+
+  \item Negotiated cipher
+
+  \item Packet number (for encryption), or expected packet number (for decryption)
+
+  \item The QUIC packet to encrypt or decrypt
+
+\end{itemize}
+
+The cipher is negotiated once and cannot be changed during the lifetime of the connection. Keys for
+the protection can be changed only for the 1-RTT packets using the process of \textit{key update}
+(see \autoref{sec:02-key-update}), which can be expected to be relatively infrequent. The rest of
+the inputs change with every packet. Therefore, our implementation encapsulates the packet
+protection implementation in a \class{CryptoSeal} class, which does not depend on the rest of the
+QUIC implementation.
+
+The process of receiving packets requires intermediate validation of the header fields. The
+individual steps --- header protection and payload protection --- must be therefore exposed separately.
+Also, the protection should happen in-place to avoid unnecessary allocations and copying of the
+packets.
+
+An important consideration needs to be made for performing the actual encryption/decryption once all
+inputs to the AEAD have been gathered. \dotnet{} does not contain an implementation of the CHACHA
+family of ciphers. Because the implementation can work without it by instructing TLS library to not
+allow its negotiation, the prototype implementation of QUIC will not support this kind of cipher.
+The other ciphers are based on the AES family of ciphers, which are supported by \dotnet{}, but
+individual classes implementing these ciphers do not share a common interface. Our implementation
+therefore wraps the concrete AES implementations in classes derived from an abstract
+\class{CryptoSealAlgorithm} class defining a common interface required by \CryptoSeal{}.
+\autoref{fig:03-crypto-seal} illustrates how the \CryptoSeal{} and \class{CryptoSealAlgorithm}
+classes are connected.
+
+\begin{myFigure}{fig:03-crypto-seal}{Relationship between CryptoSeal and CryptoSealAlgorithm classes}
+
+  \resizebox{\linewidth}{!}{\input{img/03-crypto-seal.pdf_tex}}
+
+\end{myFigure}
+
+Key update can be implemented by replacing the existing instance of the
+\CryptoSeal{} class with the new one with the updated protection secret.
 
 \section{Flow Control}
 

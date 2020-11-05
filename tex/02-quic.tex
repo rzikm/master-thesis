@@ -37,8 +37,6 @@ Throughout this chapter, and later when analysing the QUIC protocol specificatio
 use several terms in a very specific meaning. This meaning is the same as defined in the
 main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
 
-\todo{again, following list is almost verbatim from RFC}
-
 \begin{description}
 
   \ditem{QUIC packet}  A complete processable unit of QUIC that can be
@@ -81,7 +79,8 @@ schematics, individual fields include length information as follows:
 
   \litem{X (A)} Indicates that X is A bits long.
 
-  \litem{X (i)} \todo{it is not certain that i is not a placeholder. maybe explicitly state X followed by (i).} Indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
+  \todo{check this}
+  \litem{X (i)} Literal \textit{i} indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
 
   \litem{X (A..B)} Indicates that X can be any length from A to B, either of these limits can be omitted to indicate minimum size of zero, or no upper size limit, respectively.
 
@@ -104,23 +103,19 @@ Almost all numeric values stored in QUIC packets are encoded using a \textit{var
 value is encoded as 1, 2, 4, or 8-byte integer. This encoding supports only positive numbers. The
 ranges available for individual encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
 
-\todo{don't use hexadecimals for this, use bit constants (00)}
-
 \begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths}
   {ccr}
   {Most significant bits & Encoding length (B) & Maximum value}
-  \binary{0}             & 1                   & \num{63}         \\
-  \binary{1}             & 2                   & \num{16383}      \\
-  \binary{2}             & 4                   & \num{1073741824} \\
-  \binary{3}             & 8                   & $2^{62}-1$       \\
+  00                     & 1                   & \num{63}         \\
+  01                     & 2                   & \num{16383}      \\
+  10                     & 4                   & \num{1073741824} \\
+  11                     & 8                   & $2^{62}-1$       \\
 \end{myTable}
 
 In order to optimize the size of QUIC packets, the implementations are encouraged to always choose
 the shortest encoding necessary to represent the given number.
 
 \subsubsection{Packet Number Encoding}\label{sec:02-packet-number-encoding}
-
-\todo{check this for legibility}
 
 Packets in QUIC are sequentially numbered and, therefore, packet numbers received by an endpoint
 form a mostly ascending sequence with occasional reordering or gaps due to network unreliability.
@@ -219,12 +214,11 @@ both the Source and Destination Connection IDs. It also contains \textit{Version
   Type} fields. A few leftover bits of the header are reserved for type-specific information. The
 structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
-\todo{don't use the bit numbers, because now it seems that e.g. Version is also 8 bits}
+\todo{Bit headers were removed, so there should be less confusion now.}
 
 \begin{myFigure}{fig:02-long-header}{Long packet header structure}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
-    \bitheader{0-7} \\
     \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \bitbox{4}{Type Specific Bits (4)} \\
     \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
     \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
@@ -235,8 +229,6 @@ structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
   H = Header Form, F = Fixed Bit, T = Packet Type
 
-\todo{Use these also in the list later}
-
 \end{myFigure}
 
 The semantics of the individual fields of the long header is as follows:
@@ -245,21 +237,19 @@ The semantics of the individual fields of the long header is as follows:
 \begin{description}
 
     \ditem{Header Form (H)} Used to distinguish between packets with so called \textit{long header}
-    and \textit{short header} format. In case of the long header packets. the form bit is set to \binary{1}.
+    and \textit{short header} format. In case of the long header packets. the form bit is set to 1.
 
-    \ditem{Fixed Bit (F)} A bit that is always set to \binary{1} in valid QUIC packets.
+    \ditem{Fixed Bit (F)} A bit that is always set to 1 in valid QUIC packets.
 
     \ditem{Packet Type (T)} Discriminator of the packet type. the possible values are listed in \autoref{tab:02-packet-type}.
-
-        \todo{dont use hexadecimal, use binary}
 
 \begin{myTable}{tab:02-packet-type}{Values of the Packet Type field in long packet header}
   {cc}
   {Packet Type & Value}
-  Initial      & \binary{0} \\
-  0-RTT        & \binary{1} \\
-  Handshake    & \binary{2} \\
-  Retry        & \binary{3} \\
+  Initial      & 00 \\
+  0-RTT        & 01 \\
+  Handshake    & 10 \\
+  Retry        & 11 \\
 \end{myTable}
 
     \ditem{Version} Indicates which version of QUIC is in use. Location of this field will be
@@ -294,7 +284,6 @@ of the Version Negotiation packet is illustrated in \autoref{fig:02-version-nego
 \begin{myFigure}{fig:02-version-negotiation-packet}{Version Negotiation packet structure}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
-    \bitheader{0-7} \\
     \begin{rightwordgroup}{long \\ header}
       \bitbox{1}{H=1} & \colorbitbox{bytefieldunused}{7}{Unused} \\
       \wordbox[tlrb]{\longFieldHeight}{Version (32) = \binary{00000000}} \\
@@ -317,17 +306,17 @@ for draft versions of the protocol valid only until the QUIC specification is fi
 
 \subsection{Retry Packet}\label{sec:02-retry-packet}
 
-Retry packets are distinguished by value \binary{3} in the \textit{Packet Type} field of the long
-header. Retry packets are sent by a server as part of the optional \textit{Address Validation}
-mechanism used to protect against traffic amplification attack. \todo{forward ref to address
-  validation?} The structure of the packet is illustrated in \autoref{fig:02-retry-packet}.
+Retry packets are distinguished by bits 11 in the \textit{Packet Type} field of the long header.
+Retry packets are sent by a server as part of the optional \textit{Address Validation} mechanism
+used to protect against traffic amplification attack described in
+\autoref{sec:02-address-validation}. The structure of the packet is illustrated in
+\autoref{fig:02-retry-packet}.
 
 \begin{myFigure}{fig:02-retry-packet}{Retry packet structure}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
-    \bitheader{0-7} \\
     \begin{rightwordgroup}{long \\ header}
-      \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T=\binary{3}} & \colorbitbox{bytefieldunused}{4}{Unused} \\
+      \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T = 11} & \colorbitbox{bytefieldunused}{4}{Unused} \\
       \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
       \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
       \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) } \\
@@ -372,9 +361,8 @@ requested by the server. The structure of these three packets is illustrated in
 \begin{myFigure}{fig:02-initial-handshake-0rtt-packets}{Structure of the Initial, Handshake, and 0-RTT packets}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
-    \bitheader{0-7} \\
     \begin{rightwordgroup}{long \\ header}
-      \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \bitbox{2}{R=\binary{0}} & \bitbox{2}{L (2)} \\
+      \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \bitbox{2}{R = 00} & \bitbox{2}{L (2)} \\
       \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
       \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
       \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) } \\
@@ -440,9 +428,8 @@ follows. The structure of the 1-RTT frame is illustrated in \autoref{fig:02-1rtt
 \begin{myFigure}{fig:02-1rtt-packet}{1-RTT packet structure}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
-    \bitheader{0-7} \\
     \begin{rightwordgroup}{short \\ header}
-      \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \bitbox{2}{R=\binary{0}} & \bitbox{1}{K} & \bitbox{2}{L (2)} \\
+      \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \bitbox{2}{R = 00} & \bitbox{1}{K} & \bitbox{2}{L (2)} \\
       \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
     \end{rightwordgroup} \\
     \wordbox[tlrb]{1}{Packet Number (8..32)} \\
@@ -460,7 +447,8 @@ The semantics of the fields specific to 1-RTT packets are:
 \begin{description}
 
     \ditem{Spin Bit} A bit used for an optional QUIC feature which allows on-path nodes to measure
-    connection latency by observing changes in this bit. \todo{describe the SPIN bit feature?}
+    connection latency by observing changes in this bit. For detailed description on the Spin Bit
+    feature, see the complete specification~\cite[Section~17.3.1]{draft-ietf-quic-transport}.
 
     \ditem{Key Phase Bit} A bit used to communicate that the keys used for the packet encryption
     need to be updated. Updating the keys is necessary after using them to encrypt certain number of
@@ -518,7 +506,7 @@ frame types, whether they are ack-eliciting and in which packets they can be sen
 
 \todo{expand this part} This section describes the details of connection lifetime.
 
-\subsection{Connection ID}
+\subsection{Connection ID}\label{sec:02-connection-id}
 
 Traditional network protocols use the combination of remote endpoint IP address and port to identify
 the connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
@@ -531,16 +519,18 @@ Connection IDs are then used to populate the Source Connection ID and Destinatio
 the QUIC packets.
 
 The first pair of Connection IDs is exchanged during connection establishment. Additional Connection
-IDs can be issued independently by each endpoint during the lifetime of the connection. These
-additional Connection IDs are primarily used when migrating the connection to a new network path.
-QUIC requires that the same Connection ID be used only on one network path. When migrating a
-connection, the endpoints must start using different Connection ID for sending packets to prevent
-correlation of the network traffic by external observers.
+IDs can be issued independently by each endpoint during the lifetime of the connection using the
+\NEWCONNECTIONID{} frame. These additional Connection IDs are primarily used when migrating the
+connection to a new network path. QUIC requires that the same Connection ID be used only for packets
+exchanged between one pair of local and remote endpoint addresses (referred to as \textit{network
+  path}). When migrating a connection, the endpoints must start using different Connection ID for
+sending packets to prevent correlation of the network traffic by external observers.
 
-Connection IDs can be also retired by an endpoint. By retiring a Connection ID, the endpoint
-communicates that it will no longer use the Connection ID, and the other endpoint should drop any
-incoming packets that use it. Retiring a Connection ID serves as a request to the peer to issue a
-new Connection ID as a replacement.
+Connection IDs can be also retired by the other endpoint using the \RETIRECONNECTIONID{} frame. By
+retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID in
+its packets. This instructs the other endpoint to drop any incoming packets that use the retired
+Connection ID. Retiring a Connection ID also serves as a request to the peer to issue a new
+Connection ID as a replacement.
 
 Alternatively, endpoints can use a zero-length Connection ID. In that case, the connection identity
 is tied to the IP address and port of the remote endpoint. Using zero-length Connection ID saves
@@ -613,7 +603,7 @@ protocol to exchange transport parameters during the connection handshake.
 Many of the parameters have a default value, which is used when the given transport parameter is not
 sent. Other transport parameters are mandatory. The exhaustive list of the transport parameters can be found in the core transport specification~\cite[Section~7.4]{draft-ietf-quic-transport}.
 
-\subsection{Connection Establishment}
+\subsection{Connection Establishment}\label{sec:02-connection-establishment}
 
 In order to initiate a new connection, clients sends an Initial packet to the server, which
 initiates the handshake process. After the handshake completes, both peers have derived protection
@@ -712,6 +702,8 @@ we encourage readers to read the full specification if they are interested in de
 
 \subsection{Connection Migration}
 
+\todo{mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
+
 A novel feature of QUIC is the ability to migrate connections to a different network path. This is
 enabled by using a dedicated Connection ID, instead of using the endpoint's address to identify the
 connection. In the initial QUIC version, only client endpoints can migrate the connection to a
@@ -719,15 +711,18 @@ different address.
 
 Prior to migrating a connection, the endpoint can optionally check the reachability of the other
 endpoint using the process called \textit{path validation}. Path validation consists of exchanging
-\textit{probing packets}, and is described in \autoref{sec:02-path-validation}.
+\textit{probing packets}, and is described in \autoref{sec:02-path-validation}. The migration istelf
+is perform by simply starting to send packets from the new local address. After server receives the
+first non-probing packet from the new client's address, it starts sending all future packets to that
+new address.
 
-The migration istelf is initiated sIf the path is validated, the endpoint can migrate the connection
-by starting to send packets from the mew local address. After server receives the first non-probing
-packet from the new client's address, it starts sending all future packets to that new address.
-
-In order to prevent network traffic being correlated by the outside observers, QUIC requires each
-Connection ID to be used for only one combination of local and remote endpoint addresses. Therefore,
-when connection is migrated, both endpoints must switch to using different Connection IDs.
+QUIC uses additional measures to prevent network traffic being correlated by the outside observers.
+In \autoref{sec:02-connection-id} we mentioned that each endpoint can use multiple Connection IDs to
+refer to the same connection. QUIC requires that each Connection ID be used for only one combination
+of local and remote endpoint addresses (referred to as \textit{network path}). Therefore, when
+connection is migrated, both endpoints must switch to using different Connection IDs. Connection
+migration can, therefore, only be initiated if both endpoints issued additional Connection IDs using
+the \NEWCONNECTIONID{} frames for the other endpoint to use.
 
 The connection migration process is illustrated in \autoref{fig:02-connection-migration-flow}.
 Client and servers use Connection IDs \textbf{C1} and \textbf{S1}, respectively. Client first probes
@@ -740,13 +735,14 @@ new local address. After receiving next non-probing packet from the new address,
 the new client's address as well. Connection IDs \textbf{C1} and \textbf{S1} are no longer used in
 the rest of the connection and can be retired later.
 
-\todo{mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
-
 \begin{myFigure}{fig:02-connection-migration-flow}{Flow of packets during connection migration}
 
 \resizebox{\linewidth}{!}{\input{img/02-connection-migration-flow.pdf_tex}}
 
 \end{myFigure}
+
+Connection migration is an optional feature and can be disabled by sending the
+\DisableActiveMigration{} transport parameter during the connection handshake.
 
 \section{QUIC Streams}
 
@@ -769,15 +765,13 @@ Both client and server can open new streams. QUIC recognizes four types of strea
 the stream is encoded in the two least significant bits of the Stream ID. The stream types and their
 associated encoding is summarized in \autoref{tab:02-stream-id-type-map}.
 
-\todo{again, use bits instead of hexadecimal constants}
-
 \begin{myTable} {tab:02-stream-id-type-map} {Mapping of QUIC Stream types to Stream ID bits}
   {cc}
   {Stream type                     & Least significant bits}
-  Client-Initiated, Bidirectional  & \binary{0} \\
-  Server-Initiated, Bidirectional  & \binary{1} \\
-  Client-Initiated, Unidirectional & \binary{2} \\
-  Server-Initiated, Unidirectional & \binary{3} \\
+  Client-Initiated, Bidirectional  & 00 \\
+  Server-Initiated, Bidirectional  & 01 \\
+  Client-Initiated, Unidirectional & 10 \\
+  Server-Initiated, Unidirectional & 11 \\
 \end{myTable}
 
 Bidirectional streams can be viewed as the combination of two unidirectional streams. After opening
@@ -846,7 +840,7 @@ communicated to the peer using three types of frames:
 
 \begin{itemize}
 
-\litem{\MAXSTREAMDATA{}} maximum offset of data sent on a stream with specified ID\@.
+\litem{\MAXSTREAMDATA{}} maximum offset of data sent on a stream with specified Stream ID\@.
 
 \litem{\MAXDATA{}} maximum sum of all offsets of data sent on all streams.
 
@@ -879,16 +873,16 @@ parameter. For other packets, such as packets containing only \ACK{} or \PADDING
 acknowledgement can be delayed until an ack-eliciting packet is received.
 
 \autoref{fig:02-packet-loss-example} illustrates the loss detection and retransmission process in
-action. When server receives the acknowledgment for packet 3, but not for packet 2 sent earlier, it
-infers that packet 2 never reached the receiver and retransmits the payload \textbf{B} in packet 4.
-The server does not have to retransmit the \ACK{} for packet 1 because it was already sent in packet
-3 which was already acknowledged by the client. Therefore, packet 4 includes ACK only for packet 2.
-
-\todo{redraw with the same notation as other datagram flows}
+action. In the figure, frame \STREAM{}(0,[0..9]) denotes a \STREAM{} frame carrying first 10 bytes
+of the stream with Stream ID 0. When server receives the acknowledgment for packet 3, but not for
+packet 2 sent earlier, it infers that packet 2 never reached the receiver and retransmits the bytes
+10 to 19 of stream 0 in packet 4. The server does not have to retransmit the \ACK{} for packet 1
+because it was already sent in packet 3 which was already acknowledged by the client. Therefore,
+packet 4 acknowledges only the clients packet 2.
 
 \begin{myFigure}{fig:02-packet-loss-example}{Loss detection and retransmission example}
 
-\input{img/02-retransmission-example.pdf_tex}
+\resizebox{\linewidth}{!}{\input{img/02-retransmission-example.pdf_tex}}
 
 \end{myFigure}
 
@@ -933,9 +927,10 @@ cyber-attacks.
 
 Instead of designing a new handshake protocol, QUIC offloads the encryption negotiation to TLS
 protocol (more precisely, TLS version 1.3). The low-level messages used in TLS, such as
-\textit{Server Hello} and \textit{Client Hello} are transported by QUIC inside \CRYPTO{} frames and
-passed to a TLS implementation on the other side. This way, QUIC is able to offer the same
-confidentiality level as conventional TLS connections. \todo{backreference to the handshake flow, where Crypto frames were used}
+\textit{Server Hello} and \textit{Client Hello} are transported by QUIC inside \CRYPTO{} frames (as
+illustrated in \autoref{sec:02-connection-establishment}) and passed to a TLS implementation on the
+other side. This way, QUIC is able to offer the same confidentiality level as conventional TLS
+connections.
 
 The TLS protocol is extensible, among the standard extensions which are also used by QUIC are
 Application Level Protocol Negotiation~\cite{rfc7301} (ALPN for short) and Server Name
@@ -1080,9 +1075,8 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
   \begin{mySubFigure}{\textwidth}{fig:02-protected-fields-long}{Long header packets}
 
     \begin{bytefield}[bitwidth=2.5em]{8}
-      \bitheader{0-7} \\
       \begin{rightwordgroup}{long \\ header}
-        \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \colorbitbox{hp}{2}{R=\binary{0}} & \colorbitbox{hp}{2}{L (2)} \\
+        \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{2}{L (2)} \\
         \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
         \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
         \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) } \\
@@ -1107,9 +1101,8 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
 
     % this one has to be off-center to make the image aligned with the top one
     \hspace{1.8cm}\begin{bytefield}[bitwidth=2.5em]{8}
-      \bitheader{0-7} \\
       \begin{rightwordgroup}{short \\ header}
-        \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R=\binary{0}} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
+        \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
         \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
       \end{rightwordgroup} \\
       \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
