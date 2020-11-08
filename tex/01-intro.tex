@@ -1,13 +1,3 @@
-\chapter*{TODO: points for discussion}
-
-\begin{itemize}
-
-  \item glossary?, \todo{yes, it could be useful}
-  \item list of abbreviations/acronyms... ? \todo{yes, useful}
-  \item index? \todo{not necessary}
-
-\end{itemize}
-
 \chapter{Introduction}
 
 The internet, as we know it today, heavily relies on the use of the HTTP protocol. Is it used not
@@ -36,7 +26,7 @@ required to serve requests made by web browsers. Because modern web pages are co
 to load the page. In HTTP/1.1, multiple parallel HTTP connections were made to download individual
 parts of the webpage, one connection per HTTP request. In HTTP/2, a single connection can be used to
 make multiple HTTP requests in parallel. Although this change improved HTTP's performance, its
-current design is limited by a phenomenon known as \textit{head-of-line blocking}.
+current design is limited by a phenomenon known as \textit{\gls{head-of-line-blocking}}.
 
 The individual HTTP frames which make up the HTTP requests are interleaved and transferred over TCP
 in a single stream of data. When a TCP packet carrying part of this stream is lost, delivery of all
@@ -94,25 +84,24 @@ summarize the main improvements of QUIC over TCP+TLS:
 
     \litem{Stream multiplexing} QUIC provides an abstraction of multiple streams of data multiplexed
     on a single connection. Moreover, because QUIC itself also implements loss detection, packet
-    loss can be managed in a way that reduces the scope of the head-of-line blocking problem
+    loss can be managed in a way that reduces the scope of the \gls{head-of-line-blocking} problem
     described above to the single affected stream.
 
     \litem{Faster connection establishment} QUIC also performs TLS handshake, but it does so in
     parallel with the base protocol's handshake. The combined handshake requires fewer round-trips
     and is, therefore, faster when compared to the combination of TCP and TLS\@.
 
-    QUIC also supports opt-in Zero Round Trip Time Resumption (0-RTT for short) from TLS 1.3. The
-    0-RTT mode of operation allows a client to cache some session information, which allows it to
-    send application layer data with the very first packet in future connections to the same server.
-    0-RTT effectively reduces the latency by another round trip but makes connections vulnerable to
-    repeat attacks. A more detailed description of 0-RTT can be found online, e.g., on Cloudflare's
-    blog~\cite{cloudflare-0rtt}.
+    QUIC also supports opt-in \acrfull{0rtt} from TLS 1.3. The 0-RTT mode of operation allows a
+    client to cache some session information, which allows it to send application layer data with
+    the very first packet in future connections to the same server.  0-RTT effectively reduces the
+    latency by another round trip but makes connections vulnerable to repeat attacks. A more detailed
+    description of 0-RTT can be found online, e.g., on Cloudflare's blog~\cite{cloudflare-0rtt}.
 
     \litem{Always encrypted} TLS handshake is a mandatory part of connection establishment, and
     encryption, therefore, cannot be turned off. This makes QUIC secure-by-default.
 
     \litem{Separating connection identity from peer's IP address} QUIC protocol does not use peers'
-    IP addresses to identify connections but instead uses connection IDs, which are 8 to 20-byte
+    IP addresses to identify connections but instead uses Connection IDs, which are 8 to 20-byte
     sequences negotiated during connection establishment.
 
     This makes QUIC very attractive for mobile devices, which can change IP addresses as a result of
@@ -175,10 +164,11 @@ implementations.
 
 \subsection*{Motivation for Implementing QUIC in Managed Code}
 
-Code written in ahead-of-time compiled languages such as C or C++ (referred to as \textit{native
-code}) is likely to be faster than code written in \dotnet{} languages (referred to as
-\textit{managed code}), which rely on the just-in-time compilation. However, there are other aspects
-than raw performance to be considered when deciding to use native libraries such as \libmsquic{}:
+Code written in ahead-of-time compiled languages such as C or C++ (referred to as
+\textit{\gls{native-code}}) is likely to be faster than code written in \dotnet{} languages
+(referred to as \textit{\gls{managed-code}}), which rely on the just-in-time compilation. However,
+there are other aspects than raw performance to be considered when deciding to use native libraries
+such as \libmsquic{}:
 
 \begin{itemize}
 
@@ -210,7 +200,7 @@ than raw performance to be considered when deciding to use native libraries such
       \item Which side allocates memory buffers
     \end{itemize}
 
-    Managed code needs to translate the differences between APIs, which may result in noticeable
+    \Gls{managed-code} needs to translate the differences between APIs, which may result in noticeable
     performance overhead and even negate the performance gained from the native library's use.
 
     \litem{Overhead of interop calls} When execution transitions between managed and unmanaged code,
@@ -227,8 +217,8 @@ In the past, the \dotnet{} development team has encountered multiple problems wi
 \libcurl~\cite{curlGithub} library, which was used to implement HTTP request handling on macOS and
 Linux. Different Linux distributions contained different versions of the \libcurl{} library and,
 therefore, supported different features and had different bugs. The \dotnet{} development team had
-to expend many resources to make sure the managed code written by other \dotnet{} developers behaved
-consistently on all platforms.
+to expend many resources to make sure the \gls{managed-code} written by other \dotnet{} developers
+behaved consistently on all platforms.
 
 Starting with \dotnet{} Core~2.1, the default implementation of HTTP request handling does not rely
 on native libraries like \libcurl{}. Instead, the functionality has been rewritten in pure managed

@@ -213,6 +213,7 @@
 \makeatother
 
 \lstnewenvironment{myListing}[4]{% [label, caption, known types, known enums]
+  \noindent\minipage{\linewidth}\medskip
   \lstset{
     caption={#2},
     captionpos=t,
@@ -220,6 +221,7 @@
     language=[Sharp]C,
     showspaces=false,
     showtabs=false,
+    keepspaces=true,
     breaklines=true,
     showstringspaces=false,
     breakatwhitespace=true,
@@ -259,6 +261,7 @@
     enums={#4}
   }
 }{%
+  \endminipage
 }
 
 % typesetting binary and other values
@@ -359,3 +362,4 @@
 \newcommand{\QuicListener}{\class{Quic\allowbreak{}Listener}}
 \newcommand{\ReceiveStream}{\class{Receive\allowbreak{}Stream}}
 \newcommand{\SendStream}{\class{Send\allowbreak{}Stream}}
+\newcommand{\RecoveryController}{\class{Recovery\allowbreak{}Controller}}

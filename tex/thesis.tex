@@ -60,6 +60,7 @@
 \usepackage{filecontents}   % for auto creating of .xmpdata file
 \usepackage{listings}       % code listings
 \usepackage{underscore}     % underscores which do not screw up hyphenation
+\usepackage[toc,nopostdot,indexonlyfirst]{glossaries}     % lists of terms and abbreviations
 
 %%% src: https://tex.stackexchange.com/questions/57353/how-to-get-caption-above-listing-with-minted
 \captionsetup[listing]{position=top}
@@ -158,6 +159,8 @@ TODO: do the abstract last%
 % Definitions of macros (see description inside)
 \include{macros}
 
+\input{glossary}
+
 % Title page and various mandatory informational pages
 \begin{document}
 \include{title}
@@ -188,7 +191,7 @@ TODO: do the abstract last%
 
 %%% Abbreviations used in the thesis, if any, including their explanation
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
-\chapwithtoc{List of Abbreviations}
+\printglossary
 
 %%% Attachments to the master thesis, if any. Each attachment must be
 %%% referred to at least once from the text of the thesis. Attachments

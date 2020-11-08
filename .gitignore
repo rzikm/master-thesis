@@ -13,6 +13,18 @@ syntax: glob
 /tex/*.xmpi
 /tex/*.pdf
 
+/tex/img/*.pdf
+/tex/img/*.pdf_tex
+/tex/bibliography.bib.bak
+/tex/bibliography.bib.sav
+/tex/abstract.txt
+/tex/thesis.xmpdata
+/tex/*.glg
+/tex/*.glo
+/tex/*.gls
+/tex/*.ist
+/tex/*.lol
+
 /tex/.auctex-auto/
 
 ### VisualStudio ###
@@ -366,9 +378,3 @@ linker
 # ln -s $(pwd)/src/libraries/Common/src src/coreclr/src/System.Private.CoreLib/common
 src/coreclr/src/System.Private.CoreLib/shared
 src/coreclr/src/System.Private.CoreLib/common
-/tex/img/*.pdf
-/tex/img/*.pdf_tex
-/tex/bibliography.bib.bak
-/tex/bibliography.bib.sav
-/tex/abstract.txt
-tex/thesis.xmpdata

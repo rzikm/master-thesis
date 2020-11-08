@@ -39,11 +39,11 @@ main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
 
 \begin{description}
 
-  \ditem{QUIC packet}  A complete processable unit of QUIC that can be
+  \ditem{\Gls{quic-packet}}  A complete processable unit of QUIC that can be
   encapsulated in a UDP datagram.  Multiple QUIC packets can be
   encapsulated in a single UDP datagram.
 
-  \ditem{Out-of-order packet}  A packet that does not arrive directly after the packet that was
+  \ditem{\Gls{out-of-order-packet}}  A packet that does not arrive directly after the packet that was
   sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
   lost or delayed, or if the sender intentionally skips a packet number.
 
@@ -58,7 +58,9 @@ main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
   \ditem{Address}  When used without qualification, the tuple of IP version,
   IP address, and UDP port number that represents one end of a network path.
 
-  \ditem{Connection ID}  An opaque identifier that is used to identify a QUIC
+  \ditem{\Gls{network-path}} An imaginary path between two network addresses.
+
+  \ditem{\Gls{cid}}  An opaque identifier that is used to identify a QUIC
   connection at an endpoint.  Each endpoint sets a value for its
   peer to include in packets sent towards the endpoint.
 
@@ -193,12 +195,13 @@ acknowledged only by another Initial packet. In their payload, the Initial, Hand
 1-RTT packets carry \textit{QUIC Frames} which are low level protocol messages carrying e.g.
 acknowledgements and parts of streams sent by the application.
 
-Each packet type has a header and a payload. QUIC tries to optimize the packet encoding in order to
-maximize the amount of application data that can be sent in a single UDP datagram. Therefore, two
-types of packet headers exist. 1-RTT packets use a \textit{short header} and all other packet types
-use the \textit{long header}. The short header contains only a subset of fields present in the long
-header and omits data which are relevant only during connection establishment, like protocol version
-identifier.
+Each packet type has a header and a payload. The packet header contains information such as
+\acrfull{scid} and \acrfull{dcid} which are \glspl{cid} used to match the packets to the correct
+receiving connection. QUIC tries to optimize the packet encoding in order to maximize the amount of
+application data that can be sent in a single UDP datagram. Therefore, two types of packet headers
+exist. 1-RTT packets use a \textit{short header} and all other packet types use the \textit{long
+  header}. The short header contains only a subset of fields present in the long header and omits
+data which are relevant only during connection establishment, like protocol version identifier.
 
 The type of the header is specified by the most significant bit of the first byte in the packet ---
 the \textit{Header Form} bit. The second most significant bit --- the \textit{Fixed Bit} --- is always
@@ -277,8 +280,8 @@ packets, Version Negotiation packet is not discriminated by a specific value in 
 field in the header, but by a special value \binary{00000000} in the Version field.
 
 After the header, the packet contains a list of supported versions, each one listed as 32-bit
-integer in big-endian. Also, since future QUIC versions may allow larger Connection IDs than 20
-bytes, a valid Version Negotiation packet can contain up to 255-byte Connection IDs. The structure
+integer in big-endian. Also, since future QUIC versions may allow larger \glspl{cid} than 20
+bytes, a valid Version Negotiation packet can contain up to 255-byte \glspl{cid}. The structure
 of the Version Negotiation packet is illustrated in \autoref{fig:02-version-negotiation-packet}.
 
 \begin{myFigure}{fig:02-version-negotiation-packet}{Version Negotiation packet structure}
@@ -469,7 +472,7 @@ another packet in the same packet number space. However, not all packets have to
 immediately, e.g., acknowledging packets containing only ACK would cause an endless flood of ACK
 packets. Instead, the ACK frame is sent later together with a more urgent data. Frame types that
 require immediate acknowledgments are called \textit{ack-eliciting frames}, and the packets with at
-least one such frame are called \textit{ack-eliciting packets}.
+least one such frame are called \textit{\glspl{ack-eliciting-packet}}.
 
 Because packets in differnet packet number spaces offer different level of confidentiality, not all
 frames can be sent in any packet type. For example, application data in \STREAM{} frames cannot be
@@ -504,14 +507,15 @@ frame types, whether they are ack-eliciting and in which packets they can be sen
 
 \section{QUIC Connection}
 
-\todo{expand this part} This section describes the details of connection lifetime.
+This section describes the details of \gls{cid} management and the QUIC connection lifetime.
 
 \subsection{Connection ID}\label{sec:02-connection-id}
 
 Traditional network protocols use the combination of remote endpoint IP address and port to identify
 the connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
-enables migrating the connection to different network paths and interfaces, e.g. from cellular data
-to a Wi-Fi network, because the connection identity does not depend on the peer's IP address.
+enables migrating the connection to different \glspl{network-path} and interfaces, e.g. from
+cellular data to a Wi-Fi network, because the connection identity does not depend on the peer's IP
+address.
 
 Connection IDs are opaque byte sequences between 8 to 20 bytes in length. Each endpoint in a QUIC
 connection independently selects Connection IDs it will use to identify the QUIC connection. These
@@ -521,10 +525,9 @@ the QUIC packets.
 The first pair of Connection IDs is exchanged during connection establishment. Additional Connection
 IDs can be issued independently by each endpoint during the lifetime of the connection using the
 \NEWCONNECTIONID{} frame. These additional Connection IDs are primarily used when migrating the
-connection to a new network path. QUIC requires that the same Connection ID be used only for packets
-exchanged between one pair of local and remote endpoint addresses (referred to as \textit{network
-  path}). When migrating a connection, the endpoints must start using different Connection ID for
-sending packets to prevent correlation of the network traffic by external observers.
+connection to a new \gls{network-path} because QUIC specification requires that the same Connection
+ID be used only on one \gls{network-path} in order to prevent correlation of the network traffic by
+external observers.
 
 Connection IDs can be also retired by the other endpoint using the \RETIRECONNECTIONID{} frame. By
 retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID in
@@ -542,12 +545,14 @@ it cannot migrate a connection to a new local address.
 
 When a packet arrives to an endpoint, it needs to be associated with an existing connection, or ---
 for servers --- potentially initiate a new connection. If packet contains a non-zero-length Connection
-ID in the DCID field, the Connection ID is used to find an existing connection. If the packet uses a zero-length conneciton id, then the local and remote addresses determine the target connection.
+ID in the \acrshort{dcid} field, the \gls{cid} is used to find an existing connection. If the packet
+uses a zero-length conneciton id, then the local and remote addresses determine the target
+connection.
 
 \autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
-from client connections. Server maintains a table mapping between DCIDs corresponding connections,
-and dispatches the incoming packets accordingly. If a packet cannot be associated with an existing
-connection, then it may be a new connection attempt, otherwise the packet is discarded.
+from client connections. Server maintains a table mapping between \acrshort{dcid}s corresponding
+connections, and dispatches the incoming packets accordingly. If a packet cannot be associated with
+an existing connection, then it may be a new connection attempt, otherwise the packet is discarded.
 
 \begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
 
@@ -592,7 +597,7 @@ protocol to exchange transport parameters during the connection handshake.
 
   \item Whether connection migration is allowed
 
-  \item Maximum delay before sending an acknowledgment for ack-eliciting packets
+  \item Maximum delay before sending an acknowledgment for \glspl{ack-eliciting-packet}
 
   \item Maximum idle timeout before the connection is silently closed
 
@@ -702,12 +707,12 @@ we encourage readers to read the full specification if they are interested in de
 
 \subsection{Connection Migration}
 
-\todo{mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
+\todo{done: mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
 
-A novel feature of QUIC is the ability to migrate connections to a different network path. This is
-enabled by using a dedicated Connection ID, instead of using the endpoint's address to identify the
-connection. In the initial QUIC version, only client endpoints can migrate the connection to a
-different address.
+A novel feature of QUIC is the ability to migrate connections to a different \gls{network-path}.
+This is enabled by using a dedicated Connection ID, instead of using the endpoint's address to
+identify the connection. In the initial QUIC version, only client endpoints can migrate the
+connection to a different address.
 
 Prior to migrating a connection, the endpoint can optionally check the reachability of the other
 endpoint using the process called \textit{path validation}. Path validation consists of exchanging
@@ -718,11 +723,10 @@ new address.
 
 QUIC uses additional measures to prevent network traffic being correlated by the outside observers.
 In \autoref{sec:02-connection-id} we mentioned that each endpoint can use multiple Connection IDs to
-refer to the same connection. QUIC requires that each Connection ID be used for only one combination
-of local and remote endpoint addresses (referred to as \textit{network path}). Therefore, when
-connection is migrated, both endpoints must switch to using different Connection IDs. Connection
-migration can, therefore, only be initiated if both endpoints issued additional Connection IDs using
-the \NEWCONNECTIONID{} frames for the other endpoint to use.
+refer to the same connection. QUIC requires that each Connection ID be used only on one
+\gls{network-path}. Therefore, when connection is migrated, both endpoints must switch to using
+different \glspl{cid}. Connection migration can, therefore, be initiated only if both endpoints
+issued additional Connection IDs using the \NEWCONNECTIONID{} frames for the other endpoint to use.
 
 The connection migration process is illustrated in \autoref{fig:02-connection-migration-flow}.
 Client and servers use Connection IDs \textbf{C1} and \textbf{S1}, respectively. Client first probes
@@ -757,7 +761,7 @@ pack two streams into frames such that those streams are transported in parallel
 
 \end{myFigure}
 
-\subsection{Streams Types}
+\subsection{Streams Types}\label{sec:02-stream-types}
 
 Streams transported by QUIC can be either unidirectional or bidirectional. Unidirectional streams
 carry data from the initiator to its peer, and bidirectional streams carry data in both directions.
@@ -870,7 +874,7 @@ acknowledgement.
 For packets containing an \textit{ack-eliciting} frame (see \autoref{sec:02-quic-frames}),
 acknowledgements must be sent before the delay specified by the \MaxAckDelay{} transport
 parameter. For other packets, such as packets containing only \ACK{} or \PADDING{} frames, the
-acknowledgement can be delayed until an ack-eliciting packet is received.
+acknowledgement can be delayed until an \gls{ack-eliciting-packet} is received.
 
 \autoref{fig:02-packet-loss-example} illustrates the loss detection and retransmission process in
 action. In the figure, frame \STREAM{}(0,[0..9]) denotes a \STREAM{} frame carrying first 10 bytes
@@ -1160,7 +1164,7 @@ token and the server proceeds with the usual handshake.
 
 QUIC is layered on top of UDP which is a connection-less protocol. This means that changes in
 endpoint address can also happen without active migration on the endpoint's part, e.g., because of
-NAT rebinding along the network path.
+NAT rebinding along the \gls{network-path}.
 
 The endpoint address may also be spoofed by the other endpoint in an attempt to perform
 \textit{traffic amplification attack} against the spoofed address. For this reason, the amount of

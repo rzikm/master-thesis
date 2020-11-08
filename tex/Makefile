@@ -12,6 +12,7 @@ all: thesis.pdf abstract.pdf
 thesis.pdf: $(TEX_DIR)/thesis.tex $(TEX_SRC) bibliography.bib $(IMG_OUT)
 	pdflatex $<
 	bibtex thesis
+	makeglossaries thesis
 	pdflatex $<
 	pdflatex $<
 
@@ -26,7 +27,7 @@ $(IMG_DIR)/%.pdf_tex: $(IMG_DIR)/%.svg
 images: $(IMG_OUT)
 
 clean:
-	rm -f *.log *.dvi *.aux *.toc *.lof *.lot *.out *.bbl *.blg *.xmpi
+	rm -f *.log *.dvi *.aux *.toc *.lof *.lot *.out *.bbl *.blg *.xmpi *.glg *.glo *.gls *.ist *.lol
 	rm -f thesis.pdf abstract.pdf abstract.txt
 	rm -f thesis.xmpdata
 	rm -f $(IMG_PDF) $(IMG_OUT)

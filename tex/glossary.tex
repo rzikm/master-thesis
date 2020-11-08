@@ -1,0 +1,59 @@
+\makeglossaries
+
+\newglossaryentry{managed-code}
+{
+  name=managed code,
+  description={Code written in one of the \dotnet{} languages running on the \dotnet{} virtual machine.}
+}
+
+\newglossaryentry{native-code}
+{
+  name=native code,
+  description={Code written in ahead-of-time compiled language. This code runs directly on the target CPU.}
+}
+
+\newglossaryentry{network-path}
+{
+    name=network path,
+    description={An imaginary path between two network addresses. Each end of a network address consists of a pair of local address and port number.}
+}
+
+\newglossaryentry{head-of-line-blocking}
+{
+    name=head-of-line blocking,
+    description={Performance limiting phenomenon caused by a line of packets being held up by the first packet}
+}
+
+\newglossaryentry{quic-packet}
+{
+    name=QUIC packet,
+    description={A complete processable unit of QUIC that can be
+  encapsulated in a UDP datagram.  Multiple QUIC packets can be
+  encapsulated in a single UDP datagram.}
+}
+
+\newglossaryentry{out-of-order-packet}
+{
+  name=out-of-order pakcet,
+  description={A packet that does not arrive directly after the packet that was
+  sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
+  lost or delayed, or if the sender intentionally skips a packet number.}
+}
+
+\newglossaryentry{cid}
+{
+  name=Connection ID,
+  description={An opaque identifier that is used to identify a QUIC
+  connection at an endpoint.  Each endpoint sets a value for its
+  peer to include in packets sent towards the endpoint.}
+}
+
+\newglossaryentry{ack-eliciting-packet}
+{
+  name=ack-eliciting packet,
+  description={A QUIC packet which contains at least one frame which is not \PADDING{},  \ACK{}, or \CONNECTIONCLOSE{}}
+}
+
+\newacronym{0rtt}{0-RTT}{Zero Round Trip Time Resumption}
+\newacronym{scid}{SCID}{Source Connection ID}
+\newacronym{dcid}{DCID}{Destination Connection ID}
