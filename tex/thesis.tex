@@ -67,6 +67,11 @@
 %%% Graphics path (for some reason needed on windows)
 \graphicspath{{img/}}
 
+%%% Make listings part of the table of contents
+\renewcommand{\lstlistoflistings}{\begingroup
+\tocfile{List of Listings}{lol}
+\endgroup}
+
 %%% Basic information on the thesis
 
 % Thesis title in English (exactly as in the formal assignment)
@@ -179,7 +184,7 @@ TODO: do the abstract last%
 \listoftables
 
 %%% Code listings used in the thesis (consider if this is needed)
-% \listoflistings
+\lstlistoflistings
 
 %%% Abbreviations used in the thesis, if any, including their explanation
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.

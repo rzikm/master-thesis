@@ -199,6 +199,7 @@
 % custom environment for our code listings
 %
 \definecolor{codecolorclass}{rgb}{0, 0.4, 0}
+\definecolor{codecolorenum}{rgb}{0.5, 0.4, 0}
 \definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
 \definecolor{codecolornamespace}{gray}{0}
 \definecolor{codecolorcomment}{rgb}{0, 0.5, 0}
@@ -208,11 +209,13 @@
 % https://tex.stackexchange.com/questions/172048/how-can-i-define-a-custom-class-of-keywords-in-listings
 \makeatletter
 \lst@InstallKeywords k{types}{typestyle}\slshape{typestyle}{}ld
+\lst@InstallKeywords k{enums}{enumstyle}\slshape{enumstyle}{}ld
 \makeatother
 
-\lstnewenvironment{myListing}[2]{% [label, caption]
+\lstnewenvironment{myListing}[4]{% [label, caption, known types, known enums]
   \lstset{
     caption={#2},
+    captionpos=t,
     label={#1},
     language=[Sharp]C,
     showspaces=false,
@@ -229,6 +232,7 @@
     keywordstyle=\color{codecolorkeyword}\bfseries,
     stringstyle=\color{codecolorstring},
     typestyle=\color{codecolorclass},
+    enumstyle=\color{codecolorenum},
     basicstyle=\ttfamily\footnotesize,
     morekeywords={
       abstract, event, new, struct,
@@ -251,7 +255,8 @@
       double, lock, stackalloc,
       else, long, static,
       enum, namespace, string, var},
-    types={Assert, Datagram, OneRttPacket, StreamFrame}
+    types={#3},
+    enums={#4}
   }
 }{%
 }
