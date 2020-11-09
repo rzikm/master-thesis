@@ -9,7 +9,7 @@ namespace PublicApiBenchmarks
     {
         public static QuicListener CreateListener(IPEndPoint endpoint = null)
         {
-            return new QuicListener(new QuicListenerOptions()
+            return new QuicListener(QuicImplementationProviders.Default, new QuicListenerOptions()
             {
                 CertificateFilePath = "Certs/cert.crt",
                 PrivateKeyFilePath = "Certs/cert.key",

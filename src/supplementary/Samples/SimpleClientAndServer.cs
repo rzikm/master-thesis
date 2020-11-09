@@ -30,7 +30,7 @@ namespace Samples
             try
             {
                 Console.WriteLine(@"Starting listener");
-                using var listener = new QuicListener(new QuicListenerOptions
+                using var listener = new QuicListener(QuicImplementationProviders.Default, new QuicListenerOptions
                 {
                     ListenEndPoint = serverEndpoint,
                     ServerAuthenticationOptions = new SslServerAuthenticationOptions

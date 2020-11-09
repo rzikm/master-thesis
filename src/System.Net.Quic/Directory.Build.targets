@@ -1,3 +1,0 @@
-<Project>
-  <Import Project="../dotnet-runtime/eng/resources.targets" />
-</Project>

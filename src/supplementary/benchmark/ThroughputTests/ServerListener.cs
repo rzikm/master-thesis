@@ -27,7 +27,7 @@ namespace ThroughputTests
                 MaxBidirectionalStreams = 1024
             };
 
-            var listener = new QuicListener(options);
+            var listener = new QuicListener(QuicImplementationProviders.Default, options);
             listener.Start();
             
             Helpers.Dispatch(async () =>

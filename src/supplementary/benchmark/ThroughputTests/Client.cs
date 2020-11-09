@@ -23,7 +23,7 @@ namespace ThroughputTests
         {
             _streams = streams;
             _sendBuffer = Helpers.CreateMessageBuffer(messageSize);
-            _connection = new QuicConnection(new QuicClientConnectionOptions
+            _connection = new QuicConnection(QuicImplementationProviders.Managed, new QuicClientConnectionOptions
             {
                 RemoteEndPoint = endPoint,
                 ClientAuthenticationOptions = new SslClientAuthenticationOptions

@@ -1,0 +1,48 @@
+<Project>
+    <PropertyGroup>
+        <SolutionRoot>$([MSBuild]::EnsureTrailingSlash('$(MSBuildThisFileDirectory)'))</SolutionRoot>
+        <CertsRoot>$([MSBuild]::NormalizeDirectory('$(SolutionRoot)', '..\..\certs'))</CertsRoot>
+        <MsQuicArtifactRoot>$([MSBuild]::NormalizeDirectory('$(SolutionRoot)', '..\..\artifacts\msquic'))</MsQuicArtifactRoot>
+        <OpenSslArtifactRoot>$([MSBuild]::NormalizeDirectory('$(SolutionRoot)', '..\..\artifacts\openssl'))</OpenSslArtifactRoot>
+    </PropertyGroup>
+
+    <!-- Include necessary certificates -->
+    <ItemGroup>
+        <Content Include="$(CertsRoot)cert.crt">
+            <Link>Certs\cert.crt</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="$(CertsRoot)cert.key">
+            <Link>Certs\cert.key</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="$(CertsRoot)cert.pfx">
+            <Link>Certs\cert-combined.pfx</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <!-- Include native artifacts -->
+    <ItemGroup>
+        <Content Include="$(MsQuicArtifactRoot)msquic.dll" Condition="Exists('$(MsQuicArtifactRoot)msquic.dll')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(MsQuicArtifactRoot)libmsquic.so" Condition="Exists('$(MsQuicArtifactRoot)libmsquic.so')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(MsQuicArtifactRoot)msquic.pdb" Condition="Exists('$(MsQuicArtifactRoot)msquic.pdb')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(OpenSslArtifactRoot)bin\libcrypto-1_1-x64.dll" Condition="Exists('$(OpenSslArtifactRoot)bin\libcrypto-1_1-x64.dll')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(OpenSslArtifactRoot)bin\libssl-1_1-x64.dll" Condition="Exists('$(OpenSslArtifactRoot)bin\libssl-1_1-x64.dll')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+</Project>
