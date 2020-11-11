@@ -1,5 +1,22 @@
 \makeglossaries
 
+\setglossarystyle{altlist}
+
+\renewcommand{\glsnamefont}[1]{\makefirstuc{#1}}
+
+% we use glossary even for abbreviations, so that we can include a description
+\newcommand{\newdefinedabbreviation}[4]{
+    \newglossaryentry{#1}
+    {
+        text={#2},
+        long={#3},
+        name={#3 (#2)},
+        first={#3 (#2)},
+        firstplural={\glsentrylong{#1}\glspluralsuffix (\glsentryname{#1}\glspluralsuffix )},
+        description={#4}
+    }
+}
+
 \newglossaryentry{managed-code}
 {
   name=managed code,
@@ -34,7 +51,7 @@
 
 \newglossaryentry{out-of-order-packet}
 {
-  name=out-of-order pakcet,
+  name=out-of-order packet,
   description={A packet that does not arrive directly after the packet that was
   sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
   lost or delayed, or if the sender intentionally skips a packet number.}
@@ -54,6 +71,10 @@
   description={A QUIC packet which contains at least one frame which is not \PADDING{},  \ACK{}, or \CONNECTIONCLOSE{}}
 }
 
-\newacronym{0rtt}{0-RTT}{Zero Round Trip Time Resumption}
-\newacronym{scid}{SCID}{Source Connection ID}
-\newacronym{dcid}{DCID}{Destination Connection ID}
+\newdefinedabbreviation{0rtt}{0-RTT}{Zero round trip time resumption}{TLS mode of operation allowing clients to send application data in the very first but possibly exposing the server to reply attacks.}
+
+\newdefinedabbreviation{scid}{SCID}{Source Connection ID}{Connection ID used by the sender of the QUIC packet.}
+
+\newdefinedabbreviation{dcid}{DCID}{Destination Connection ID}{Connection ID used by the receiver of the QUIC packet.}
+
+\newdefinedabbreviation{aead}{AEAD}{Authenticated encryption with associated data}{Form of encryption which simultaneously assure the confidentiality and authenticity of data.}

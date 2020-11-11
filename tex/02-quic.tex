@@ -81,10 +81,11 @@ schematics, individual fields include length information as follows:
 
   \litem{X (A)} Indicates that X is A bits long.
 
-  \todo{check this}
   \litem{X (i)} Literal \textit{i} indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
 
-  \litem{X (A..B)} Indicates that X can be any length from A to B, either of these limits can be omitted to indicate minimum size of zero, or no upper size limit, respectively.
+  \litem{X (A..B)} Indicates that X can be any length from A to B.
+
+  \litem{X (..)} Indicates that X can be any length. The length is generally stored in different field.
 
   \litem{X (A) = C} Indicates that X has a fixed value C.
 
@@ -196,7 +197,7 @@ acknowledged only by another Initial packet. In their payload, the Initial, Hand
 acknowledgements and parts of streams sent by the application.
 
 Each packet type has a header and a payload. The packet header contains information such as
-\acrfull{scid} and \acrfull{dcid} which are \glspl{cid} used to match the packets to the correct
+\gls{scid} and \gls{dcid} which are \glspl{cid} used to match the packets to the correct
 receiving connection. QUIC tries to optimize the packet encoding in order to maximize the amount of
 application data that can be sent in a single UDP datagram. Therefore, two types of packet headers
 exist. 1-RTT packets use a \textit{short header} and all other packet types use the \textit{long
@@ -216,8 +217,6 @@ Long headers contain information that is necessary for the connection establishm
 both the Source and Destination Connection IDs. It also contains \textit{Version} and \textit{Packet
   Type} fields. A few leftover bits of the header are reserved for type-specific information. The
 structure of the long header is illustrated in \autoref{fig:02-long-header}.
-
-\todo{Bit headers were removed, so there should be less confusion now.}
 
 \begin{myFigure}{fig:02-long-header}{Long packet header structure}
 
@@ -545,12 +544,12 @@ it cannot migrate a connection to a new local address.
 
 When a packet arrives to an endpoint, it needs to be associated with an existing connection, or ---
 for servers --- potentially initiate a new connection. If packet contains a non-zero-length Connection
-ID in the \acrshort{dcid} field, the \gls{cid} is used to find an existing connection. If the packet
+ID in the \gls{dcid} field, the \gls{cid} is used to find an existing connection. If the packet
 uses a zero-length conneciton id, then the local and remote addresses determine the target
 connection.
 
 \autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
-from client connections. Server maintains a table mapping between \acrshort{dcid}s corresponding
+from client connections. Server maintains a table mapping between \gls{dcid}s corresponding
 connections, and dispatches the incoming packets accordingly. If a packet cannot be associated with
 an existing connection, then it may be a new connection attempt, otherwise the packet is discarded.
 
@@ -706,8 +705,6 @@ associated with his Connection ID\@. The Stateless Reset Token requirements are 
 we encourage readers to read the full specification if they are interested in details~\cite[Section~10.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Migration}
-
-\todo{done: mention that there must be a reserve of connection IDs on the client in order to allow migration (how does client get S2), also backreference stuff about issuing connection ids.}
 
 A novel feature of QUIC is the ability to migrate connections to a different \gls{network-path}.
 This is enabled by using a dedicated Connection ID, instead of using the endpoint's address to
@@ -918,7 +915,9 @@ timeout (see \autoref{sec:02-idle-timeout})
 
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The selection of the congestion control algorithm is left on
-the implementation. As an example, The QUIC specification document for loss detection and recovery~\cite[Section~7]{draft-ietf-quic-recovery} describes a congestion control algorithm similar to TCP NewReno~\cite{rfc6582} algorithm.
+the implementation. As an example, The QUIC specification document for loss detection and
+recovery~\cite[Section~7]{draft-ietf-quic-recovery} describes a congestion control algorithm similar
+to TCP NewReno~\cite{rfc6582} algorithm.
 
 \section{Security}
 
@@ -962,14 +961,14 @@ applied to QUIC packets.
 
 \subsubsection{Authenticated Encryption with Associated Data}
 
-QUIC uses type of encryption called Authenticated encryption with associated data~\cite{rfc5116}
-(AEAD for short). This type of encryption ensures both confidentiality and authenticity of the
-encrypted data. In addition to encrypted data --- called \textit{ciphertext} --- AEAD encryption
-outputs also an authentication tag which is used to check the integrity of the payload during
-decryption. The encryption can be authenticated by supplying additional authentication data (AAD for
-short) which are not encrypted, but influence the authentication tag and, therefore, must be
-supplied also during decryption. As an additional protection, AEAD also accepts a \textit{nonce}
-parameter, which is an additional input which is supposed to be unique for each encrypted packet.
+QUIC uses type of encryption called \gls{aead}~\cite{rfc5116}. This type of encryption ensures both
+confidentiality and authenticity of the encrypted data. In addition to encrypted data --- called
+\textit{ciphertext} --- AEAD encryption outputs also an authentication tag which is used to check the
+integrity of the payload during decryption. The encryption can be authenticated by supplying
+additional authentication data (AAD for short) which are not encrypted, but influence the
+authentication tag and, therefore, must be supplied also during decryption. As an additional
+protection, AEAD also accepts a \textit{nonce} parameter, which is an additional input which is
+supposed to be unique for each encrypted packet.
 
 The programming interface for AEAD provides following operations:
 
@@ -1016,6 +1015,8 @@ The following subsections describe how the $key$, $iv$, and $hp$ keys are used i
 of packet encryption.
 
 \subsubsection{Packet Protection Procedure}
+
+\todo{do something about the vertical spacing there, perhaps split the figure into 2 separate figures}
 
 When actually encrypting the packets, QUIC first encrypts the packet payload using the AEAD cipher
 negotiated by the TLS implementation. QUIC specification allows use of all AEAD ciphers allowed in
@@ -1076,8 +1077,10 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
 
   \vspace{5mm}
 
-  \begin{mySubFigure}{\textwidth}{fig:02-protected-fields-long}{Long header packets}
 
+  \todo{check baseline of the cells}
+
+  \begin{mySubFigure}{\textwidth}{fig:02-protected-fields-long}{Long header packets}
     \begin{bytefield}[bitwidth=2.5em]{8}
       \begin{rightwordgroup}{long \\ header}
         \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{2}{L (2)} \\

@@ -107,6 +107,8 @@ specification.
 
 \section{Target \dotnet{} API}
 
+\todo{slim this section, explain the main concepts, maybe diagrams, and move this text to user documentation}
+
 This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
 other developers. This thesis will use this API to allow swapping underlying implementation between
 this thesis implementation and the \libmsquic{}-based implementation. As mentioned in the
@@ -326,7 +328,7 @@ connections receiving datagrams from the same socket, and therefore being served
 \QuicSocketContext{} instance. Servicing multiple \QuicConnection{} instances by only one thread
 could limit the server's throughput.
 
-To allow parallel processing of multiple QUIC connections on serers, each \QuicConnection{} should
+To processing of multiple QUIC connections in parallel, each \QuicConnection{} should
 have a dedicated thread for background processing. Our implementation separates the per-connection
 logic into separate \QuicConnectionContext{} class. The \QuicSocketContext{} class will be,
 therefore, directly responsible only for stateless packet processing like sending Version
@@ -371,6 +373,9 @@ datagrams should be sent.
 
 \subsection{Public API Threading model}
 
+\todo{add figures similar to the previous section. one for accessing the connections (extends the
+  previous one), and another for accessing the streams in the connection}
+
 The target API uses the \class{ValueTask} type designed for efficient asynchronous methods. Using
 this type, user code will start an asynchronous operation, that can be completed by a background
 thread servicing the connection. This way the user code cannot block the execution of the
@@ -412,12 +417,12 @@ variables would make the implementation harder to maintain. Logically, the QUIC 
 messages that should be represented by individual \dotnet{} types. This gives us also an opportunity to keep the serialization and deserialization code next to each other, making it easier to ensure that e.g. the order of the serialized fields match in both methods.
 
 Representing QUIC frames as instances of individual classes would introduce a lot of heap
-allocations for every received QUIC packet. This thesis therefore models QUIC frames headers of QUIC
-packets as value types. Also, payload of some frames may consist of large blocks of memory. Examples
-include \STREAM{} and \CRYPTO{} frames, which can fill the entire payload of the QUIC packet.
-Duplicating this block of memory would be another unnecessary memory allocation. \dotnet{}~2.1
-introduced the \class{Span<T>} type which can be used to efficiently reference arbitrary memory
-block, including memory allocated on stack using the \keyword{stackalloc} keyword.
+allocations for every received QUIC packet. This thesis therefore will model QUIC frames headers of
+QUIC packets as value types. Also, payload of some frames may consist of large blocks of memory.
+Examples include \STREAM{} and \CRYPTO{} frames, which can fill the entire payload of the QUIC
+packet. Duplicating this block of memory would be another unnecessary memory allocation.
+\dotnet{}~2.1 introduced the \class{Span<T>} type which can be used to efficiently reference
+arbitrary memory block, including memory allocated on stack using the \keyword{stackalloc} keyword.
 
 However, the \class{Span<T>} type is a \keyword{ref struct} --- a special kind of value type which can
 be stored only in local variables or inside other \keyword{ref struct}s. Limitations on usage of
@@ -425,6 +430,9 @@ be stored only in local variables or inside other \keyword{ref struct}s. Limitat
 other generic delegates. Although this limitation does not pose problems for the \QuicConnection{}
 implementation which can process the frames immediately as they are parsed, it could complicate
 writing of unit tests.
+
+\todo{Separate section for unit testing, because now we are introducing ShouldHaveFrame and other
+helper testing methods, that is too much stuff for this section}
 
 Because it is impossible to create a \class{List<>} containing all frames from a particular QUIC
 packet or an \class{Action<>} delegate from a lambda inspecting the contents of a specific QUIC
@@ -438,15 +446,18 @@ for frame representation using \keyword{class}es. This duplication will allow ex
 tests in a succint, declarative manner, as demonstrated in \autoref{lst:03-desired-unit-test} and
 \autoref{lst:03-unit-test-intercept}.
 
-\begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame}{}
+\begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
     [Fact]
     public void ClientInitialDatagramHasInitialPacketWithCryptoFrame()
     {
         var datagram = GetDatagramToSend(Client);
-        Assert.Equal(QuicConstants.MinimumClientInitialDatagramSize, datagram.Size);
+        Assert.Equal(
+            QuicConstants.MinimumClientInitialDatagramSize,
+            datagram.Size);
 
-        var initial = Assert.IsType<InitialPacket>(Assert.Single(datagram.Packets));
-        Assert.Equal(0u, initial.PacketNumber);
+        var initial = Assert.IsType<InitialPacket>(
+            Assert.Single(datagram.Packets));
+        Assert.Equal(0, initial.PacketNumber);
         initial.ShouldHaveFrame<CryptoFrame>(crypto =>
         {
             Assert.Equal(0, crypto.Offset);
@@ -462,7 +473,8 @@ tests in a succint, declarative manner, as demonstrated in \autoref{lst:03-desir
         InterceptFlight(Client, Server, flight =>
         {
             // simulate sending wrong value in reserved bits
-            InitialPacket initial = Assert.IsType<InitialPacket>(flight.Packets[0]);
+            InitialPacket initial = Assert.IsType<InitialPacket>(
+                flight.Packets[0]);
             initial.ReservedBits = 0x01;
         });
 
@@ -580,8 +592,6 @@ space that could be used by the application data. On the other hand, updating th
 could lead to the other endpoint being blocked and signal the fact using the \STREAMDATABLOCKED{}
 frame. In such state, the endpoint is unable to send more application data until it receives an
 update via \MAXSTREAMDATA{} frame.
-
-\todo{check this}
 
 Our implementation will send a \MAXSTREAMDATA{} frame after the client uses more than half of the
 limit provided since the last update. This should prevent updates being too often, and at
@@ -809,18 +819,24 @@ Key update can be implemented by replacing the existing instance of the
 
 \section{Loss Detection and Loss Recovery}
 
-\todo{This section is new}
+In order to be able to detect lost packets and retransmit any lost data, the \QuicConnection{}
+implementation must keep track of which data have been sent in which packets and the timestamp when
+the packet was sent for timeout detection. Our implementation will encapsulate this information
+together with the loss detection algorithm in a dedicated \RecoveryController{} class which does not
+depend on the \QuicConnection{} class. This way, its implementation can be unit tested separately
+from the rest of the connection logic.
 
-In order to be able to detect loss packets and retransmit any lost data, the \QuicConnection{}
-implementation must keep track of which data have been sent in which packets and when the packet was
-sent. Our implementation will encapsulate this information together with the loss detection
-algorithm implementation in a dedicated \RecoveryController{} class.
+Another responsibility of the \RecoveryController{} class is maintaining the congestion window.
+Although the specification defines only a single algorithm for congestion
+control~\cite[Section~7]{draft-ietf-quic-recovery}, there can be multiple congestion control
+algorithms in the future and the implementation can possibly switch between those. For that reason,
+the \RecoveryController{} will use the strategy pattern \todo{should I reference some source? YES}
+to allow chosing the congestion control algorithm at runtime.
 
-\subsection{Detecting lost packets}
-\subsection{Detecting duplicate packets}
-\subsection{Tail loss probe}
-\subsection{Congestion window}
-\subsection{Interface for Congestion control algorithm}
+\todo{try finding and mention articles that experiment with congestion control, so that we dont
+  prepare for ``hypothetical future'', also we can mention that this is already done for TCP}
+
+e.g. https://blog.cloudflare.com/cubic-and-hystart-support-in-quiche/
 
 \section{Debuggability}
 

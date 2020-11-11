@@ -1,5 +1,7 @@
 \chapter{Introduction}
 
+\todo{glossaries: start with capital letter in the glossary list}
+
 The internet, as we know it today, heavily relies on the use of the HTTP protocol. Is it used not
 only by web browsers for interacting with web applications, but it may be also used for at the
 server side for communication between individual nodes in a cluster. Such use of HTTP is commonly
@@ -91,7 +93,7 @@ summarize the main improvements of QUIC over TCP+TLS:
     parallel with the base protocol's handshake. The combined handshake requires fewer round-trips
     and is, therefore, faster when compared to the combination of TCP and TLS\@.
 
-    QUIC also supports opt-in \acrfull{0rtt} from TLS 1.3. The 0-RTT mode of operation allows a
+    QUIC also supports opt-in \gls{0rtt} from TLS 1.3. The 0-RTT mode of operation allows a
     client to cache some session information, which allows it to send application layer data with
     the very first packet in future connections to the same server.  0-RTT effectively reduces the
     latency by another round trip but makes connections vulnerable to repeat attacks. A more detailed
