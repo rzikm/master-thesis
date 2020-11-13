@@ -107,171 +107,19 @@ specification.
 
 \section{Target \dotnet{} API}
 
-\todo{slim this section, explain the main concepts, maybe diagrams, and move this text to user documentation}
-
-This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
-other developers. This thesis will use this API to allow swapping underlying implementation between
-this thesis implementation and the \libmsquic{}-based implementation. As mentioned in the
-introduction chapter, the current design is a work-in-progress and is subject to change in the
-future. All of the mentioned classes are located in the \namespace{System.Net.Quic} namespace.
-
-\subsection{QuicListener Class}
-
-The \class{QuicListener} class is the equivalent of the \class{TcpListener}. Servers use this
-class to accept incoming QUIC connections.
-
-\begin{description}
-
-    \ditemctor{QuicListener}{QuicListenerOptions} Constructor.
-
-    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new connection. Read-only.
-
-    \ditemmethod{ValueTask<QuicConnection>}{AcceptConnectionAsync}{CancellationToken}
-    Accepts a new incoming QUIC Connection.
-
-    \ditemmethod{void}{Start}{} Starts listening.
-
-    \ditemmethod{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
-
-\end{description}
-
-\subsection{QuicListenerOptions Class}
-
-The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener}s.
-
-\begin{description}
-
-    \ditemproperty{SslServerAuthenticationOptions}{ServerAuthenticationOptions}{\propgetset}
-        SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
-
-    \ditemproperty{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
-
-    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
-
-    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
-
-    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
-
-    \ditemproperty{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
-
-    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
-
-    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
-
-    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
-
-\end{description}
-
-\subsection{QuicConnection Class}
-
-The \QuicConnection{} class provides operation on the QUIC connection. Clients open new
-connections by creating a new instance of this class and calling the \method{ConnectAsync} method.
-Servers receive new connections using the \class{QuicListener} class.
-
-\begin{description}
-
-    \ditemctor{QuicConnection}{QuicClientConnectionOptions} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
-
-    \ditemproperty{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is connected (the handshake has completed).
-
-    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propget} Local IP endpoint of the connection.
-
-    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propget} Remote IP endpoint of the connection.
-
-    \ditemmethod{ValueTask}{ConnectAsync}{CancellationToken} Connects to the remote endpoint.
-
-    \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
-
-    \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
-
-    \ditemmethod{ValueTask<QuicStream>}{AcceptStreamAsync}{Cancellationtoken} Accepts an incoming stream.
-
-    \ditemmethod{ValueTask}{CloseAsync}{long, CancellationToken} Closes the connection with the specified given error code and terminates all active streams.
-
-    \ditemmethod{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
-
-    \ditemmethod{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
-
-\end{description}
-
-\subsection{QuicClientConnectionOptions}
-
-The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC conections.
-
-\begin{description}
-
-    \ditemproperty{SslClientAuthenticationOptions}{ClientAuthenticationOptions}{\propgetset} Client authentication options to use when establishing the connection.
-
-    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propgetset} The local IP endpoint that will be bound to.
-
-    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propgetset} The IP endpoint to connect to.
-
-    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
-
-    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
-
-    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
-
-\end{description}
-
-\subsection{QuicStream Class}
-
-The \QuicStream{} class represents a single stream in a QUIC connection and derives from the
-abstract \class{Stream} class. The \class{Stream} class is a bidirectional stream abstraction and
-since not all QUIC streams are bidirectional, user should check if the specific \QuicStream{}
-instance supports supports the operation by inspecting the \method{CanRead} and \method{CanWrite}
-properties. Invoking read methods on write-only (i.e. unidirectional sending) stream will cause an
-exception to be thrown and vice versa.
-
-The list below mentions the members specific for the \class{QuicStream} class and some important
-members inherited from the \class{Stream} class.
-
-\begin{description}
-
-    \ditemproperty{long}{StreamId}{\propget} The Stream ID\@.
-
-    \ditemproperty{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
-
-    \ditemproperty{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
-
-    \ditemmethod{void}{AbortRead}{long} Aborts the receiving part of the stream with the provided error code.
-
-    \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
-
-    \ditemmethod{int}{Read}{Span<byte>} Reads the content
-    of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
-
-    \ditemmethod{ValueTask<int>}{ReadAsync}{Memory<byte>, CancellationToken} Reads the content
-    of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
-
-    \ditemmethod{void}{Write}{Span<byte>} Writes the content
-    of the provided buffer into the stream, returns when the data have been buffered internally.
-
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
-
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
-
-    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{CancellationToken} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
-
-    \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until shutdown completes.
-
-\end{description}
-
-\subsection{Exceptions}
-
-The QUIC API can throw following exceptions:
-
-\begin{description}
-
-    \ditem{\ditemsrcsize\class{QuicException}} Base class for all thrown exceptions, used when a more specific exception is not available
-
-    \ditem{\ditemsrcsize\class{QuicConnectionAbortedException}} Thrown when the connection is forcibly closed either by the transport or by the remote endpoint.
-
-    \ditem{\ditemsrcsize\class{QuicStreamAbortedException}} Thrown when the stream was aborted by the remote endpoint.
-
-    \ditem{\ditemsrcsize\class{QuicOperationAbortedException}} Thrown when the pending operation was aborted by the local endpoint.
-
-\end{description}
+\todo{The majority of this section has been moved to user docs}
+
+The public API which was designed by the \dotnet{} team for use by other developers uses similar
+concepts like TCP and UDP networking APIs. There is a \QuicListener{} class intended to be used by
+servers for listening for incoming connections like using the \class{TcpListener} class. The actual
+connection is represented by the \QuicConnection{} class, which serves the same purpose as the
+\class{TcpClient} class. The individual QUIC streams are exposed using the \QuicStream{} class which
+implements the \class{Stream} abstraction.
+
+The API is expected to be used asynchronously using the \keyword{async}/\keyword{await} model. Most
+methods returns the \class{ValueTask} which should be \keyword{await}ed to efficiently wait until
+the completion. The full list of methods with detailed description can be found later in
+\autoref{sec:06-api}.
 
 \section{High-Level Architecture}
 
@@ -410,7 +258,9 @@ of exceptions for above-mentioned performance reasons. Therefore, all possible e
 during packet deserialization must be handled gracefully. This includes values being outside of
 range of allowed values and incomplete or damaged packets.
 
-\subsection{QUIC Packet and Frame Representation}
+\subsection{QUIC Packet and Frame Representation}\label{sec:03-data-representation}
+
+\todo{this was slimmed down and parts of this moved to unit testing section}
 
 Some packets contain a large number of fields and, therefore, passing them around as individual
 variables would make the implementation harder to maintain. Logically, the QUIC frames form coherent
@@ -427,63 +277,9 @@ arbitrary memory block, including memory allocated on stack using the \keyword{s
 However, the \class{Span<T>} type is a \keyword{ref struct} --- a special kind of value type which can
 be stored only in local variables or inside other \keyword{ref struct}s. Limitations on usage of
 \keyword{ref struct}s also forbid their use as generic type arguments, e.g. for \class{Func<>} and
-other generic delegates. Although this limitation does not pose problems for the \QuicConnection{}
-implementation which can process the frames immediately as they are parsed, it could complicate
-writing of unit tests.
-
-\todo{Separate section for unit testing, because now we are introducing ShouldHaveFrame and other
-helper testing methods, that is too much stuff for this section}
-
-Because it is impossible to create a \class{List<>} containing all frames from a particular QUIC
-packet or an \class{Action<>} delegate from a lambda inspecting the contents of a specific QUIC
-packet or frame, the code for writing unit tests would have to seek inside the serialized frame
-payload, which would be very verbose. Additionally, it would be hard to modify certain kinds of
-frames in order to simulate error conditions because such modifications could change the serialized
-length of the frame and thus all following frames would have to be moved.
-
-In order to keep some flexibility for writing unit test code, this thesis will duplicate the types
-for frame representation using \keyword{class}es. This duplication will allow expressing the unit
-tests in a succint, declarative manner, as demonstrated in \autoref{lst:03-desired-unit-test} and
-\autoref{lst:03-unit-test-intercept}.
-
-\begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
-    [Fact]
-    public void ClientInitialDatagramHasInitialPacketWithCryptoFrame()
-    {
-        var datagram = GetDatagramToSend(Client);
-        Assert.Equal(
-            QuicConstants.MinimumClientInitialDatagramSize,
-            datagram.Size);
-
-        var initial = Assert.IsType<InitialPacket>(
-            Assert.Single(datagram.Packets));
-        Assert.Equal(0, initial.PacketNumber);
-        initial.ShouldHaveFrame<CryptoFrame>(crypto =>
-        {
-            Assert.Equal(0, crypto.Offset);
-            Assert.NotEmpty(crypto.CryptoData);
-        });
-    }
-\end{myListing}
-
-\begin{myListing}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError}{TransportErrorCode}
-    [Fact]
-    public void SendsConnectionCloseWhenReservedBitsAreSet()
-    {
-        InterceptFlight(Client, Server, flight =>
-        {
-            // simulate sending wrong value in reserved bits
-            InitialPacket initial = Assert.IsType<InitialPacket>(
-                flight.Packets[0]);
-            initial.ReservedBits = 0x01;
-        });
-
-        GetInitialToSend(Server)
-            .ShouldHaveConnectionCloseFrame(
-                TransportErrorCode.ProtocolViolation,
-                QuicError.InvalidReservedBits);
-    }
-\end{myListing}
+other generic delegates. This limitation is acceptable for \QuicConnection{} implementation because
+the QUIC frames can be processed one after another right after being deserialized from the Quic
+packet.
 
 \subsection{QuicReader and QuicWriter}
 
@@ -827,33 +623,144 @@ depend on the \QuicConnection{} class. This way, its implementation can be unit 
 from the rest of the connection logic.
 
 Another responsibility of the \RecoveryController{} class is maintaining the congestion window.
-Although the specification defines only a single algorithm for congestion
-control~\cite[Section~7]{draft-ietf-quic-recovery}, there can be multiple congestion control
-algorithms in the future and the implementation can possibly switch between those. For that reason,
-the \RecoveryController{} will use the strategy pattern \todo{should I reference some source? YES}
-to allow chosing the congestion control algorithm at runtime.
+Although the specification defines only a single algorithm for congestion control based on TCP
+NewReno~\cite[Section~7]{draft-ietf-quic-recovery}, there are already experiments with other
+algorithms like HyStart++ and CUBIC~\cite{cloudflareCubic}. The ability to support multible such
+algorithms could provide an opportunity for future experimentations. For that reason, the
+\RecoveryController{} will use the strategy pattern~\cite{wiki:strategy-pattern} to allow chosing
+the congestion control algorithm at runtime.
 
-\todo{try finding and mention articles that experiment with congestion control, so that we dont
-  prepare for ``hypothetical future'', also we can mention that this is already done for TCP}
+\section{Automated Testing}
 
-e.g. https://blog.cloudflare.com/cubic-and-hystart-support-in-quiche/
+It is necessary to implement automated tests that assert that the implementation conforms to the
+specification of both the QUIC protocol. Additionally, the public API makes use of existing
+concepts, namely \class{Stream} abstraction for QUIC streams, and it is necessary to ensure that
+\QuicStream{} conforms to the expected \class{Stream} behavior expectations.
 
-\section{Debuggability}
+\subsection{Testing the QUIC Protocol}
 
-QUIC is a very complex protocol and investigation of some issues may be very difficult. By stopping
-the application on a breakpoint, the developer inadvertently changes the behavior of the
-implementation, which makes interactive debugging of issues which span multiple round trips almost
-impossible.
+The QUIC protocol specification~\cite{draft-ietf-quic-transport} mostly specifies the protocol
+behaviors in terms of what endpoint may or may not send in specific scenarios. This implies that the
+correctness of the implementatino as a whole can be tested by inspecting the contents of the
+generated UDP datagrams. Because our implementation separates QUIC connection logic from socket IO,
+the unit tests can be written against internal \QuicConnection{} API, exchanging buffers containing
+sent and received UDP datagrams. This way, the background processing threads are avoided and the
+tests can be made single-threaded with manual time stepping, making the tests deterministic.
 
-There are two possible ways of gaining better insight into the behavior of the connection ---
-externally inspecting the packets sent over the network, and producing verbose logs (called traces)
-by the implementation.
+\subsubsection{Testing Harness}
+
+A large number of the tests will consist of inspecting contents of QUIC packets exchanged between a
+pair of \QuicConnection{} instances or checking the internal state of a connectino after a
+particular packet exchange. However, correctly implemented \QuicConnection{} will never violate the
+protocol and, therefore, additional logic is required to test error conditions.
+
+In order to be able to test the behavior in errorneous conditions, the testing code needs to be able
+to either simulate sending of an invalid packet or intercept a valid packet and modify it to elicit
+an error response. However, doing this is difficult for two reasons:
+
+\begin{itemize}
+
+  \item All packets are encrypted and protected against modification. The testing code must first retrieve the correct \CryptoSeal{} from the sender \QuicConnection{} instance and unprotect the packet. After any modification, the encryption must be reapplied.
+
+  \item Modifying a particular QUIC frame may change the size of that frame because of the variable-length encoding used. This will require shifting all following frames and adjusting the Length field in packet header.
+
+\end{itemize}
+
+Doing this manually would make unit testing function very verbose and hard to understand. In order
+to keep the tests concise and easy to understand, we will implement a \textit{testing harness} which
+will provide the above mentioned functionality via set of helper methods. These methods will allow
+declarative specification of what the QUIC packet or datagram must contain, and also allow
+registering callbacks for packet modification for eliciting error responses.
+
+\autoref{lst:03-desired-unit-test} shows how the desired testing harness would be used in
+conjunction with \libname{xUnit} testing framework to test if the first UDP datagram sent by the
+client has correct size. The \method{GetDatagramToSend} method will get the next datagram to be sent
+and present it in a structured manner. Later, the \method{ShouldHaveFrame<\class{TFrame}>} method
+will internally check if a frame represented by \class{TFrame} type is present in the packet, and
+will invoke the provided callback for further assertions.
+
+\begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
+    [Fact]
+    public void ClientInitialDatagramHasInitialPacketWithCryptoFrame()
+    {
+        var datagram = GetDatagramToSend(Client);
+        Assert.Equal(
+            QuicConstants.MinimumClientInitialDatagramSize,
+            datagram.Size);
+
+        var initial = Assert.IsType<InitialPacket>(
+            Assert.Single(datagram.Packets));
+        Assert.Equal(0, initial.PacketNumber);
+
+        initial.ShouldHaveFrame<CryptoFrame>(crypto =>
+        {
+            Assert.Equal(0, crypto.Offset);
+            Assert.NotEmpty(crypto.CryptoData);
+        });
+    }
+\end{myListing}
+
+However, in \autoref{sec:03-data-representation}, we mentioned that the types representing QUIC
+frames must be \keyword{ref struct}s in order to contain \class{Span<T>} instances, and that
+\keyword{ref struct}s cannot be used as type arguments for generic classes or methods. This could be
+overcome by using \class{Memory<T>} instead of \class{Span<T>}, but use of structs for frame types
+still poses a problem for modification of the QUIC frames by a callback.
+
+Structs are normally passed by value, therefore the callback would either have to accept the frame
+by reference using the \keyword{ref} keyword, or return the modified frame as the return value.
+Neither of these solution is perfect. Parameters types with \keyword{ref} modifiers cannot be
+infered for lambdas and need to be stated explicitly, and having to return the modified frame is
+unintuitive for non-modifying callbacks. Furthermore, \keyword{struct}s should be preferably made
+\keyword{readonly} to allow more compiler optimizations, so modifying the frame would require creating new instance of the frame and overwiritng the old value.
+
+For the above reasons, we decided to duplicate the types for frame representation using mutable
+\keyword{class}es. This duplication will allow expressing the unit tests in a succint, natural
+declarative manner. This is illustrated in the test in \autoref{lst:03-unit-test-intercept} which
+uses a \method{Intercept1RttFrame<\class{TFrame}>} to intercept a frame of type \class{TFrame} and
+modify it. In this case, we shift the range of acknowledged packets by one and thus acknowldged
+packet that wasn't sent yet, which is a protocol violation.
+
+\begin{myListing}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame}{TransportErrorCode}
+    [Fact]
+    public void ConnectionCloseWhenAckingFuturePacket()
+    {
+        // ... setup ommited for brevity
+
+        Intercept1RttFrame<AckFrame>(Client, Server, ack =>
+        {
+            // ack one packet more than originally intended
+            ack.LargestAcknowledged++;
+        });
+
+        Get1RttToSend(Server).ShouldHaveFrame<ConnectionCloseFrame>(f =>
+        {
+            Assert.Equal(TransportErrorCode.ProtocolViolation, f.ErrorCode);
+            Assert.Equal(QuicError.InvalidAckRange, f.RasonPhrase);
+        });
+    }
+\end{myListing}
+
+\subsection{Testing the Public API}
+
+The \dotnet{} runtime repository already contains a suite of tests which are used to test the
+\libmsquic{}-based QUIC implementation. Another large separate set of tests exists for ensuring that
+all \class{Stream} implementation behave consistently. All these tests can be used to ensure that
+our implementation of \QuicListener{}, \QuicConnection{} and \QuicStream{} conforms to the public
+API specification.
+
+\section{Diagnostics}
+
+QUIC is a very complex protocol and bug investigation may be very difficult. By stopping the
+application on a breakpoint, the developer inadvertently changes the behavior of the implementation,
+which makes interactive debugging of spanning multiple roundtrips almost impossible. There are two
+possible ways of gaining better insight into the behavior of the connection --- externally inspecting
+the packets sent over the network, and producing verbose logs (called traces) by the implementation.
 
 \subsection{Inspecting the Sent Packets}
 
 Inspecting the connection behavior by observing the packets sent over the network is a non-invasive
 way of diagnosing issues in any networking protocol. An example of a tool which can be used for this
-task is Wireshark \cite{web:wireshark} which also supports QUIC.
+task is Wireshark~\cite{web:wireshark} which also supports QUIC.
 
 However, since QUIC is always encrypted, inspecting QUIC packets via Wireshark is not
 straightforward as for other network protocols. Implementations must leak the encryption secrets
@@ -865,8 +772,8 @@ to successfully decrypt the packets.
 A better insight into the behavior of the connection can be gained by emitting verbose logs which
 can be later analyzed, but such logs may be difficult to read and reason about. Fortunately, there
 are tools which can visualize individual events in the connection in a graphic format which is easy
-to understand. One of these tool is \textit{qvis} \cite{web:qvis} which is part of \textit{quiclog}
-suite \cite{githubquiclog}. The \textit{qvis} tool consumes logs in a JSON format, which can be
+to understand. One of these tool is \textit{qvis}~\cite{web:qvis} which is part of \textit{quiclog}
+suite~\cite{githubquiclog}. The \textit{qvis} tool consumes logs in a JSON format, which can be
 either produced directly, or generated from implementation-specific log format or even from network
 packet captures created by Wireshark, provided that encryption secrets are logged elsewhere for the
 given connection.

@@ -1016,8 +1016,6 @@ of packet encryption.
 
 \subsubsection{Packet Protection Procedure}
 
-\todo{do something about the vertical spacing there, perhaps split the figure into 2 separate figures}
-
 When actually encrypting the packets, QUIC first encrypts the packet payload using the AEAD cipher
 negotiated by the TLS implementation. QUIC specification allows use of all AEAD ciphers allowed in
 TLS 1.3. These ciphers are:
@@ -1060,11 +1058,11 @@ then applied using XOR to parts of the packet header. The details of the header 
 calculation depend on the negotiated cipher, but it always uses the $hp$ key and a 16-byte sample of
 the encrypted payload.
 
-The parts of the packets protected by the payload encryption and header
-protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
+The parts of the packets protected by the payload encryption and header protection mechanisms are
+illustrated in \autoref{fig:02-protected-fields-short} for short headers and in
+\autoref{fig:02-protected-fields-long} for long headers.
 
-
-\begin{myFigure}{fig:02-protected-fields}{Fields protected by payload encryption and header protection}
+\begin{myFigure}{fig:02-protected-fields-short}{Protected fields in the short packet header}
 
   \newcommand{\legendsquare}[1]{%
     \textcolor{#1}{\rule{0.7em}{0.7em}}%
@@ -1077,48 +1075,50 @@ protection mechanisms are illustrated in \autoref{fig:02-protected-fields}.
 
   \vspace{5mm}
 
+  % this one has to be off-center to make the image aligned with the long header one
+  \hspace{1.8cm}\begin{bytefield}[bitwidth=2.5em]{8}
+    \begin{rightwordgroup}{short \\ header}
+      \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
+    \end{rightwordgroup} \\
+    \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
+    \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
+    \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
+  \end{bytefield}
 
-  \todo{check baseline of the cells}
+\end{myFigure}
 
-  \begin{mySubFigure}{\textwidth}{fig:02-protected-fields-long}{Long header packets}
-    \begin{bytefield}[bitwidth=2.5em]{8}
-      \begin{rightwordgroup}{long \\ header}
-        \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{2}{L (2)} \\
-        \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
-        \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
-        \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) } \\
-        \wordbox[tlrb]{1}{Source Connection ID Length (8)} \\
-        \wordbox[tlrb]{\longFieldHeight}{Source Connection ID (0..160) }
-      \end{rightwordgroup} \\
-      \begin{leftwordgroup}{Initial \\ only}
-        \colorbitbox{bytefieldunused}{8}{Token Length (i)} \\
-        \colorwordbox{bytefieldunused}{tlrb}{\longFieldHeight}{Token (..)}
-      \end{leftwordgroup} \\
-      \wordbox[tlrb]{1}{Length (i)} \\
-      \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
-      \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
-      \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
-    \end{bytefield}
+\begin{myFigure}{fig:02-protected-fields-long}{Protected fields in the long packet header}
 
-  \end{mySubFigure}
+  \newcommand{\legendsquare}[1]{%
+    \textcolor{#1}{\rule{0.7em}{0.7em}}%
+  }
+
+  \definecolor{hp}{rgb}{0.7, 1, 0.7}
+  \definecolor{pp}{rgb}{0.7, 0.7, 1}
+
+  \legendsquare{hp}~Header protection \hspace{1cm} \legendsquare{pp}~Payload encryption
 
   \vspace{5mm}
 
-  \begin{mySubFigure}{\textwidth}{fig:02-protected-fields-short}{Short header packets}
-
-    % this one has to be off-center to make the image aligned with the top one
-    \hspace{1.8cm}\begin{bytefield}[bitwidth=2.5em]{8}
-      \begin{rightwordgroup}{short \\ header}
-        \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
-        \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
-      \end{rightwordgroup} \\
-      \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
-      \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
-      \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
-    \end{bytefield}
-
-  \end{mySubFigure}
-
+  \begin{bytefield}[bitwidth=2.5em]{8}
+    \begin{rightwordgroup}{long \\ header}
+      \bitbox{1}{H=1} & \bitbox{1}{F=1} & \bitbox{2}{T (2)} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{2}{L (2)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Version (32)} \\
+      \wordbox[tlrb]{1}{Destination Connection ID Length (8)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) } \\
+      \wordbox[tlrb]{1}{Source Connection ID Length (8)} \\
+      \wordbox[tlrb]{\longFieldHeight}{Source Connection ID (0..160) }
+    \end{rightwordgroup} \\
+    \begin{leftwordgroup}{Initial \\ only}
+      \colorbitbox{bytefieldunused}{8}{Token Length (i)} \\
+      \colorwordbox{bytefieldunused}{tlrb}{\longFieldHeight}{Token (..)}
+    \end{leftwordgroup} \\
+    \wordbox[tlrb]{1}{Length (i)} \\
+    \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
+    \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
+    \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
+  \end{bytefield}
 \end{myFigure}
 
 \subsubsection{Updating 1-RTT Protection Keys}\label{sec:02-key-update}

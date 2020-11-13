@@ -1,0 +1,167 @@
+\chapter{User Documentation}
+
+\section{API Classes}\label{sec:06-api}
+
+This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
+other developers. This thesis will use this API to allow swapping underlying implementation between
+this thesis implementation and the \libmsquic{}-based implementation. As mentioned in the
+introduction chapter, the current design is a work-in-progress and is subject to change in the
+future. All of the mentioned classes are located in the \namespace{System.Net.Quic} namespace.
+
+\subsection{QuicListener Class}
+
+The \class{QuicListener} class is the equivalent of the \class{TcpListener}. Servers use this
+class to accept incoming QUIC connections.
+
+\begin{description}
+
+    \ditemctor{QuicListener}{QuicListenerOptions} Constructor.
+
+    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new connection. Read-only.
+
+    \ditemmethod{ValueTask<QuicConnection>}{AcceptConnectionAsync}{CancellationToken}
+    Accepts a new incoming QUIC Connection.
+
+    \ditemmethod{void}{Start}{} Starts listening.
+
+    \ditemmethod{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
+
+\end{description}
+
+\subsection{QuicListenerOptions Class}
+
+The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener}s.
+
+\begin{description}
+
+    \ditemproperty{SslServerAuthenticationOptions}{ServerAuthenticationOptions}{\propgetset}
+        SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
+
+    \ditemproperty{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
+
+    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+
+    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+
+    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
+
+    \ditemproperty{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
+
+    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
+
+    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
+
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+
+\end{description}
+
+\subsection{QuicConnection Class}
+
+The \QuicConnection{} class provides operation on the QUIC connection. Clients open new
+connections by creating a new instance of this class and calling the \method{ConnectAsync} method.
+Servers receive new connections using the \class{QuicListener} class.
+
+\begin{description}
+
+    \ditemctor{QuicConnection}{QuicClientConnectionOptions} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
+
+    \ditemproperty{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is connected (the handshake has completed).
+
+    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propget} Local IP endpoint of the connection.
+
+    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propget} Remote IP endpoint of the connection.
+
+    \ditemmethod{ValueTask}{ConnectAsync}{CancellationToken} Connects to the remote endpoint.
+
+    \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+
+    \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+
+    \ditemmethod{ValueTask<QuicStream>}{AcceptStreamAsync}{Cancellationtoken} Accepts an incoming stream.
+
+    \ditemmethod{ValueTask}{CloseAsync}{long, CancellationToken} Closes the connection with the specified given error code and terminates all active streams.
+
+    \ditemmethod{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
+
+    \ditemmethod{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
+
+\end{description}
+
+\subsection{QuicClientConnectionOptions}
+
+The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC conections.
+
+\begin{description}
+
+    \ditemproperty{SslClientAuthenticationOptions}{ClientAuthenticationOptions}{\propgetset} Client authentication options to use when establishing the connection.
+
+    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propgetset} The local IP endpoint that will be bound to.
+
+    \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propgetset} The IP endpoint to connect to.
+
+    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
+
+    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
+
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+
+\end{description}
+
+\subsection{QuicStream Class}
+
+The \QuicStream{} class represents a single stream in a QUIC connection and derives from the
+abstract \class{Stream} class. The \class{Stream} class is a bidirectional stream abstraction and
+since not all QUIC streams are bidirectional, user should check if the specific \QuicStream{}
+instance supports supports the operation by inspecting the \method{CanRead} and \method{CanWrite}
+properties. Invoking read methods on write-only (i.e. unidirectional sending) stream will cause an
+exception to be thrown and vice versa.
+
+The list below mentions the members specific for the \class{QuicStream} class and some important
+members inherited from the \class{Stream} class.
+
+\begin{description}
+
+    \ditemproperty{long}{StreamId}{\propget} The Stream ID\@.
+
+    \ditemproperty{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
+
+    \ditemproperty{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
+
+    \ditemmethod{void}{AbortRead}{long} Aborts the receiving part of the stream with the provided error code.
+
+    \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
+
+    \ditemmethod{int}{Read}{Span<byte>} Reads the content
+    of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
+
+    \ditemmethod{ValueTask<int>}{ReadAsync}{Memory<byte>, CancellationToken} Reads the content
+    of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
+
+    \ditemmethod{void}{Write}{Span<byte>} Writes the content
+    of the provided buffer into the stream, returns when the data have been buffered internally.
+
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
+
+    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{CancellationToken} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
+
+    \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until shutdown completes.
+
+\end{description}
+
+\subsection{Exceptions}
+
+The QUIC API can throw following exceptions:
+
+\begin{description}
+
+    \ditem{\ditemsrcsize\class{QuicException}} Base class for all thrown exceptions, used when a more specific exception is not available
+
+    \ditem{\ditemsrcsize\class{QuicConnectionAbortedException}} Thrown when the connection is forcibly closed either by the transport or by the remote endpoint.
+
+    \ditem{\ditemsrcsize\class{QuicStreamAbortedException}} Thrown when the stream was aborted by the remote endpoint.
+
+    \ditem{\ditemsrcsize\class{QuicOperationAbortedException}} Thrown when the pending operation was aborted by the local endpoint.
+
+\end{description}
