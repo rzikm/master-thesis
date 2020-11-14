@@ -1,6 +1,166 @@
 \chapter{User Documentation}
 
-\section{API Classes}\label{sec:06-api}
+This section provides guidance on how to obtain the build of the \dotnet{} runtime with managed QUIC
+implementation, how to install it, and how to use the code to develop other applications.
+
+\section{Getting Started}
+
+This thesis provides a branch of the \dotnet{} runtime codebase with managed QUIC implementation.
+Since our branch contains changes only in the \SystemNetQuicDll{}, the easiest way of composing a
+fully working \dotnet{} distribution is obtaining a full SDK installation of the latest master
+development version of \dotnet{}~6 and replacing the \SystemNetQuicDll{}. This section explains how
+this can be done without affecting other \dotnet{} SDK installations present on the machine.
+
+Also, since the managed implementation depends on a particular \libopenssl{} version in order to
+interoperate with other QUIC implementations. This section also explains how to deploy a locally
+built \libopenssl{} so that it is automatically used by user code. The process consists of following
+steps:
+
+\begin{enumerate}
+
+  \item Build the \SystemNetQuicDll{} library from our code branch runtime.
+
+  \item Compose a new local \dotnet{}~6 SDK installation with our \SystemNetQuicDll{}.
+
+  \item Configure the development environment to use the local installation when compiling the code.
+
+  \item \textit{(optional)} Compile a QUIC-supporting \libopenssl{} from source and deploy it.
+
+\end{enumerate}
+
+\subsection{Building the System.Net.Quic Library from Source}
+
+The source code for the \dotnet{} runtime with managed QUIC implementation is part of this thesis'
+attachments. \todo{path to the src once the attachments are finalized}. Alternatively, the code can
+also be found on github \todo{link}. For the remainder of this section, all paths will be relative
+to the \dotnet{} runtime repository directory.
+
+The \dotnet{} runtime repository contains a descriptive guide on how to build the sources. The
+necessary prerequisities are listed in files inside the \filename{docs/workflow/requirements/}
+directory, separately for each operating system.
+
+Once you have installed all prerequisities, you can build the entire \dotnet{} runtime using the
+\filename{build.cmd} or \filename{build.sh} script:
+
+\begin{myVerbatim}
+> build.cmd -subset clr+libs -configuration release
+\end{myVerbatim}
+
+The above command will build the Common Language Runtime (CLR) and all libraries in Release
+configuration. The artifacts are available in the \filename{artifacts/bin/System.Net.Quic}
+directory. The important artifacts from this directory are:
+
+\begin{itemize}
+
+  \item \filename{ref/net6.0-Release/System.Net.Quic.dll}: The so-called reference assembly that specifies the public API of the library.
+
+  \item \filename{net6.0-{OS}-Release/System.Net.Quic.dll}: Where \verb|{OS}| is the operating system platform you are running. This is the library with the actual implementation.
+
+\end{itemize}
+
+\subsection{Creating a Local Installation of \dotnet{}}
+
+Now we need to download the latest \dotnet{}~6 SDK. This zip archive containing this SDK can be
+downloaded from \url{https://github.com/dotnet/installer}. Download the ``Master (6.0.x Runtime)''
+build for your platform and extract it to a convenient location. In the remainder of this guide, the
+directory containing the extracted contents will be referred to as \filename{DOTNET_ROOT}.
+
+\todo{I don't like the paths being like this in the text, but this is the only way I could make them line-break sanely}
+
+The \SystemNetQuicDll{} produced in the previous subsection must be coppied to appropriate locations
+in the \filename{DOTNET_ROOT}. The reference \SystemNetQuicDll{} assembly should be copied over the
+existing one in the
+\filename{DOTNET_ROOT/packs/Microsoft.NETCore.App.Ref/6.0.0-{version}/ref/net6.0/} directory, and
+the implementation assembly to should be copied to the
+\filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/} directory, overwriting the
+existing files.
+
+\subsection{Configuring the Development Environment}
+
+Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation created in previous step is used when building the user code. For this, following environment variables need to be defined correctly.
+
+\begin{description}
+
+        \ditem{\texttt{DOTNET_ROOT}} Path to the dotnet installation directory. This instructs the build process to use the SDK installed in this directory.
+
+        \ditem{\texttt{DOTNET_MULTILEVEL_LOOKUP}} Set this to ``0''. This instructs the build process not to look for SDK installation in other places than \filename{DOTNET_ROOT}.
+
+        \ditem{\texttt{PATH}} Prepend the \filename{DOTNET_ROOT} directory to the beginning of the \texttt{PATH} variable to make sure the \filename{dotnet} executable from the \filename{DOTNET_ROOT} is used over the system-wide installed one.
+\end{description}
+
+\todo{more differentiation of the dotnet --info command to make it stand out more}
+After configuring the variables check the output of \verb|dotnet --info| command. Assuming
+\texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the following:
+
+\begin{myVerbatim}
+> dotnet --info
+.NET SDK (reflecting any global.json):
+ Version:   6.0.100-alpha.1.20563.2
+ Commit:    32d179d680
+
+Runtime Environment:
+ OS Name:     Windows
+ OS Version:  10.0.18363
+ OS Platform: Windows
+ RID:         win10-x64
+ Base Path:   C:\dotnet\sdk\6.0.100-alpha.1.20563.2\
+
+Host (useful for support):
+  Version: 6.0.0-alpha.1.20560.10
+  Commit:  72b7d236ad
+
+.NET SDKs installed:
+  6.0.100-alpha.1.20563.2 [C:\dotnet\sdk]
+
+.NET runtimes installed:
+  Microsoft.AspNetCore.App 6.0.0-alpha.1.20526.6 [C:\dotnet\shared\...]
+  Microsoft.NETCore.App 6.0.0-alpha.1.20560.10 [C:\dotnet\shared\...]
+  Microsoft.WindowsDesktop.App 6.0.0-alpha.1.20560.7 [C:\dotnet\shared\...]
+
+To install additional .NET runtimes or SDKs:
+  https://aka.ms/dotnet-download
+\end{myVerbatim}
+
+With environment configured as described, you can now use the \verb|dotnet build| command, or start
+Visual Studio or other IDE to develop programs using the provided SDK installation.
+
+\subsection{Adding the OpenSSL Library}
+
+The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
+maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes are attached
+\todo{path}, or can be obtained from the github repository in branch \todo{branch name}.
+
+Before building the source, check \filename{NOTES.{OS}} file in the repository and make sure you
+have all prerequisities installed on your machine. After that, you can build the \libopenssl{}
+library by running following command inside the repository. Note that for Windows OS, you must run
+these commands using the developer command prompt in order to have the necessary tools in
+\texttt{PATH}.
+
+\begin{myVerbatim}
+# Windows
+> perl Configure VC-WIN64A
+> nmake
+
+# Linux
+> ./config
+> make
+\end{myVerbatim}
+
+This will produce the \libname{libcyrpto} and \libname{libssl} libraries in the \libopenssl{}
+repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
+\texttt{libssl-1_1-x64.dll}. These libraries need to be loaded when managed QUIC implementation is
+used by the program. The simplest way is to ensure that is either adding them to a directory in
+\texttt{PATH} or copying them to
+\filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+
+\section{Using QUIC in \dotnet{}}
+
+This section is a walkthrough on how to use QUIC in \dotnet{}.
+
+\todo{This needs to be thougt out}
+
+
+\section{QUIC API Reference}\label{sec:06-api}
 
 This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
 other developers. This thesis will use this API to allow swapping underlying implementation between

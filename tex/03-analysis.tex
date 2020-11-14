@@ -2,7 +2,7 @@
 
 In this chapter, we analyze the protocol and select the necessary subset needed for evaluation of a
 pure \dotnet{} implementation. Afterwards, we design the architecture and outline the implementation
-\todo{this should be expanded once the chapter is written}
+of its major parts. Lastly, we investigate the means for testing and debugging the implementation.
 
 \section{Implemented Feature Subset Selection}
 
@@ -221,23 +221,24 @@ datagrams should be sent.
 
 \subsection{Public API Threading model}
 
-\todo{add figures similar to the previous section. one for accessing the connections (extends the
-  previous one), and another for accessing the streams in the connection}
+\todo{I did not add the second pair of figures, there are to many ``groups'' to represent them clearly
+(only some operations on Connection must be synchronized...)}
 
 The target API uses the \class{ValueTask} type designed for efficient asynchronous methods. Using
 this type, user code will start an asynchronous operation, that can be completed by a background
 thread servicing the connection. This way the user code cannot block the execution of the
 connection's background thread which could otherwise cause timeouts to be missed.
 
-The implementation should make possible to use the \QuicConnection{} from multiple threads when
-it makes sense. For example, it can be useful to be able to process individual QUIC streams in
-parallel. Therefore, when designing the implementation we will assume following threading model for
-the API:
+The \QuicConnection{} can be potentially used in a multithreaded environment and the implementation
+should allow concurrent usage of \QuicConnection{} and \QuicStream{} classes when it makes sense.
+For example, it makes sense for an application code to process each \QuicStream{} in a different
+thread. However, it does not make sense to concurrently write into one \QuicStream{} from two
+threads without any synchronization. Our implementation will, therefore, provide following
+thread-safety guarantees for the API:
 
 \begin{itemize}
 
-  \item Individual streams can be used concurrently. However, a single stream can be
-    accessed only by one thread at a time.
+  \item Individual streams can be used concurrently from different threads. However, a each direction of the stream (reading and writing) can be accessed only by one thread at a time and must be, therefore, synchronized.
 
   \item Accepting/opening new streams on a connection can be done concurrently from multiple threads.
 

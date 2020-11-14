@@ -264,6 +264,11 @@
   \endminipage
 }
 
+% settings for uniform verbatim environment
+\DefineVerbatimEnvironment%
+{myVerbatim}{Verbatim}
+{frame=lines,fontsize=\footnotesize,framesep=1em}
+
 % typesetting binary and other values
 \newcommand{\binary}[1]{0x#1}
 
@@ -363,3 +368,9 @@
 \newcommand{\ReceiveStream}{\class{Receive\allowbreak{}Stream}}
 \newcommand{\SendStream}{\class{Send\allowbreak{}Stream}}
 \newcommand{\RecoveryController}{\class{Recovery\allowbreak{}Controller}}
+
+% macro for the System.Net.Quic.dll library
+\newcommand{\SystemNetQuicDll}{\texttt{System.\allowbreak{}Net.\allowbreak{}Quic.dll}}
+
+% macros for typesetting paths and filenames
+\newcommand{\filename}[1]{\path{#1}}
