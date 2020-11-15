@@ -22,9 +22,9 @@ steps:
 
   \item Compose a new local \dotnet{}~6 SDK installation with our \SystemNetQuicDll{}.
 
-  \item Configure the development environment to use the local installation when compiling the code.
-
   \item \textit{(optional)} Compile a QUIC-supporting \libopenssl{} from source and deploy it.
+
+  \item Configure the development environment to use the local installation when compiling the code.
 
 \end{enumerate}
 
@@ -61,7 +61,7 @@ directory. The important artifacts from this directory are:
 \subsection{Creating a Local Installation of \dotnet{}}
 
 Now we need to download the latest \dotnet{}~6 SDK. This zip archive containing this SDK can be
-downloaded from \url{https://github.com/dotnet/installer}. Download the ``Master (6.0.x Runtime)''
+downloaded from \todo{should this be a citation?} \url{https://github.com/dotnet/installer}. Download the ``Master (6.0.x Runtime)''
 build for your platform and extract it to a convenient location. In the remainder of this guide, the
 directory containing the extracted contents will be referred to as \filename{DOTNET_ROOT}.
 
@@ -75,7 +75,36 @@ the implementation assembly to should be copied to the
 \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/} directory, overwriting the
 existing files.
 
-\subsection{Configuring the Development Environment}
+\subsection{Adding the OpenSSL Library}
+
+The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
+maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes are attached
+\todo{path}, or can be obtained from the github repository in branch \todo{branch name}.
+
+Before building the source, check \filename{NOTES.{OS}} file in the repository and make sure you
+have all prerequisities installed on your machine. After that, you can build the \libopenssl{}
+library by running following command inside the repository. Note that for Windows OS, you must run
+these commands using the developer command prompt in order to have the necessary tools in
+\texttt{PATH}.
+
+\begin{myVerbatim}
+# Windows
+> perl Configure VC-WIN64A
+> nmake
+
+# Linux
+> ./config
+> make
+\end{myVerbatim}
+
+This will produce the \libname{libcrypto} and \libname{libssl} libraries in the \libopenssl{}
+repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
+\texttt{libssl-1_1-x64.dll}. These libraries need to be loaded when managed QUIC implementation is
+used by the program. The simplest way is to ensure that is either adding them to a directory in
+\texttt{PATH} or copying them to
+\filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+
+\subsection{Configuring the Development Environment}\label{sec:06-env-vars}
 
 Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation created in previous step is used when building the user code. For this, following environment variables need to be defined correctly.
 
@@ -124,34 +153,80 @@ To install additional .NET runtimes or SDKs:
 With environment configured as described, you can now use the \verb|dotnet build| command, or start
 Visual Studio or other IDE to develop programs using the provided SDK installation.
 
-\subsection{Adding the OpenSSL Library}
+\subsection{Creating a Sample \dotnet{}~6 Project}
 
-The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
-maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes are attached
-\todo{path}, or can be obtained from the github repository in branch \todo{branch name}.
-
-Before building the source, check \filename{NOTES.{OS}} file in the repository and make sure you
-have all prerequisities installed on your machine. After that, you can build the \libopenssl{}
-library by running following command inside the repository. Note that for Windows OS, you must run
-these commands using the developer command prompt in order to have the necessary tools in
-\texttt{PATH}.
+The last step is creating a new project and configuring it to use \dotnet{}~6. This section
+demonstrates how this can be done using the \verb|dotnet| command line tool. Assuming the
+environment variables have been configured as specified in \autoref{sec:06-env-vars}, you can create
+a new project using the following commands:
 
 \begin{myVerbatim}
-# Windows
-> perl Configure VC-WIN64A
-> nmake
-
-# Linux
-> ./config
-> make
+> mkdir hello-net6
+> cd hello-net6
+> dotnet new console
 \end{myVerbatim}
 
-This will produce the \libname{libcyrpto} and \libname{libssl} libraries in the \libopenssl{}
-repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
-\texttt{libssl-1_1-x64.dll}. These libraries need to be loaded when managed QUIC implementation is
-used by the program. The simplest way is to ensure that is either adding them to a directory in
-\texttt{PATH} or copying them to
-\filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+These commands will create a \filename{hello-net6/hello-net6.csproj} file. Use of \dotnet{}~6
+preview requires minor changes to the project file. Namely changing the \xmltag{TargetFramework}
+property to \verb|net6.0|. The modified project file contents are listed in \autoref{lst:06-csproj-net6.0}.
+
+\begin{myListingXml}{lst:06-csproj-net6.0}{Project file for \dotnet{}~6 console application project.}{Sdk}
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>hello_net6</RootNamespace>
+  </PropertyGroup>
+
+</Project>
+\end{myListingXml}
+
+Lastly, the NuGet feed must be configured to use the correct source for the preview packages for
+\dotnet{}~6. This can be done by creating a \filename{NuGet.Config} file in the project directory
+with contents as listed in \autoref{lst:06-nuget-config}. The contents can be also copied from the
+webpage from which the \dotnet{}~6 SDK was downloaded.
+
+\begin{myListingXml}[basicstyle=\ttfamily\scriptsize]{lst:06-nuget-config}{NuGet configuration file for \dotnet{}~6 projects.}{key,value}
+<configuration>
+  <packageSources>
+    <add key="dotnet6"
+      value="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet6/nuget/v3/index.json" />
+  </packageSources>
+</configuration>
+\end{myListingXml}
+
+To demonstrate that we are using the correct SDK, you can try compiling and running program from
+\autoref{lst:06-hello-net6}.
+
+\begin{myListing}{lst:06-hello-net6}{\csharp{} program for testing the SDK installation.}{Program,FileVersionInfo,Console,Path}{}
+using System;
+using System.Diagnostics;
+
+namespace hello_net6._0
+{
+    class Program
+    {
+        static void |Main|(string[] args)
+        {
+            string assemblyPath = typeof(object).Assembly.Location;
+            string assemblyDir = Path.|GetDirectoryName|(assemblyPath);
+            var info = FileVersionInfo.|GetVersionInfo|(assemblyPath);
+            Console.|WriteLine|($"Hello from .NET {info.ProductVersion}");
+            Console.|WriteLine|($"Runtime location: {assemblyDir}");
+        }
+    }
+}
+\end{myListing}
+
+Running the program should produce similar output to the following:
+
+\begin{myVerbatim}
+> dotnet run
+Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
+Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
+\end{myVerbatim}
+
 
 \section{Using QUIC in \dotnet{}}
 

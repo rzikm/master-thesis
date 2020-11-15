@@ -682,18 +682,18 @@ will invoke the provided callback for further assertions.
 
 \begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
     [Fact]
-    public void ClientInitialDatagramHasInitialPacketWithCryptoFrame()
+    public void |ClientInitialDatagramHasInitialPacketWithCryptoFrame|()
     {
-        var datagram = GetDatagramToSend(Client);
-        Assert.Equal(
+        var datagram = |GetDatagramToSend|(Client);
+        Assert.|Equal|(
             QuicConstants.MinimumClientInitialDatagramSize,
             datagram.Size);
 
-        var initial = Assert.IsType<InitialPacket>(
-            Assert.Single(datagram.Packets));
-        Assert.Equal(0, initial.PacketNumber);
+        var initial = Assert.|IsType|<InitialPacket>(
+            Assert.|Single|(datagram.Packets));
+        Assert.|Equal|(0, initial.PacketNumber);
 
-        initial.ShouldHaveFrame<CryptoFrame>(crypto =>
+        initial.|ShouldHaveFrame|<CryptoFrame>(crypto =>
         {
             Assert.Equal(0, crypto.Offset);
             Assert.NotEmpty(crypto.CryptoData);
@@ -721,22 +721,23 @@ uses a \method{Intercept1RttFrame<\class{TFrame}>} to intercept a frame of type 
 modify it. In this case, we shift the range of acknowledged packets by one and thus acknowldged
 packet that wasn't sent yet, which is a protocol violation.
 
-\begin{myListing}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame}{TransportErrorCode}
+\begin{myListing}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame, AckFrame}{TransportErrorCode, FrameType}
     [Fact]
-    public void ConnectionCloseWhenAckingFuturePacket()
+    public void |ConnectionCloseWhenAckingFuturePacket|()
     {
         // ... setup ommited for brevity
 
-        Intercept1RttFrame<AckFrame>(Client, Server, ack =>
+        |Intercept1RttFrame|<AckFrame>(Client, Server, ack =>
         {
             // ack one packet more than originally intended
             ack.LargestAcknowledged++;
         });
 
-        Get1RttToSend(Server).ShouldHaveFrame<ConnectionCloseFrame>(f =>
+        |Get1RttToSend|(Server).|ShouldHaveFrame|<ConnectionCloseFrame>(f =>
         {
-            Assert.Equal(TransportErrorCode.ProtocolViolation, f.ErrorCode);
-            Assert.Equal(QuicError.InvalidAckRange, f.RasonPhrase);
+            Assert.|Equal|(TransportErrorCode.ProtocolViolation, f.ErrorCode);
+            Assert.|Equal|(FrameType.Ack, f.ErrorFrameType);
+            Assert.|Equal|(QuicError.InvalidAckRange, f.ReasonPhrase);
         });
     }
 \end{myListing}
