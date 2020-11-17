@@ -628,7 +628,7 @@ Although the specification defines only a single algorithm for congestion contro
 NewReno~\cite[Section~7]{draft-ietf-quic-recovery}, there are already experiments with other
 algorithms like HyStart++ and CUBIC~\cite{cloudflareCubic}. The ability to support multible such
 algorithms could provide an opportunity for future experimentations. For that reason, the
-\RecoveryController{} will use the strategy pattern~\cite{wiki:strategy-pattern} to allow chosing
+\RecoveryController{} will use the \gls{strategy-pattern}~\cite{wiki:strategy-pattern} to allow chosing
 the congestion control algorithm at runtime.
 
 \section{Automated Testing}
@@ -680,7 +680,7 @@ and present it in a structured manner. Later, the \method{ShouldHaveFrame<\class
 will internally check if a frame represented by \class{TFrame} type is present in the packet, and
 will invoke the provided callback for further assertions.
 
-\begin{myListing}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
+\begin{myListingCsharp}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
     [Fact]
     public void |ClientInitialDatagramHasInitialPacketWithCryptoFrame|()
     {
@@ -699,7 +699,7 @@ will invoke the provided callback for further assertions.
             Assert.NotEmpty(crypto.CryptoData);
         });
     }
-\end{myListing}
+\end{myListingCsharp}
 
 However, in \autoref{sec:03-data-representation}, we mentioned that the types representing QUIC
 frames must be \keyword{ref struct}s in order to contain \class{Span<T>} instances, and that
@@ -721,7 +721,7 @@ uses a \method{Intercept1RttFrame<\class{TFrame}>} to intercept a frame of type 
 modify it. In this case, we shift the range of acknowledged packets by one and thus acknowldged
 packet that wasn't sent yet, which is a protocol violation.
 
-\begin{myListing}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame, AckFrame}{TransportErrorCode, FrameType}
+\begin{myListingCsharp}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame, AckFrame}{TransportErrorCode, FrameType}
     [Fact]
     public void |ConnectionCloseWhenAckingFuturePacket|()
     {
@@ -740,7 +740,7 @@ packet that wasn't sent yet, which is a protocol violation.
             Assert.|Equal|(QuicError.InvalidAckRange, f.ReasonPhrase);
         });
     }
-\end{myListing}
+\end{myListingCsharp}
 
 \subsection{Testing the Public API}
 
