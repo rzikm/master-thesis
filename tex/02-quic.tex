@@ -854,7 +854,7 @@ decrease the flow control limits to ensure consistency when two consecutive QUIC
 control updates are reordered during transit. In case the peer violates any of the control flow
 limits mentioned above, the QUIC implementation must immediately terminate the connection.
 
-\section{Loss Detection and Recovery}
+\section{Loss Detection and Recovery}\label{sec:02-loss-detection}
 
 Because UDP is an unreliable transport protocol, QUIC must implement measures to recover from packet
 loss. The packet loss detection is implemented similarly to TPC --- each endpoint sends

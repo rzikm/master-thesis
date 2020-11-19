@@ -56,13 +56,13 @@ The \filename{System.Net.Quic} project contains multiple implementations of the 
 is not achieved via polymorphism of the QUIC API classes, but rather using indirection to
 \textit{implementation providers}. Each \QuicListener{}, \QuicConnection{}, and \QuicStream{}
 instance contains a reference to a \QuicListenerProvider{}, \QuicConnectionProvider{}, or
-\QuicStreamProvider{} instance, respectively. Implementations of each providers are provided by each
+\QuicStreamProvider{} instance, respectively. Implementations of each provider are provided by each
 QUIC implementation in the \filename{System.Net.Quic} library. Figure
 \autoref{fig:05-quic-impl-providers} illustrates this indirection layer using a class diagram.
 
 \begin{myFigure}{fig:05-quic-impl-providers}{Implementation providers for the QUIC API classes}
 
-  \todo{class diagram showing inheritance + grouping of classes + access modifiers}
+\resizebox{0.95\linewidth}{!}{\input{img/05-quic-implementation-providers.pdf_tex}}
 
 \end{myFigure}
 
@@ -126,7 +126,58 @@ The source code for the managed implementation developed in this thesis is locat
 
 The implementation is exposed using the \ManagedQuicListener{}, \ManagedQuicConnection{},
 \ManagedQuicStream{} implementation provider classes and the \ManagedQuicImplementationProvider{}
-factory. The source code for these classes can be found in the root directory of the
-implementation.
+factory. The source code for these classes can be found in the root directory of the implementation.
+
+\subsection{Supporting Data Structures}
+
+The QUIC implementation requires a few specialized data structures.
+
+\todo{should this be in analysis or documentation?}
+
+\subsubsection{RangeSet}
+
+Efficient representation of acknowledged ranges of packet numbers and maintaining information about
+which parts of the QUIC stream have been sent or acknowledged require a data structure capable of
+efficiently performing set operations on ranges of integers. The \RangeSet{} class represents such a
+set.
+
+It is expected that the number of ranges in one \RangeSet{} instance will be rather small. Therefore
+our implementation uses a sorted \class{List<T>} instance to store individual ranges. The ranges
+themselves are represented by \class{RangeSet.\allowbreak{}Range} struct which contains the first and last
+element represented by the range.
+
+\subsubsection{PacketNumberWindow}
+
+The \PacketNumberWindow{} class is used to test if QUIC packet the given packet number has already
+been received. Internally, it contains two 64-bit fields: a bitmask marking the received bits and an
+integer representing the packet number represented by the least significant bit of the mask. Marking
+a packet number as received consists of setting a particular bit in the mask, shifting the other
+bits if necessary. \todo{is this clear or does it need an illustration?}
+
+The data structure can maintain state only for 64 consecutive packet numbers. This leads to packets
+with packet number under the window being defensively marked as already received and, therefore,
+discarded. The tollerance of the loss detection algorithm outlined in
+\autoref{sec:02-loss-detection} allow way smaller packet reordering. In fact, the specification
+suggests maximum reordering tollerance of 3, meaning that receiving a packet number should mark all
+packets as lost except the previous two. Therefore, it is very likely that any newly received packet
+with packet number under the window maintained by the \PacketNumberWindow{} instance is already
+deemed lost and its data retransmitted in a different packet. Thus the width of 64 of the packet
+number window is sufficient.
+
+\todo{possibly include segmented ArrayBuffer, if I decide to implement it myself}
+
+\subsection{Implementation Overview}
+
+
 
 \section{Tests Implementation}
+
+The QUIC implementation is covered by an extensive suite of unit tests and functional tests. The
+unit tests focus on the correctness of the individual parts of the managed QUIC implementation, and
+that the QUIC packets sent by the implementation conform to the QUIC protocol specification.
+Functional tests, on the other hand, tests high-level functionality like being able to send and
+receive data, and that the public API behavior conforms to the public API specification.
+
+\subsection{Unit Tests}
+
+\subsection{Functional Tests}
