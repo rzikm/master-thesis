@@ -128,6 +128,42 @@ The implementation is exposed using the \ManagedQuicListener{}, \ManagedQuicConn
 \ManagedQuicStream{} implementation provider classes and the \ManagedQuicImplementationProvider{}
 factory. The source code for these classes can be found in the root directory of the implementation.
 
+\subsection{Implementation Overview}
+
+The high-level architecture has been described in \autoref{sec:03-high-level-architecture}. This and
+following sections will provide further implementation details. The class diagram in
+\autoref{fig:05-high-level-class-diagram} shows the releationship between the key architecture
+classes which were also mentioned in \autoref{fig:03-architecture} and
+\autoref{fig:03-socket-context-architecture}. These classes are:
+
+\begin{itemize}
+
+  \litem[]{\ManagedQuicConnection{}} Implementation provider for \QuicConnection{}. Implements stateful connection logic.
+
+  \litem[]{\ManagedQuicListener{}} Implementation provider for \QuicListener{}. Maintains a queue of incomming connections to be accepted by the application.
+
+  \litem[]{\QuicConnectionContext{}} Class hosting the background thread for servicing a single \ManagedQuicConnection{}, including timeout expiration and sending or receiving UDP datagrams with QUIC packets.
+
+  \litem[]{\QuicSocketContext{}} Abstract class handling basic sending and receiving of UDP datagrams, base class for \QuicClientSocketContext{} and \QuicServerSocketContext{}.
+
+  \litem[]{\QuicServerSocketContext{}} Implements server-side stateless UDP datagram processing and dispatch of incoming UDP datagrams to appropriate \QuicConnectionContext{} instance.
+
+  \litem[]{\QuicClientSocketContext{}} Implements client-side \QuicSocketContext{} behavior, passing all packets to a single single \QuicConnectionContext{}.
+
+\end{itemize}
+
+\begin{myFigure}{fig:05-high-level-class-diagram}{Relationship between key classes of managed QUIC implementation}
+
+\resizebox{0.87\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
+
+\end{myFigure}
+
+\subsection{Matching QUIC Packets to Connections}
+
+
+
+\subsection{ManagedQuicConnection}
+
 \subsection{Supporting Data Structures}
 
 The QUIC implementation requires a few specialized data structures.
@@ -165,9 +201,6 @@ deemed lost and its data retransmitted in a different packet. Thus the width of 
 number window is sufficient.
 
 \todo{possibly include segmented ArrayBuffer, if I decide to implement it myself}
-
-\subsection{Implementation Overview}
-
 
 
 \section{Tests Implementation}
