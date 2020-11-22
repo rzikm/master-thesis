@@ -1,19 +1,19 @@
 \chapter{QUIC Protocol}\label{chap:02-quic}
 
 This chapter is intended as a summary of the QUIC protocol specification and aims to provide
-sufficient background for the design of our implementation. This text is based on version 29 of the
-draft specification documents from June 2020, more specifically on the documents describing the core
+sufficient background for our implementation design. This text is based on version 29 of the draft
+specification documents from June 2020, more specifically on the documents describing the core
 transport protocol~\cite{draft-ietf-quic-transport}, TLS integration~\cite{draft-ietf-quic-tls}, and
 congestion control mechanism~\cite{draft-ietf-quic-recovery}. Readers familiar with these documents
 may skip this chapter.
 
 We will start this chapter by first providing a high-level overview of QUIC and then providing a
-more detailed description of the protocol's individual parts.
+more detailed description of the individual parts of the protocol.
 
 \section{Introduction}
 
 QUIC protocol provides reliable and secure transport of multiple streams of data over a single
-connection. QUIC provides following services:
+connection. QUIC provides the following services:
 
 \begin{itemize}
 
@@ -33,81 +33,79 @@ transport security, and other features known from TCP or TLS protocols.
 
 \subsection{Basic Concepts}
 
-Throughout this chapter, and later when analysing the QUIC protocol specification, this text will
-use several terms in a very specific meaning. This meaning is the same as defined in the
-main specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
+Throughout this chapter, and later when analyzing the QUIC protocol specification, this text will
+use several terms in a very specific meaning. This meaning is the same as defined in the main
+specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
 
 \begin{description}
 
-  \ditem{\Gls{quic-packet}}  A complete processable unit of QUIC that can be
-  encapsulated in a UDP datagram.  Multiple QUIC packets can be
-  encapsulated in a single UDP datagram.
+  \ditem{\Gls{quic-packet}} A complete processable unit of QUIC that can be encapsulated in a UDP
+datagram. Multiple QUIC packets can be encapsulated in a single UDP datagram.
 
-  \ditem{\Gls{out-of-order-packet}}  A packet that does not arrive directly after the packet that was
-  sent before it.  A packet can arrive out of order if it is delayed, if earlier packets are
-  lost or delayed, or if the sender intentionally skips a packet number.
+  \ditem{\Gls{out-of-order-packet}} A packet that does not arrive directly after the packet that was
+sent before it. A packet can arrive out of order if it was delayed, if earlier packets were lost or
+delayed, or if the sender intentionally skipped a packet number.
 
-  \ditem{Endpoint}  An entity that can participate in a QUIC connection by
-  generating, receiving, and processing QUIC packets.  There are
-  only two types of endpoint in QUIC: client and server.
+  \ditem{Endpoint} An entity that can participate in a QUIC connection by generating, receiving, and
+processing QUIC packets. There are only two types of endpoints in QUIC: client and server.
 
-  \ditem{Client}  The endpoint initiating a QUIC connection.
+  \ditem{Client} The endpoint initiating a QUIC connection.
 
-  \ditem{Server}  The endpoint accepting incoming QUIC connections.
+  \ditem{Server} The endpoint accepting incoming QUIC connections.
 
-  \ditem{Address}  When used without qualification, the tuple of IP version,
-  IP address, and UDP port number that represents one end of a network path.
+  \ditem{Address} When used without qualification, the tuple of IP version, IP address, and UDP port
+number which represents one end of a network path.
 
   \ditem{\Gls{network-path}} An imaginary path between two network addresses.
 
-  \ditem{\Gls{cid}}  An opaque identifier that is used to identify a QUIC
-  connection at an endpoint.  Each endpoint sets a value for its
-  peer to include in packets sent towards the endpoint.
+  \ditem{\Gls{cid}} An opaque identifier that is used to identify a QUIC connection at an endpoint.
+Each endpoint sets a value for its peer to include in packets sent towards the endpoint.
 
-  \ditem{Stream}  A unidirectional or bidirectional channel of ordered bytes
-  within a QUIC connection.  A QUIC connection can carry multiple
-  simultaneous streams.
+  \ditem{Stream} A unidirectional or bidirectional channel of ordered bytes within a QUIC
+connection. A QUIC connection can carry multiple simultaneous streams.
 
-  \ditem{Application}  An entity that uses QUIC to send and receive data.
+  \ditem{Application} An entity that uses QUIC to send and receive data.
 
 \end{description}
 
 \subsection{Notational Conventions}
 
-This chapter contains graphical diagrams of several elements such as QUIC packets. In those
+This chapter contains graphical diagrams of several elements, such as QUIC packets. In those
 schematics, individual fields include length information as follows:
 
 \begin{itemize}
 
   \litem{X (A)} Indicates that X is A bits long.
 
-  \litem{X (i)} Literal \textit{i} indicates that X is encoded using the QUIC's variable-length encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
+  \litem{X (i)} Literal \textit{i} indicates that X is encoded using the QUIC's variable-length
+encoding. This encoding is described in \autoref{sec:02-variable-length-encoding}.
 
   \litem{X (A..B)} Indicates that X can be any length from A to B.
 
-  \litem{X (..)} Indicates that X can be any length. The length is generally stored in different field.
+  \litem{X (..)} Indicates that X can be any length. The length is generally stored in a different
+field.
 
   \litem{X (A) = C} Indicates that X has a fixed value C.
 
-  \litem{X (A) ...} Indicates that X has is repeated zero or more times and each instance is A bits long.
+  \litem{X (A) ...} Indicates that X is repeated zero or more times and each instance is A bits
+long.
 
 \end{itemize}
 
 \subsection{Wire Encoding}\label{sec:02-wire-encoding}
 
 The process of encoding QUIC packets to be sent via the network is optimized for size. All values
-sent over the network are encoded in big endian order. There are two nontrivial encodings used:
+sent over the network are encoded in big-endian order. There are two nontrivial encodings used:
 variable-length integer encoding and packet number encoding.
 
 \subsubsection{Variable-Length Integer Encoding}\label{sec:02-variable-length-encoding}
 
 Almost all numeric values stored in QUIC packets are encoded using a \textit{variable-length integer
-  encoding}. This encoding uses the first byte's two most significant bits to encode whether the
-value is encoded as 1, 2, 4, or 8-byte integer. This encoding supports only positive numbers. The
-ranges available for individual encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
+encoding}. This encoding uses the first byte's two most significant bits to encode whether the value
+is encoded as 1, 2, 4, or 8-byte integer. This encoding supports only positive numbers. The ranges
+available for individual encoding lengths are listed in \autoref{tab:02-quic-varint-length}.
 
-\begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths}
-  {ccr}
+\begin{myTable} {tab:02-quic-varint-length} {Variable-length integer encoding lengths} {ccr}
   {Most significant bits & Encoding length (B) & Maximum value}
   00                     & 1                   & \num{63}         \\
   01                     & 2                   & \num{16383}      \\
@@ -120,7 +118,7 @@ the shortest encoding necessary to represent the given number.
 
 \subsubsection{Packet Number Encoding}\label{sec:02-packet-number-encoding}
 
-Packets in QUIC are sequentially numbered and, therefore, packet numbers received by an endpoint
+Packets in QUIC are sequentially numbered, and, therefore, packet numbers received by an endpoint
 form a mostly ascending sequence with occasional reordering or gaps due to network unreliability.
 This causes the packet number of a newly received packet to be close to that of the previously
 received packet. QUIC leverages this fact by sending only the lower bytes of the packet number. The
@@ -129,12 +127,12 @@ can reconstruct the original packet number using the previously received packet 
 bytes from the arriving packet.
 
 When determining how many bytes of the packet number need to be included in the packet, the sender
-uses the value of the highest acknowledged packet number. The encoding length must use enough bytes
-to be able to represent at least twice the difference between the current packet number and the
-highest acknowledged number.
+uses the highest acknowledged packet number. The encoding length must use enough bytes to be able to
+represent at least twice the difference between the current packet number and the highest
+acknowledged number.
 
-As an example, consider following situation: as sender prepares to send packet \binary{4417}, its
-highest acknowledged packet number is \binary{43a0}. The difference between the two numbers is
+As an example, consider the following situation: as sender prepares to send packet \binary{4417},
+its highest acknowledged packet number is \binary{43a0}. The difference between the two numbers is
 \binary{77} which is still small enough to require only the least significant byte (\binary{17}) of
 the packet number to be sent in the packet. Suppose that by the time the packet arrives at the
 receiver, its highest received packet number is \binary{43f5}. Based on the encoded packet number
@@ -145,69 +143,70 @@ which is the correct packet number.
 \section{QUIC Packets}
 
 In QUIC connection, endpoints exchange \textit{QUIC packets} enclosed in UDP datagrams. A single UDP
-datagram can contain multiple packets, although in most cases they contain only one. Packing
+datagram can contain multiple packets, although in most cases, they contain only one. Packing
 multiple QUIC packets into a single UDP datagram is called \textit{coalescing}. A single QUIC packet
 cannot span multiple UDP datagrams. QUIC uses a total of six different packet types:
 
 \begin{enumerate}
 
   \litem{Version Negotiation} sent by the server when the client tries to establish a connection
-  with QUIC version that is not supported by the server;
+with QUIC version that is not supported by the server;
 
-  \litem{Retry} optionally used by servers for Client Address Validation  when establishing new connections. Address validation is described in \autoref{sec:02-address-validation};
+  \litem{Retry} optionally used by servers for Client Address Validation when establishing new
+connections. Address validation is described in \autoref{sec:02-address-validation};
 
   \litem{Initial} used to initiate a new connection and exchange the initial information;
 
   \litem{Handshake} used during the connection handshake;
 
   \litem{0-RTT} when TLS 1.3 0-RTT mode of operation is enabled, 0-RTT packets carry \textit{early
-  data} --- application data that is sent before the TLS handshake is complete in order to reduce
-  latency; and
+data} --- application data that is sent before the TLS handshake is complete in order to reduce
+latency; and
 
   \litem{1-RTT} main packet type used throughout the lifetime of QUIC connection. 1-RTT and 0-RTT
-  packets are the only packet types which carry application data.
+packets are the only packet types that carry application data.
 
 \end{enumerate}
 
-Version Negotiation and Retry packets are sent as one-time responses in special scenarios and are
-not individually numbered. QUIC is designed in a way that lets the server send these packets without
-maintaining any state for the connection. These packets are not used in an established connection.
+Version Negotiation and Retry packets are sent as one-time responses in particular scenarios and are
+not individually numbered. QUIC is designed to let the server send these packets without maintaining
+any state for the connection. These packets are not used in an established connection.
 
-Packets of the other types --- Initial, Handshake, 0-RTT and 1-RTT --- are individually numbered. The
+Packets of the other types --- Initial, Handshake, 0-RTT, and 1-RTT --- are individually numbered. The
 packet numbers do not form a single sequence, as is the case with TCP packets. Instead, QUIC
-organizes these packets into three separate \textit{packet number spaces}, and uses a separate
+organizes these packets into three separate \textit{packet number spaces} and uses a separate
 sequence of numbers for each packet number space. These packet number spaces are:
 
 \begin{enumerate}
 
   \litem{Initial} Used for initiating new connections and exchanging initial cryptographic
-  information. Contains only Initial packets.
+information. Contains only Initial packets.
 
   \litem{Handshake} Used during the connection handshake process. Contains only Handshake packets.
 
   \litem{Application} Used throughout the lifetime of the connection to transfer application data.
-  This packet space contains both 0-RTT and 1-RTT packets.
+This packet space contains both 0-RTT and 1-RTT packets.
 
 \end{enumerate}
 
 In addition to being numbered separately, packets from each packet number space are processed
-completely independently of the other packet number spaces. For example, Initial packets can be
-acknowledged only by another Initial packet. In their payload, the Initial, Handshake, 0-RTT and
-1-RTT packets carry \textit{QUIC Frames} which are low level protocol messages carrying e.g.
-acknowledgements and parts of streams sent by the application.
+entirely independently of the other packet number spaces. For example, Initial packets can be
+acknowledged only by another Initial packet. In their payload, the Initial, Handshake, 0-RTT, and
+1-RTT packets carry \textit{QUIC Frames} which are low-level protocol messages carrying, e.g.,
+acknowledgments and parts of streams sent by the application.
 
 Each packet type has a header and a payload. The packet header contains information such as
-\gls{scid} and \gls{dcid} which are \glspl{cid} used to match the packets to the correct
-receiving connection. QUIC tries to optimize the packet encoding in order to maximize the amount of
-application data that can be sent in a single UDP datagram. Therefore, two types of packet headers
-exist. 1-RTT packets use a \textit{short header} and all other packet types use the \textit{long
-  header}. The short header contains only a subset of fields present in the long header and omits
-data which are relevant only during connection establishment, like protocol version identifier.
+\gls{scid} and \gls{dcid} which are \glspl{cid} used to match the packets to the correct receiving
+connection. QUIC tries to optimize the packet encoding to maximize the amount of application data
+that can be sent in a single UDP datagram. Therefore, two types of packet headers exist. 1-RTT
+packets use a \textit{short header}, and all other packet types use the \textit{long header}. The
+short header contains only a subset of fields present in the long header and omits data relevant
+only during connection establishment, like protocol version identifier.
 
-The type of the header is specified by the most significant bit of the first byte in the packet ---
-the \textit{Header Form} bit. The second most significant bit --- the \textit{Fixed Bit} --- is always
-set to 1 in valid QUIC packets. Following sections describe the structure of the rest of the packet
-for individual packet types.
+The type of the header is determined by the most significant bit of the first byte in the packet ---
+the \textit{Header Form} bit. The second most significant bit --- the \textit{Fixed Bit} --- is
+always set to 1 in a valid QUIC packet. The following sections describe the structure of the rest of
+the packet for individual packet types.
 
 \newcommand{\longFieldHeight}{1}
 
@@ -215,8 +214,8 @@ for individual packet types.
 
 Long headers contain information that is necessary for the connection establishment. It includes
 both the Source and Destination Connection IDs. It also contains \textit{Version} and \textit{Packet
-  Type} fields. A few leftover bits of the header are reserved for type-specific information. The
-structure of the long header is illustrated in \autoref{fig:02-long-header}.
+Type} fields. A few leftover bits of the header are reserved for type-specific information.
+\autoref{fig:02-long-header} illustrates the structure of the long header.
 
 \begin{myFigure}{fig:02-long-header}{Long packet header structure}
 
@@ -235,18 +234,18 @@ structure of the long header is illustrated in \autoref{fig:02-long-header}.
 
 The semantics of the individual fields of the long header is as follows:
 
-
 \begin{description}
 
-    \ditem{Header Form (H)} Used to distinguish between packets with so called \textit{long header}
-    and \textit{short header} format. In case of the long header packets. the form bit is set to 1.
+    \ditem{Header Form (H)} Used to distinguish between packets with so-called \textit{long header}
+and \textit{short header} format. In the case of the long header packets. The Header Form bit is set
+to 1.
 
-    \ditem{Fixed Bit (F)} A bit that is always set to 1 in valid QUIC packets.
+    \ditem{Fixed Bit (F)} A bit that is always set to 1 in a valid QUIC packet.
 
-    \ditem{Packet Type (T)} Discriminator of the packet type. the possible values are listed in \autoref{tab:02-packet-type}.
+    \ditem{Packet Type (T)} Discriminator of the packet type. the possible values are listed in
+\autoref{tab:02-packet-type}.
 
-\begin{myTable}{tab:02-packet-type}{Values of the Packet Type field in long packet header}
-  {cc}
+\begin{myTable}{tab:02-packet-type}{Values of the Packet Type field in long packet header} {cc}
   {Packet Type & Value}
   Initial      & 00 \\
   0-RTT        & 01 \\
@@ -254,20 +253,20 @@ The semantics of the individual fields of the long header is as follows:
   Retry        & 11 \\
 \end{myTable}
 
-    \ditem{Version} Indicates which version of QUIC is in use. Location of this field will be
-    the same across all QUIC versions However, the structure of the rest of the packet may be different
-    in future versions of QUIC.
+    \ditem{Version} Indicates which version of QUIC is in use. The location of this field will be
+the same across all QUIC versions. However, the structure of the rest of the packet may be different
+in future versions of QUIC.
 
     \ditem{Destination Connection ID Length} Length of the Destination Connection ID field.
 
-    \ditem{Destination Connection ID}  The Connection ID issued by the recipient of the packet.
+    \ditem{Destination Connection ID} The Connection ID issued by the recipient of the packet.
 
-    \ditem{Source Connection ID Length}  Length of the Source Connection ID field.
+    \ditem{Source Connection ID Length} Length of the Source Connection ID field.
 
     \ditem{Source Connection ID} The Connection ID issued by the sender of the packet.
 
     \ditem{Reserved Bits} Bits reserved for use in the future QUIC versions. In the initial QUIC
-    version, these bits must be set to 0.
+version, these bits must be set to 0.
 
 \end{description}
 
@@ -275,13 +274,13 @@ The semantics of the individual fields of the long header is as follows:
 
 The Version Negotiation packet is sent by the server when it receives a long header packet
 requesting a version of QUIC unsupported by the server. As an exception to other long header
-packets, Version Negotiation packet is not discriminated by a specific value in the Packet Type
+packets, the Version Negotiation packet is not discriminated by a specific value in the Packet Type
 field in the header, but by a special value \binary{00000000} in the Version field.
 
-After the header, the packet contains a list of supported versions, each one listed as 32-bit
-integer in big-endian. Also, since future QUIC versions may allow larger \glspl{cid} than 20
-bytes, a valid Version Negotiation packet can contain up to 255-byte \glspl{cid}. The structure
-of the Version Negotiation packet is illustrated in \autoref{fig:02-version-negotiation-packet}.
+After the header, the packet contains a list of supported versions, each one listed as a 32-bit
+integer in big-endian. Also, since future QUIC versions may allow larger \glspl{cid} than 20 bytes,
+a valid Version Negotiation packet can contain up to 255-byte \glspl{cid}. The structure of the
+Version Negotiation packet is illustrated in \autoref{fig:02-version-negotiation-packet}.
 
 \begin{myFigure}{fig:02-version-negotiation-packet}{Version Negotiation packet structure}
 
@@ -303,16 +302,15 @@ of the Version Negotiation packet is illustrated in \autoref{fig:02-version-nego
 
 \end{myFigure}
 
-The identifier of the initial QUIC version is \binary{00000001}. There are also special identifiers
+The identifier of the initial QUIC version is \binary{00000001}. There are also unique identifiers
 for draft versions of the protocol valid only until the QUIC specification is finalized.
 
 \subsection{Retry Packet}\label{sec:02-retry-packet}
 
-Retry packets are distinguished by bits 11 in the \textit{Packet Type} field of the long header.
-Retry packets are sent by a server as part of the optional \textit{Address Validation} mechanism
-used to protect against traffic amplification attack described in
-\autoref{sec:02-address-validation}. The structure of the packet is illustrated in
-\autoref{fig:02-retry-packet}.
+Retry packets are distinguished by bits 11 in the \textit{Packet Type} field of the long header. A
+server sends Retry packets as part of the optional \textit{Address Validation} mechanism used to
+protect against traffic amplification attack described in \autoref{sec:02-address-validation}.
+\autoref{fig:02-retry-packet} illustrates the structure of the Retry packet.
 
 \begin{myFigure}{fig:02-retry-packet}{Retry packet structure}
 
@@ -337,30 +335,31 @@ The semantics of the fields specific to the Retry packet are:
 
 \begin{description}
 
-    \ditem{Retry Token} Contains an opaque token generated by the server. This token must be
-    echoed back in an Initial packet during next connection attempt. The contents of the token must be
-    difficult to guess by the attacker and verifyable in a stateless manner (i.e. without saving it in
-    memory for future comparisons).
+    \ditem{Retry Token} Contains an opaque token generated by the server. This token must be echoed
+back in an Initial packet during the next connection attempt. The token must be difficult to guess
+by the attacker and verifiable in a stateless manner (i.e., without saving it in memory for future
+comparisons).
 
     \ditem{Retry Integrity Tag} Tag used to check the integrity of the packet. For the details on
-    how the ingegrity tag is calculated, refer to the TLS integration
-    specification~\cite[Section~5.8]{draft-ietf-quic-tls}.
+how the integrity tag is calculated, refer to the TLS integration
+specification~\cite[Section~5.8]{draft-ietf-quic-tls}.
 
 \end{description}
 
-\subsection{Initial, Handshake and 0-RTT Packets}
+\subsection{Initial, Handshake, and 0-RTT Packets}
 
-Initial, Handshake and 0-RTT packets are almost identical in structure. All three types use the
+Initial, Handshake, and 0-RTT packets are almost identical in structure. All three types use the
 \textit{Type-Specific Bits} from the long header to store \textit{Reserved Bits} and the
 \textit{Packet Number Length}. After the long packet header, these packets contain the
-\textit{Length} field containing the packet length, \textit{Packet Number} field and the actual
+\textit{Length} field containing the packet length, \textit{Packet Number} field, and the actual
 payload consisting of QUIC frames. The only exception to this structure is the Initial packet, which
 contains two additional fields just after the long header: \textit{Token Length} and \textit{Token},
 which are used to carry the Retry Token from the Retry packet in case Address Validation is
-requested by the server. The structure of these three packets is illustrated in
-\autoref{fig:02-initial-handshake-0rtt-packets}.
+requested by the server. \autoref{fig:02-initial-handshake-0rtt-packets} illustrates the structure
+of these three packet types.
 
-\begin{myFigure}{fig:02-initial-handshake-0rtt-packets}{Structure of the Initial, Handshake, and 0-RTT packets}
+\begin{myFigure}{fig:02-initial-handshake-0rtt-packets}{Structure of the Initial, Handshake, and
+0-RTT packets}
 
   \begin{bytefield}[bitwidth=2.5em]{8}
     \begin{rightwordgroup}{long \\ header}
@@ -381,8 +380,7 @@ requested by the server. The structure of these three packets is illustrated in
     \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
   \end{bytefield}
 
-  H = Header Form, F = Fixed Bit, T = Packet Type,\\
-  R = Reserved Bits, L = Packet Number Length
+  H = Header Form, F = Fixed Bit, T = Packet Type,\\ R = Reserved Bits, L = Packet Number Length
 
 \end{myFigure}
 
@@ -392,33 +390,33 @@ The semantics of the new fields in these packets are:
 
     \ditemWithComment{Token Length}{Initial only} Length of the Token field.
 
-    \ditemWithComment{Token}{Initial only} Contains an opaque token if the server provided
-    one in the Retry packet as part of Address Validation.
+    \ditemWithComment{Token}{Initial only} Contains an opaque token if the server provided one in
+the Retry packet as part of Address Validation.
 
     \ditem{Reserved Bits (R)} Bits reserved for use in the future QUIC versions. In the initial QUIC
-    version, these bits must be set to 0.
+version, these bits must be set to 0.
 
     \ditem{Packet Number Length (L)} The length of the encoding used for the packet number.
 
-    \ditem{Length} The length of the remainder of the packet. This includes the Packet Number,
-    the payload of the packet, and --- for encrypted packets --- the AEAD integrity tag.
+    \ditem{Length} The length of the remainder of the packet. This includes the Packet Number, the
+packet's payload, and --- for encrypted packets --- the AEAD integrity tag.
 
     \ditem{Packet Number} The sequence number of this packet in the respective packet number space.
-    This field uses a special encoding which is described in \autoref{sec:02-packet-number-encoding}.
+This field uses a special encoding which is described in \autoref{sec:02-packet-number-encoding}.
 
     \ditem{Packet Payload} Serialized sequence of QUIC frames.
 
     \ditem{Integrity Tag} Opaque checksum produced by the AEAD cipher during packet encryption.
-    Packet encryption is described in detail in \autoref{sec:02-packet-protection}.
+Packet encryption is described in detail in \autoref{sec:02-packet-protection}.
 
 \end{description}
 
 \subsection{1-RTT Packet}
 
 1-RTT packets are the only packet that uses the short header to make more space for application data
-in the UDP datagram. Besides the Header Form, Fixed, Reserved Bits and Packet Number Length fields
-which have the same meaning as in the long header, short header contains \textit{Spin Bit} and
-\textit{Key Phase Bit} fields.
+in the UDP datagram. In addition to the Header Form, Fixed, Reserved Bits, and Packet Number Length
+fields, which have the same meaning as in the long header, the short header contains \textit{Spin
+Bit} and \textit{Key Phase Bit} fields.
 
 1-RTT packets can be sent only after the connection has been successfully established. This implies
 that connection IDs used for the connection by both endpoints are already known, and there is no
@@ -439,8 +437,8 @@ follows. The structure of the 1-RTT frame is illustrated in \autoref{fig:02-1rtt
     \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
   \end{bytefield}
 
-  H = Header Form, F = Fixed Bit, S = Spin Bit, \\
-  R = Reserved Bits, K = Key Phase Bit, L = Packet Number Length
+  H = Header Form, F = Fixed Bit, S = Spin Bit, \\ R = Reserved Bits, K = Key Phase Bit, L = Packet
+Number Length
 
 \end{myFigure}
 
@@ -449,59 +447,60 @@ The semantics of the fields specific to 1-RTT packets are:
 \begin{description}
 
     \ditem{Spin Bit} A bit used for an optional QUIC feature which allows on-path nodes to measure
-    connection latency by observing changes in this bit. For detailed description on the Spin Bit
-    feature, see the complete specification~\cite[Section~17.3.1]{draft-ietf-quic-transport}.
+connection latency by observing changes in this bit. For a detailed description of the Spin Bit
+feature, see the complete specification~\cite[Section~17.3.1]{draft-ietf-quic-transport}.
 
     \ditem{Key Phase Bit} A bit used to communicate that the keys used for the packet encryption
-    need to be updated. Updating the keys is necessary after using them to encrypt certain number of
-    packets to provide stronger protection. The mechanism of Key Update is described in
-    \autoref{sec:02-key-update}.
+need to be updated. Updating the keys is necessary after using them to encrypt a certain number of
+packets to provide sufficient protection. \autoref{sec:02-key-update} describes the mechanism of Key
+Update in detail.
 
 \end{description}
 
 \section{QUIC Frames}\label{sec:02-quic-frames}
 
-QUIC frames are low-level QUIC protocol messages carried in the payload of Initial, Handshake, 0-RTT
-and 1-RTT packets. Examples of these frames include, e.g., \ACK{} frames carrying acknowledgments
-for received packets, \STREAM{} frames carrying the application data, and \CRYPTO{} frames carrying
-data for the TLS handshake.
+QUIC frames are low-level QUIC protocol messages carried in the payload of Initial, Handshake,
+0-RTT, and 1-RTT packets. Examples of these frames include, e.g., \ACK{} frames carrying
+acknowledgments for received packets, \STREAM{} frames carrying the application data, and \CRYPTO{}
+frames carrying data for the TLS handshake.
 
-During the lifetime of the connection, all QUIC packets have to be acknowledged by sending ACK in
-another packet in the same packet number space. However, not all packets have to be acknowledged
-immediately, e.g., acknowledging packets containing only ACK would cause an endless flood of ACK
-packets. Instead, the ACK frame is sent later together with a more urgent data. Frame types that
+During the lifetime of the connection, all QUIC packets must be acknowledged by sending an ACK frame
+in another packet in the same packet number space. However, not all packets have to be acknowledged
+immediately; e.g., acknowledging packets containing only ACK would cause an endless flood of ACK
+packets. Instead, the ACK frame is sent later together with more urgent data. Frame types that
 require immediate acknowledgments are called \textit{ack-eliciting frames}, and the packets with at
 least one such frame are called \textit{\glspl{ack-eliciting-packet}}.
 
-Because packets in differnet packet number spaces offer different level of confidentiality, not all
-frames can be sent in any packet type. For example, application data in \STREAM{} frames cannot be
-sent in Initial and Handshake to avoid compromising security. \autoref{tab:02-frame-types} lists all
-frame types, whether they are ack-eliciting and in which packets they can be sent.
+Because packets in different packet number spaces offer a different level of confidentiality, not
+all frames can be sent in any packet type. For example, \STREAM{} frames --- which carry the
+application data --- must not be sent in Initial and Handshake packets to avoid compromising
+security. \autoref{tab:02-frame-types} lists all frame types used in QUIC, whether they are
+ack-eliciting and which packets can carry them.
 
 \begin{myTable}[\small] {tab:02-frame-types} {QUIC frame types}
   {l@{\hskip -0.1in}ccccc}
-  {                     &               & \multicolumn{4}{c}{Allowed in packet type} \\ \cmidrule(lr){3-6}
-    Frame type          & Ack-eliciting & Initial & Handshake & 0-RTT & 1-RTT}
-  \PADDING{}            &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
-  \PING{}               & \checkmark{}           & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
-  \ACK{}                &               & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
-  \RESETSTREAM{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \STOPSENDING{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \CRYPTO{}             & \checkmark{}           & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
-  \NEWTOKEN{}           & \checkmark{}           &         &           &       & \checkmark{}          \\
-  \STREAM{}             & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \MAXDATA{}            & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \MAXSTREAMDATA{}      & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \MAXSTREAMS{}         & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \DATABLOCKED{}        & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \STREAMDATABLOCKED{}  & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \STREAMSBLOCKED{}     & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \NEWCONNECTIONID{}    & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \RETIRECONNECTIONID{} & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \PATHCHALLENGE{}      & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \PATHRESPONSE{}       & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
-  \CONNECTIONCLOSE{}    &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
-  \HANDSHAKEDONE{}      & \checkmark{}           &         &           &       & \checkmark{}          \\
+  {                               &               & \multicolumn{4}{c}{Allowed in packet type} \\
+    \cmidrule(lr){3-6} Frame type & Ack-eliciting & Initial & Handshake & 0-RTT & 1-RTT}
+  \PADDING{}                      &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \PING{}                         & \checkmark{}           & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \ACK{}                          &               & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
+  \RESETSTREAM{}                  & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STOPSENDING{}                  & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \CRYPTO{}                       & \checkmark{}           & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
+  \NEWTOKEN{}                     & \checkmark{}           &         &           &       & \checkmark{}          \\
+  \STREAM{}                       & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXDATA{}                      & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXSTREAMDATA{}                & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \MAXSTREAMS{}                   & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \DATABLOCKED{}                  & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STREAMDATABLOCKED{}            & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \STREAMSBLOCKED{}               & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \NEWCONNECTIONID{}              & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \RETIRECONNECTIONID{}           & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \PATHCHALLENGE{}                & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \PATHRESPONSE{}                 & \checkmark{}           &         &           & \checkmark{}   & \checkmark{}          \\
+  \CONNECTIONCLOSE{}              &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
+  \HANDSHAKEDONE{}                & \checkmark{}           &         &           &       & \checkmark{}          \\
 \end{myTable}
 
 \section{QUIC Connection}
@@ -511,47 +510,47 @@ This section describes the details of \gls{cid} management and the QUIC connecti
 \subsection{Connection ID}\label{sec:02-connection-id}
 
 Traditional network protocols use the combination of remote endpoint IP address and port to identify
-the connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This in essence
-enables migrating the connection to different \glspl{network-path} and interfaces, e.g. from
-cellular data to a Wi-Fi network, because the connection identity does not depend on the peer's IP
-address.
+the connection. QUIC, on the other hand, uses a dedicated Connection ID identifier. This, in
+essence, enables migrating the connection to different \glspl{network-path} and interfaces, e.g.,
+from cellular data to a Wi-Fi network, because the connection identity does not depend on the peer's
+IP address.
 
 Connection IDs are opaque byte sequences between 8 to 20 bytes in length. Each endpoint in a QUIC
 connection independently selects Connection IDs it will use to identify the QUIC connection. These
 Connection IDs are then used to populate the Source Connection ID and Destination Connection ID of
 the QUIC packets.
 
-The first pair of Connection IDs is exchanged during connection establishment. Additional Connection
-IDs can be issued independently by each endpoint during the lifetime of the connection using the
-\NEWCONNECTIONID{} frame. These additional Connection IDs are primarily used when migrating the
+The endpoints exchange the first pair of Connection IDs during connection establishment. Additional
+Connection IDs can be issued independently by each endpoint during the connection's lifetime using
+the \NEWCONNECTIONID{} frame. These additional Connection IDs are primarily used when migrating the
 connection to a new \gls{network-path} because QUIC specification requires that the same Connection
 ID be used only on one \gls{network-path} in order to prevent correlation of the network traffic by
 external observers.
 
-Connection IDs can be also retired by the other endpoint using the \RETIRECONNECTIONID{} frame. By
-retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID in
-its packets. This instructs the other endpoint to drop any incoming packets that use the retired
-Connection ID. Retiring a Connection ID also serves as a request to the peer to issue a new
+Connection IDs can also be retired by the other endpoint using the \RETIRECONNECTIONID{} frame. By
+retiring a Connection ID, the endpoint communicates that it will no longer use the Connection ID to
+send packets and that the other endpoint should drop any incoming packets that use that Connection
+ID. At the same time, retiring a Connection ID also serves as a request to the peer to issue a new
 Connection ID as a replacement.
 
-Alternatively, endpoints can use a zero-length Connection ID. In that case, the connection identity
-is tied to the IP address and port of the remote endpoint. Using zero-length Connection ID saves
-space in the sent datagrams, but imposes several limitations on the connection. For example, if an
+Alternatively, endpoints can use a zero-length Connection ID. In that case, the connection's
+identity is tied to the remote endpoint's IP address and port. Using zero-length Connection ID saves
+space in the sent datagrams but imposes several limitations on the connection. For example, if an
 endpoint uses a zero-length Connection ID, it cannot issue additional connection IDs and, therefore,
 it cannot migrate a connection to a new local address.
 
 \subsection{Matching Packets to Connections}
 
-When a packet arrives to an endpoint, it needs to be associated with an existing connection, or ---
-for servers --- potentially initiate a new connection. If packet contains a non-zero-length Connection
-ID in the \gls{dcid} field, the \gls{cid} is used to find an existing connection. If the packet
-uses a zero-length conneciton id, then the local and remote addresses determine the target
+When a packet arrives at an endpoint, it needs to be associated with an existing connection or ---
+for servers --- potentially initiate a new connection. If packet contains a non-zero-length
+Connection ID in the \gls{dcid} field, the \gls{cid} is used to find an existing connection. If the
+packet uses a zero-length Connection ID, the local and remote addresses determine the target
 connection.
 
 \autoref{fig:02-connection-multiplexing} illustrates how server endpoint processes incoming packets
-from client connections. Server maintains a table mapping between \gls{dcid}s corresponding
-connections, and dispatches the incoming packets accordingly. If a packet cannot be associated with
-an existing connection, then it may be a new connection attempt, otherwise the packet is discarded.
+from client connections. The server maintains a table mapping between \gls{dcid}s corresponding
+connections and dispatches the incoming packets accordingly. If a packet cannot be associated with
+an existing connection, it may be a new connection attempt; otherwise, the packet is discarded.
 
 \begin{myFigure}{fig:02-connection-multiplexing}{Multiple QUIC connections on the same machine port}
 
@@ -559,19 +558,19 @@ an existing connection, then it may be a new connection attempt, otherwise the p
 
 \end{myFigure}
 
-In case the packet cannot be associated with an existing connections, client endpoints simply ingore
+In case the packet cannot be associated with an existing connection, client endpoints simply ignore
 the packet. Server, on the other hand, check the packet type and version of the protocol it
-requires. For valid Initial packets with supported verions, server proceeds with the handshake as
+requires. For valid Initial packets with supported versions, the server proceeds with the handshake
 described in the previous section. For invalid Initial packets, the server responds with an Initial
 packet containing a \CONNECTIONCLOSE{} frame signaling the refusal of the connection.
 
-In case the client packet requests an unsupported QUIC version, server replies with a Version
+In case the client packet requests an unsupported QUIC version, the server replies with a Version
 Negotiation packet (described in \autoref{sec:02-version-negotiation-packet}). After receiving such
-a packet, the client can try again using one of the supported versions. Figure
+a packet, the client can try again using one of the supported versions.
 \autoref{fig:02-version-negotiation-flow} illustrates such an exchange. In the figure, the client
-tries to establish connection using an unsupported version denoted by X. Server then replies with
-Version Negotiation packet listing versions 1,2, and 3. Client the tries to establish connection
-again using the version 1.
+tries to establish a connection using an unsupported version denoted by X. The server then replies
+with a Version Negotiation packet listing versions 1, 2, and 3. The client then tries to establish
+the connection again using version 1.
 
 \begin{myFigure}{fig:02-version-negotiation-flow}{Example Version Negotiation packet exchange}
 
@@ -580,13 +579,13 @@ again using the version 1.
 \end{myFigure}
 
 Lastly, the server may choose to send a Stateless Reset (see later in
-\autoref{sec:02-stateless-reset}) for any other packet that cannot be matched to an existing
+\autoref{sec:02-stateless-reset}) for any other packet that it cannot match to an existing
 connection.
 
 \subsection{QUIC Transport Parameters}\label{sec:02-transport-parameters}
 
 QUIC has several options for parameterizing the connection. These are called \textit{Transport
-  Parameters} and they essentially represent constraints for the other endpoint. Each endpoint sets
+Parameters}, and they essentially represent constraints for the other endpoint. Each endpoint sets
 the transport parameters for the other endpoint. QUIC leverages the extensibility of the TLS
 protocol to exchange transport parameters during the connection handshake.
 
@@ -604,20 +603,20 @@ protocol to exchange transport parameters during the connection handshake.
 
 \end{itemize}
 
-Many of the parameters have a default value, which is used when the given transport parameter is not
-sent. Other transport parameters are mandatory. The exhaustive list of the transport parameters can be found in the core transport specification~\cite[Section~7.4]{draft-ietf-quic-transport}.
+Many parameters have a default value, which is used when the given transport parameter is not sent.
+Other transport parameters are mandatory. The exhaustive list of the transport parameters can be
+found in the core transport specification~\cite[Section~7.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Establishment}\label{sec:02-connection-establishment}
 
-In order to initiate a new connection, clients sends an Initial packet to the server, which
-initiates the handshake process. After the handshake completes, both peers have derived protection
-keys necessary to send and receive 1-RTT packets with application data.
+To initiate a new connection, clients send an Initial packet to the server, which initiates the
+handshake process. After the handshake completes, both peers have derived protection keys necessary
+to send and receive 1-RTT packets with application data.
 
-An example handshake flow is illustrated in \autoref{fig:02-example-handshake-flow}. The figure
-shows client and server endpoints exchanging UDP datagrams with QUIC packets. For illustration, we
-list the contents of the individual QUIC frames. The figure also lists contents of the \CRYPTO{}
-frames sent. However, these are only for illustrative purposes because QUIC does not interpret the
-\CRYPTO{} frames' contents.
+\autoref{fig:02-example-handshake-flow} illustrates a possible sequence of QUIC packets sent during
+a handshake. For illustration, the figure lists the contents of the individual QUIC frames. Because
+QUIC does not interpret the contents of the \CRYPTO{} frames, their contents are listed only for
+illustrative purposes.
 
 \begin{myFigure} {fig:02-example-handshake-flow} {Example QUIC handshake flow}
 
@@ -630,15 +629,15 @@ single \CRYPTO{}(CH) frame. This frame contains the \textit{Client Hello} TLS me
 
 The server replies with a datagram containing three coalesced QUIC packets. The first is an Initial
 packet that acknowledges the client's Initial packet using the \ACK{}(0) frame, and a \CRYPTO{}(SH)
-frame with a \textit{Server Hello} message. The contents of Client Hello and Server Hello messages
-are used by TLS to derive Handshake protection keys. The server advances the TLS handshake further
-by sending another \CRYPTO{} frame in the Handshake packet. The server also has enough information
-to derive also the 1-RTT keys, so it can also start sending data on Stream 1 using the \STREAM{}(1,
-``...'') frame in a 1-RTT packet.
+frame with a \textit{Server Hello} message. The TLS implementation uses the contents of Client Hello
+and Server Hello messages to derive the Handshake protection keys. The server then advances the TLS
+handshake by sending another \CRYPTO{} frame in the Handshake packet. The server also has enough
+information to derive the 1-RTT keys, so it can also start sending data on Stream 1 using the
+\STREAM{}(1, ``...'') frame in a 1-RTT packet.
 
 Because the server's Initial packet contained an ack-eliciting \CRYPTO{}(SH) frame, the client needs
-to acknowledge it by sending an Initial frame with an \ACK{}(0) frame. The client can posesses both
-Client and Server Hello mesages and can derive the Handshake keys, enabling him to process the
+to acknowledge it by sending an Initial frame with an \ACK{}(0) frame. The client possesses both
+Client and Server Hello messages and can derive the Handshake keys, enabling him to process the
 server's Handshake packet. The Handshake packet needs to be separately acknowledged by another
 \ACK{}(0) frame, and a reply from the TLS layer must be sent using another \CRYPTO{} frame. From the
 information in the server's Handshake packet's \CRYPTO{} frame, the client derives 1-RTT protection
@@ -646,8 +645,8 @@ keys and processes the server's 1-RTT packet. In addition to sending an \ACK{}(0
 server's 1-RTT packet, the client can now start sending application data on stream 0 using a
 \STREAM{}(0, ``...'') frame.
 
-After server detects that Handshake has successfully completed, it sends a \HANDSHAKEDONE{} frame to
-communicate the fact to the client.
+After the server detects that Handshake has completed, it sends a \HANDSHAKEDONE{} frame to
+communicate it to the client.
 
 \subsection{Connection Termination}
 
@@ -667,8 +666,7 @@ QUIC connection can be terminated in three ways:
 
 If idle timeout is enabled, the endpoint silently closes the connection if it does not receive a
 packet from the peer for a specified time period. Each peer may advertise a timeout period using the
-\MaxIdleTimeout{} transport parameter, but the effective value is the minimum of the two
-values.
+\MaxIdleTimeout{} transport parameter, but the effective value is the minimum of the two values.
 
 In order to prevent timeouts, endpoints can send a \PING{} or another ack-eliciting frame to test
 the liveness of the connection. However, sending \PING{} frames should be initiated by the
@@ -679,13 +677,13 @@ application protocol, not QUIC implementation, to prevent unnecessary network tr
 An immediate close can be initiated both by QUIC implementation and by the application protocol.
 Either endpoint can initiate an immediate close by sending a \CONNECTIONCLOSE{} frame. By sending a
 \CONNECTIONCLOSE{} frame, the peer enters a \textit{closing state}, in which it includes the
-\CONNECTIONCLOSE{} frame in all packets it sends in reply to incoming packets. The closing state is
-received also if the endpoint receives a \CONNECTIONCLOSE{} frame from the peer. In that case the
+\CONNECTIONCLOSE{} frame in all packets, it sends in reply to incoming packets. The closing state is
+also entered if the endpoint receives a \CONNECTIONCLOSE{} frame from the peer. In that case, the
 endpoint also echoes the \CONNECTIONCLOSE{} frame back to the other endpoint.
 
-The closing state lasts until the endpoint is sure the other endpoint is also in the closing state ---
-e.g., until it also receives \CONNECTIONCLOSE{} --- or until a \textit{closing timeout} expires. The
-closing timeout period is calculated from the current estimate of the round-trip time of the
+The closing state lasts until the endpoint is sure the other endpoint is also in the closing state
+--- e.g., until it also receives \CONNECTIONCLOSE{} --- or until a \textit{closing timeout} expires.
+The closing timeout period is calculated from the current estimate of the round-trip time of the
 connection.
 
 The \CONNECTIONCLOSE{} frame carries an error code and, optionally, a human-readable error phrase.
@@ -702,39 +700,40 @@ in response to receiving a packet that it cannot associate with an active connec
 
 In such cases, the endpoint sends a specially crafted packet that ends with a Stateless Reset Token
 associated with his Connection ID\@. The Stateless Reset Token requirements are quite complex, and
-we encourage readers to read the full specification if they are interested in details~\cite[Section~10.4]{draft-ietf-quic-transport}.
+we encourage readers to read the full specification if they are interested in
+details~\cite[Section~10.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Migration}
 
-A novel feature of QUIC is the ability to migrate connections to a different \gls{network-path}.
-This is enabled by using a dedicated Connection ID, instead of using the endpoint's address to
-identify the connection. In the initial QUIC version, only client endpoints can migrate the
-connection to a different address.
+A novel feature of QUIC is migrating connections to a different \gls{network-path}. This is enabled
+by using a dedicated Connection ID instead of using the endpoint's address to identify the
+connection. In the initial QUIC version, only client endpoints can migrate the connection to a
+different address.
 
-Prior to migrating a connection, the endpoint can optionally check the reachability of the other
+Before migrating a connection, the endpoint can optionally check the reachability of the other
 endpoint using the process called \textit{path validation}. Path validation consists of exchanging
-\textit{probing packets}, and is described in \autoref{sec:02-path-validation}. The migration istelf
-is perform by simply starting to send packets from the new local address. After server receives the
-first non-probing packet from the new client's address, it starts sending all future packets to that
-new address.
+\textit{probing packets}, and is described in \autoref{sec:02-path-validation}. The migration itself
+is performed by simply starting to send packets from the new local address. After the server
+receives the first non-probing packet from the new client's address, it starts sending all future
+packets to that new address.
 
-QUIC uses additional measures to prevent network traffic being correlated by the outside observers.
-In \autoref{sec:02-connection-id} we mentioned that each endpoint can use multiple Connection IDs to
-refer to the same connection. QUIC requires that each Connection ID be used only on one
-\gls{network-path}. Therefore, when connection is migrated, both endpoints must switch to using
-different \glspl{cid}. Connection migration can, therefore, be initiated only if both endpoints
-issued additional Connection IDs using the \NEWCONNECTIONID{} frames for the other endpoint to use.
+QUIC uses additional measures to prevent network traffic from being correlated by the outside
+observers. In \autoref{sec:02-connection-id} we mentioned that each endpoint could use multiple
+Connection IDs to refer to the same connection. QUIC requires that each Connection ID be used only
+on one \gls{network-path}. Therefore, both endpoints must switch to using different \glspl{cid} when
+the connection is migrated. Therefore, connection migration can only be initiated if both endpoints
+issued additional Connection IDs using the \NEWCONNECTIONID{} frame.
 
 The connection migration process is illustrated in \autoref{fig:02-connection-migration-flow}.
-Client and servers use Connection IDs \textbf{C1} and \textbf{S1}, respectively. Client first probes
-the reachability of the server with a probing packet containing a \PATHCHALLENGE{} frame. Because
+Client and servers use Connection IDs \textbf{C1} and \textbf{S1}, respectively. The client first
+probes the server's reachability with a probing packet containing a \PATHCHALLENGE{} frame. Because
 this packet is sent from a different local address, it uses a different Connection ID (\textbf{S2})
-that was issued previously by the server. Likewise, server uses different Connection ID \textbf{C2}
-to reply with a packet containing a \PATHRESPONSE{} frame, confirming the reachability from the
-clients new local address. After that, client migrates the connection by sending all packets via the
-new local address. After receiving next non-probing packet from the new address, server switches to
-the new client's address as well. Connection IDs \textbf{C1} and \textbf{S1} are no longer used in
-the rest of the connection and can be retired later.
+issued previously by the server. Likewise, the server uses a different Connection ID \textbf{C2} to
+reply with a packet containing a \PATHRESPONSE{} frame, confirming the reachability from the
+client's new local address. After that, the client migrates the connection by sending all packets
+via the new local address. After receiving the next non-probing packet from the new address, the
+server switches to the new client's address for all outgoing packets. Connection IDs \textbf{C1} and
+\textbf{S1} are no longer used in the rest of the connection and can be retired later.
 
 \begin{myFigure}{fig:02-connection-migration-flow}{Flow of packets during connection migration}
 
@@ -766,13 +765,10 @@ Both client and server can open new streams. QUIC recognizes four types of strea
 the stream is encoded in the two least significant bits of the Stream ID. The stream types and their
 associated encoding is summarized in \autoref{tab:02-stream-id-type-map}.
 
-\begin{myTable} {tab:02-stream-id-type-map} {Mapping of QUIC Stream types to Stream ID bits}
-  {cc}
-  {Stream type                     & Least significant bits}
-  Client-Initiated, Bidirectional  & 00 \\
-  Server-Initiated, Bidirectional  & 01 \\
-  Client-Initiated, Unidirectional & 10 \\
-  Server-Initiated, Unidirectional & 11 \\
+\begin{myTable} {tab:02-stream-id-type-map} {Mapping of QUIC Stream types to Stream ID bits} {cc}
+{Stream type & Least significant bits} Client-Initiated, Bidirectional & 00 \\ Server-Initiated,
+Bidirectional & 01 \\ Client-Initiated, Unidirectional & 10 \\ Server-Initiated, Unidirectional & 11
+\\
 \end{myTable}
 
 Bidirectional streams can be viewed as the combination of two unidirectional streams. After opening
@@ -782,11 +778,11 @@ of each other.
 
 \subsection{Stream Lifetime}
 
-Opening a stream does no require any special action. Streams are opened simply by sending the first
+Opening a stream does not require any special action. Streams are opened simply by sending the first
 \STREAM{} frame carrying data for that stream. However, streams of a particular type can be opened
-only in ascending order of their Stream IDs. For example, stream with ID 2 must be opened before
-opening stream 6. Sending data for higher numbered streams will automatically open all lower
-numbered streams of the same stream type.
+only in ascending order of their Stream IDs. For example, a stream with ID 2 must be opened before
+opening stream 6. Sending data for higher-numbered streams will automatically open all
+lower-numbered streams of the same stream type.
 
 Streams can be closed either gracefully or abortively. Graceful stream close is signaled by a
 \textit{Fin} bit in the \STREAM{} frame, signaling that data carried by this packet are the last
@@ -794,12 +790,12 @@ part of the stream. The stream is gracefully closed once all stream data is conf
 the other endpoint.
 
 Abortive stream close is achieved using the \RESETSTREAM{} frame and, therefore, this action is also
-reffered to as \textit{resetting the stream}. Streams can be reset only by the sender. Receiver can
-request abortive stream close by sending a \STOPSENDING{} frame if it no longer wishes to receive
-data on that stream. Both \RESETSTREAM{} and \STOPSENDING{} frames carry an application-level error
-code, that is then read by the application using QUIC.
+referred to as \textit{resetting the stream}. Streams can be reset only by the sender. The receiver
+can request abortive stream close by sending a \STOPSENDING{} frame if it no longer wishes to
+receive data on that stream. Both \RESETSTREAM{} and \STOPSENDING{} frames carry an
+application-level error code. This error code is also delivered to the application using QUIC.
 
-After the stream is closed, it's Stream ID cannot be reused. Instead, the next available Stream ID
+After the stream is closed, its Stream ID cannot be reused. Instead, the next available Stream ID
 must be used. QUIC uses the variable-length integer encoding (see
 \autoref{sec:02-variable-length-encoding}) and, therefore, there is no shortage of available stream
 IDs, which range from 0 to $2^{62}-1$.
@@ -814,11 +810,11 @@ The implementation should provide the following operations on sending part of th
 
   \item end the stream by specifying that all data has been written; and
 
-  \item terminate the stream with an application-level error code.
+  \item terminates the stream with an application-level error code.
 
 \end{itemize}
 
-On receiving part of the stream, application protocols must to be able to:
+On receiving part of the stream, application protocols must be able to:
 
 \begin{itemize}
 
@@ -841,11 +837,11 @@ communicated to the peer using three types of frames:
 
 \begin{itemize}
 
-\litem{\MAXSTREAMDATA{}} maximum offset of data sent on a stream with specified Stream ID\@.
+\litem[]{\MAXSTREAMDATA{}} maximum offset of data sent on a stream with specified Stream ID\@.
 
-\litem{\MAXDATA{}} maximum sum of all offsets of data sent on all streams.
+\litem[]{\MAXDATA{}} the maximum sum of all offsets of data sent on all streams.
 
-\litem{\MAXSTREAMS{}} maximum number of opened streams of a particular stream type.
+\litem[]{\MAXSTREAMS{}} the maximum number of opened streams of a particular stream type.
 
 \end{itemize}
 
@@ -860,26 +856,25 @@ Because UDP is an unreliable transport protocol, QUIC must implement measures to
 loss. The packet loss detection is implemented similarly to TPC --- each endpoint sends
 acknowledgments for each received packet. However, an essential difference from TCP is that QUIC
 endpoints do not retransmit entire lost packets using the same packet number. Instead, each QUIC
-frame in the original packet is updated and sent in some future packet, or dropped altogether if the
+frame in the original packet is updated and sent in some future packet or dropped altogether if the
 information contained in the frame is no longer relevant.
 
-The acknowledgement is communicated using the \ACK{} frame which contains ranges of received packet
-numbers that the endpoint acknowledges. A packet number can sent multiple times (in \ACK{} frames in
-multiple packets) until the endpoint can determine that the other endpoint received the
-acknowledgement.
+The endpoints communicate the acknowledgment using the \ACK{} frame containing ranges of received
+packet numbers. A packet number can be sent multiple times (in \ACK{} frames in different packets)
+until the endpoint can determine that the other endpoint received the acknowledgment.
 
 For packets containing an \textit{ack-eliciting} frame (see \autoref{sec:02-quic-frames}),
-acknowledgements must be sent before the delay specified by the \MaxAckDelay{} transport
-parameter. For other packets, such as packets containing only \ACK{} or \PADDING{} frames, the
-acknowledgement can be delayed until an \gls{ack-eliciting-packet} is received.
+acknowledgements must be sent before the delay specified by the \MaxAckDelay{} transport parameter.
+For other packets, such as packets containing only \ACK{} or \PADDING{} frames, the acknowledgement
+can be delayed until an \gls{ack-eliciting-packet} is received.
 
 \autoref{fig:02-packet-loss-example} illustrates the loss detection and retransmission process in
-action. In the figure, frame \STREAM{}(0,[0..9]) denotes a \STREAM{} frame carrying first 10 bytes
-of the stream with Stream ID 0. When server receives the acknowledgment for packet 3, but not for
-packet 2 sent earlier, it infers that packet 2 never reached the receiver and retransmits the bytes
-10 to 19 of stream 0 in packet 4. The server does not have to retransmit the \ACK{} for packet 1
-because it was already sent in packet 3 which was already acknowledged by the client. Therefore,
-packet 4 acknowledges only the clients packet 2.
+action. In the figure, frame \STREAM{}(0,[0..9]) denotes a \STREAM{} frame carrying the first 10
+bytes of the stream with Stream ID 0. When the server receives the acknowledgment for packet 3, but
+not for packet 2 sent earlier, it infers that packet 2 never reached the receiver and retransmits
+the bytes 10 to 19 of stream 0 in packet 4. The server does not have to retransmit the \ACK{}(1)
+frame because it was sent in packet 3, which the client acknowledged. Therefore, packet 4
+acknowledges only the client's packet 2.
 
 \begin{myFigure}{fig:02-packet-loss-example}{Loss detection and retransmission example}
 
@@ -887,7 +882,7 @@ packet 4 acknowledges only the clients packet 2.
 
 \end{myFigure}
 
-The exact criteria for a packet to be deemed lost by a QUIC endpoint are following:
+The exact criteria for a packet to be deemed lost by a QUIC endpoint are the following:
 
 \begin{enumerate}
 
@@ -905,13 +900,13 @@ that the packet is considered lost if the gap between its packet number and the 
 packet number is at least 3, or if it was sent for longer than $9/8$ times the estimate of the
 current round-trip time.
 
-The first condition mentioned above requires receipt of a packet from the peer to declare any packet
+The first condition mentioned above requires receiving a packet from the peer to declare any packet
 as lost. However, the loss of the last packet in a sequence could go undetected because there is no
-following packet that can be acknowledged. To avoid possible deadlocks in such scenarios, QUIC
-endpoint sends up to two ack-eliciting \textit{probe packets} if it does not receive a packet from a
-peer in a period called \textit{probe timeout} (PTO for short). The PTO duration doubles each time
-probe packets are sent until either a reply is received or the connection is terminated due to idle
-timeout (see \autoref{sec:02-idle-timeout})
+following packet that can be acknowledged. In order to avoid possible deadlocks in such scenarios,
+QUIC endpoint sends up to two ack-eliciting \textit{probe packets} if it does not receive a packet
+from a peer in a period called \textit{probe timeout} (PTO for short). The PTO duration doubles each
+time probe packets are sent until either a reply is received or the connection is terminated due to
+idle timeout (see \autoref{sec:02-idle-timeout})
 
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The selection of the congestion control algorithm is left on
@@ -921,10 +916,10 @@ to TCP NewReno~\cite{rfc6582} algorithm.
 
 \section{Security}
 
-This section describes the mechanisms used to ensure security of the protocol. Besides encrypting
-all packets sent throughout the lifetime of the connection, QUIC uses additional mechanisms to
-ensure that the servers using the protocol are resistant to denial-of-service and other
-cyber-attacks.
+This section describes the mechanisms used to ensure the security of the protocol. Besides
+encrypting all packets sent throughout the lifetime of the connection, QUIC uses additional
+mechanisms to ensure that the servers using the protocol are resistant to denial-of-service and
+other cyber-attacks.
 
 \subsection{TLS Integration}
 
@@ -935,42 +930,42 @@ illustrated in \autoref{sec:02-connection-establishment}) and passed to a TLS im
 other side. This way, QUIC is able to offer the same confidentiality level as conventional TLS
 connections.
 
-The TLS protocol is extensible, among the standard extensions which are also used by QUIC are
-Application Level Protocol Negotiation~\cite{rfc7301} (ALPN for short) and Server Name
-Indication~\cite{rfc6066} (SNI for short).
+The TLS protocol is extensible. Among the standard extensions which are also used by QUIC are
+Application Level Protocol \todo{glossary} Negotiation~\cite{rfc7301} (ALPN for short) and Server
+Name Indication~\cite{rfc6066} (SNI for short).
 
 Application Level Protocol Negotiation is used when multiple application protocols are supported on
 the same TCP or UDP port. ALPN allows the application layer to negotiate --- as part of the TLS
 handshake --- which application protocol will be used in the established connection.
 
-Server Name Indication is used by clients to specify the hostname of the server to which they are
+Clients use server Name Indication to specify the hostname of the server to which they are
 connecting. When multiple websites are hosted on the same IP address and port, SNI allows the server
 to customize the security configuration for each hosted website. During connection establishment,
 proper security configuration, such as the SSL certificate to be used, can be selected based on the
 value of the hostname.
 
-A custom TLS extension is used by QUIC to exchange transport parameters during the handshake. The
+QUIC uses a custom TLS extension to exchange transport parameters during the handshake. The
 transport parameters are described in \autoref{sec:02-transport-parameters}.
 
 \subsection{Packet Protection}\label{sec:02-packet-protection}
 
-All QUIC packets of type Initial, Handshake, 1-RTT and 0-RTT are encrypted to ensure integrity and
-confidentiality of the transmitted data. Negotiation of the cryptographic ciphers and the encryption
-keys is handled by the TLS handshake. This section focuses on how the negotiated encryption is
-applied to QUIC packets.
+All QUIC packets of type Initial, Handshake, 1-RTT, and 0-RTT are encrypted to ensure the integrity
+and confidentiality of the transmitted data. Negotiation of the cryptographic ciphers and the
+encryption keys is handled by the TLS handshake. This section focuses on how the negotiated
+encryption is applied to QUIC packets.
 
 \subsubsection{Authenticated Encryption with Associated Data}
 
 QUIC uses type of encryption called \gls{aead}~\cite{rfc5116}. This type of encryption ensures both
-confidentiality and authenticity of the encrypted data. In addition to encrypted data --- called
-\textit{ciphertext} --- AEAD encryption outputs also an authentication tag which is used to check the
-integrity of the payload during decryption. The encryption can be authenticated by supplying
-additional authentication data (AAD for short) which are not encrypted, but influence the
-authentication tag and, therefore, must be supplied also during decryption. As an additional
+the confidentiality and authenticity of the encrypted data. In addition to encrypted data --- called
+\textit{ciphertext} --- AEAD encryption also outputs an authentication tag, which is used to check
+the integrity of the payload during decryption. The encryption can be authenticated by supplying
+additional authentication data (AAD for short), which are not encrypted but influence the
+authentication tag and, therefore, must also be supplied during decryption. As additional
 protection, AEAD also accepts a \textit{nonce} parameter, which is an additional input which is
 supposed to be unique for each encrypted packet.
 
-The programming interface for AEAD provides following operations:
+The programming interface for AEAD provides the following operations:
 
 \begin{itemize}
 
@@ -991,7 +986,7 @@ The programming interface for AEAD provides following operations:
     \item input: ciphertext, key, nonce, authentication tag, AAD (if provided during encryption)
 
     \item output: plaintext or error if the authentication tag does not match the supplied
-      ciphertext and AAD
+ciphertext and AAD
 
   \end{itemize}
 
@@ -1005,9 +1000,9 @@ derived as follows:
 
 \begin{equation*}
   \begin{split}
-  key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic key"}, \texttt{""}, 32) \\
-  iv  & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic iv"}, \texttt{""}, 12)  \\
-  hp  & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic hp"}, \texttt{""}, 32)  \\
+    key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic key"}, \texttt{""}, 32) \\
+    iv & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic iv"}, \texttt{""}, 12) \\
+    hp & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic hp"}, \texttt{""}, 32) \\
   \end{split}
 \end{equation*}
 
@@ -1017,8 +1012,8 @@ of packet encryption.
 \subsubsection{Packet Protection Procedure}
 
 When actually encrypting the packets, QUIC first encrypts the packet payload using the AEAD cipher
-negotiated by the TLS implementation. QUIC specification allows use of all AEAD ciphers allowed in
-TLS 1.3. These ciphers are:
+negotiated by the TLS implementation. QUIC specification allows the use of all AEAD ciphers allowed
+in TLS 1.3. These ciphers are:
 
 \begin{itemize}
 
@@ -1041,7 +1036,8 @@ The parameters for AEAD for packet payload protection are:
 
     \litem{key} the $key$ derived in previous section
 
-    \litem{nonce} the $iv$ derived in previous section, last 8 bytes XORed with the packet number
+    \litem{nonce} the $iv$ derived in the previous section, last 8 bytes XORed with the packet
+number
 
     \litem{AAD} the contents of the packet header
 
@@ -1052,11 +1048,11 @@ The parameters for AEAD for packet payload protection are:
 The produced authentication tag is appended to the protected payload and is included in the payload
 size.
 
-QUIC also protects the header of the packet. The header protection mechanism is more complex than
-that of the payload. The process requires calculating the \textit{header protection mask}, which is
-then applied using XOR to parts of the packet header. The details of the header protection mask
-calculation depend on the negotiated cipher, but it always uses the $hp$ key and a 16-byte sample of
-the encrypted payload.
+QUIC also protects the header of the packet. The header protection mechanism is more complicated
+than that of the payload. The process requires calculating the \textit{header protection mask},
+which is then applied using XOR to parts of the packet header. The header protection mask
+calculation algorithm depends on the negotiated cipher, but it always uses the $hp$ key and a
+16-byte sample of the encrypted payload.
 
 The parts of the packets protected by the payload encryption and header protection mechanisms are
 illustrated in \autoref{fig:02-protected-fields-short} for short headers and in
@@ -1064,9 +1060,7 @@ illustrated in \autoref{fig:02-protected-fields-short} for short headers and in
 
 \begin{myFigure}{fig:02-protected-fields-short}{Protected fields in the short packet header}
 
-  \newcommand{\legendsquare}[1]{%
-    \textcolor{#1}{\rule{0.7em}{0.7em}}%
-  }
+  \newcommand{\legendsquare}[1]{\textcolor{#1}{\rule{0.7em}{0.7em}}}
 
   \definecolor{hp}{rgb}{0.7, 1, 0.7}
   \definecolor{pp}{rgb}{0.7, 0.7, 1}
@@ -1076,23 +1070,20 @@ illustrated in \autoref{fig:02-protected-fields-short} for short headers and in
   \vspace{5mm}
 
   % this one has to be off-center to make the image aligned with the long header one
-  \hspace{1.8cm}\begin{bytefield}[bitwidth=2.5em]{8}
-    \begin{rightwordgroup}{short \\ header}
-      \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
-      \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
-    \end{rightwordgroup} \\
-    \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
-    \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
-    \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
+\hspace{1.8cm}\begin{bytefield}[bitwidth=2.5em]{8}
+  \begin{rightwordgroup}{short \\ header}
+    \bitbox{1}{H=0} & \bitbox{1}{F=1} & \bitbox{1}{S} & \colorbitbox{hp}{2}{R = 00} & \colorbitbox{hp}{1}{K} & \colorbitbox{hp}{2}{L (2)} \\
+    \wordbox[tlrb]{\longFieldHeight}{Destination Connection ID (0..160) }
+  \end{rightwordgroup} \\
+  \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
+  \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
+  \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
   \end{bytefield}
-
 \end{myFigure}
 
 \begin{myFigure}{fig:02-protected-fields-long}{Protected fields in the long packet header}
 
-  \newcommand{\legendsquare}[1]{%
-    \textcolor{#1}{\rule{0.7em}{0.7em}}%
-  }
+  \newcommand{\legendsquare}[1]{\textcolor{#1}{\rule{0.7em}{0.7em}}}
 
   \definecolor{hp}{rgb}{0.7, 1, 0.7}
   \definecolor{pp}{rgb}{0.7, 0.7, 1}
@@ -1113,8 +1104,7 @@ illustrated in \autoref{fig:02-protected-fields-short} for short headers and in
     \begin{leftwordgroup}{Initial \\ only}
       \colorbitbox{bytefieldunused}{8}{Token Length (i)} \\
       \colorwordbox{bytefieldunused}{tlrb}{\longFieldHeight}{Token (..)}
-    \end{leftwordgroup} \\
-    \wordbox[tlrb]{1}{Length (i)} \\
+    \end{leftwordgroup} \\ \wordbox[tlrb]{1}{Length (i)} \\
     \colorwordbox{hp}{ltrb}{\longFieldHeight}{Packet Number (8..32)} \\
     \colorwordbox{pp}{tlrb}{\longFieldHeight}{Packet Payload (..)} \\
     \wordbox[tlrb]{\longFieldHeight}{Integrity Tag (16)} \\
@@ -1134,9 +1124,9 @@ $iv$ keys using the HKDF-Expand-Label function:
 
 \begin{equation*}
   \begin{split}
-  secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{"quic ku"}, \texttt{""}, 32) \\
-  key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic key"}, \texttt{""}, 32) \\
-  iv_{n+1}  & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic iv"}, \texttt{""}, 12)  \\
+    secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{"quic ku"}, \texttt{""}, 32) \\
+    key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic key"}, \texttt{""}, 32) \\
+    iv_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic iv"}, \texttt{""}, 12) \\
   \end{split}
 \end{equation*}
 
@@ -1145,19 +1135,20 @@ unchanged to ensure that the other endpoint can correctly remove the header prot
 
 \subsection{Client Address Validation}\label{sec:02-address-validation}
 
-After receiving the first Initial packet from a new client, server can request address validation by
-sending a Retry packet (see \autoref{sec:02-retry-packet}). The Retry packet carries a token which
-must be echoed back to the server in all following Initial packets. As long as an attacker cannot
-generate a valid token for its address and the client is able to return that token, this exchange
-proves to the server that the client has received the token.
+After receiving the first Initial packet from a new client, the server can request address
+validation by sending a Retry packet (see \autoref{sec:02-retry-packet}). The Retry packet carries a
+token, which must be echoed back to the server in all following Initial packets. As long as an
+attacker cannot generate a valid token for its address, and the client can return that token, this
+exchange proves to the server that the client has received the token.
 
-\autoref{fig:02-client-address-validation-flow} illustrates the use of Retry packet to valididate
+\autoref{fig:02-client-address-validation-flow} illustrates the use of Retry packet to validate
 client address during connection establishment. By default, clients do not fill the Token field of
 the Initial packet. The server rejects the initial connection attempt and issues a Retry Token
-(denoted ``ABCD'' in the figure). Client then tries again with another Initial with the provided
-token and the server proceeds with the usual handshake.
+(denoted ``ABCD'' in the figure). The client then tries again with another Initial with the provided
+token, and the server proceeds with the usual handshake.
 
-\begin{myFigure}{fig:02-client-address-validation-flow}{Client address validation using a Retry packet.}
+\begin{myFigure}{fig:02-client-address-validation-flow}{Client address validation using a Retry
+packet.}
 
 \resizebox{\linewidth}{!}{\input{img/02-client-address-validation-flow.pdf_tex}}
 
@@ -1165,14 +1156,14 @@ token and the server proceeds with the usual handshake.
 
 \subsection{Path Validation}\label{sec:02-path-validation}
 
-QUIC is layered on top of UDP which is a connection-less protocol. This means that changes in
+QUIC is layered on top of UDP, which is a connection-less protocol. This means that changes in
 endpoint address can also happen without active migration on the endpoint's part, e.g., because of
 NAT rebinding along the \gls{network-path}.
 
-The endpoint address may also be spoofed by the other endpoint in an attempt to perform
-\textit{traffic amplification attack} against the spoofed address. For this reason, the amount of
-data sent to the new endpoint address must be limited until path validation determines that the
-address belongs to the endpoint. This path validation is performed by sending a \textit{probing
-  packet} containing a \PATHCHALLENGE{} frame with an unpredictable token. The other endpoint must
-echo the token back in a \PATHRESPONSE{} frame. After that the new address is considered validated
-and the sending rate restrictions are lifted.
+The other endpoint may also spoof the endpoint address in an attempt to perform \textit{traffic
+amplification attack} \todo{ref or gls}. For this reason, the amount of data sent to the new
+endpoint address must be limited until path validation \todo{gls} determines that the address
+belongs to the endpoint. This path validation is performed by sending a \textit{probing packet}
+containing a \PATHCHALLENGE{} frame with an unpredictable token. The other endpoint must echo the
+token back in a \PATHRESPONSE{} frame. After that, the new address is considered validated, and the
+sending rate restrictions are lifted.
