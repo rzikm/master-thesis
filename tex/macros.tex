@@ -172,6 +172,7 @@
 \newcommand{\libcurl}{\libname{libcurl}}
 \newcommand{\libopenssl}{\libname{OpenSSL}}
 \newcommand{\libschannel}{\libname{Schannel}}
+\newcommand{\xUnit}{\libname{xUnit}}
 
 % helper for composing captions from short and long entries
 \newcommand{\myCaption}[2]{% short, long
@@ -179,6 +180,20 @@
     \caption{#2}%
   \else%
     \caption[#1]{#2}%
+  \fi%
+}
+\newcommand{\myCaptionInline}[2]{% short, long
+  \def\temp{#1}\ifx\temp\empty% Use different short caption if provided
+    #2%
+  \else%
+    [#1]#2%
+  \fi%
+}
+\newcommand{\myCaptionOf}[3]{% env, short, long
+  \def\temp{#2}\ifx\temp\empty% Use different short caption if provided
+    \captionof{#1}{#3}%
+  \else%
+    \captionof{#1}[#2]{#3}%
   \fi%
 }
 
@@ -218,7 +233,7 @@
   \endtable{}
 }
 
-% used VS like colors
+% used VS like colors/
 % \usemintedstyle{vs}
 \definecolor{codecolorclass}{rgb}{0.12, 0.53, 0.62}
 \definecolor{codecolorenum}{rgb}{0.40, 0.63, 0.23}
@@ -339,15 +354,18 @@
 }
 
 % general listing env
-\DeclareFloatingEnvironment[fileext=lol]{listing}
 
 \newenvironment{myListing}[3][]{% [short caption], label, caption
-  \begin{listing}[H]
-  \myCaption{#1}{#3}\label{#2}% for tables, the caption goes to the top
+  \begin{mdframed}[
+    hidealllines=true,
+    innerleftmargin=0,
+    innerrightmargin=0
+    ]
+  \myCaptionOf{lstlisting}{#1}{#3}\label{#2}% for tables, the caption goes to the top
   \hrule\medskip
 }{%
   \medskip\hrule
-  \end{listing}
+  \end{mdframed}
 }
 
 % settings for uniform verbatim environment
@@ -440,7 +458,7 @@
 \newcommand{\PATHCHALLENGE}{\quicFrame{PATH\_CHALLENGE}}
 \newcommand{\PATHRESPONSE}{\quicFrame{PATH\_RESPONSE}}
 \newcommand{\CONNECTIONCLOSE}{\quicFrame{CONNECTION\_CLOSE}}
-\newcommand{\HANDSHAKEDONE}{\quicFrame{HANDSHAKE\_DONE}}
+\newcommand{\HANDSHAKEDONE}{\quicFrame{HAND\-SHAKE\_DONE}}
 
 % macros for commonly used class names
 \newcommand{\Socket}{\class{Socket}}

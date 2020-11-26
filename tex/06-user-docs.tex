@@ -11,10 +11,10 @@ fully working \dotnet{} distribution is obtaining a full SDK installation of the
 development version of \dotnet{}~6 and replacing the \SystemNetQuicDll{}. This section explains how
 this can be done without affecting other \dotnet{} SDK installations present on the machine.
 
-Also, since the managed implementation depends on a particular \libopenssl{} version in order to
-interoperate with other QUIC implementations. This section also explains how to deploy a locally
-built \libopenssl{} so that it is automatically used by user code. The process consists of following
-steps:
+The managed implementation depends on a particular \libopenssl{} version in order to interoperate
+with other QUIC implementations. This section also explains how to deploy a locally built
+\libopenssl{} so that it is automatically used by user code. The process consists of following
+steps which will be explained in following subsections:
 
 \begin{enumerate}
 
@@ -58,14 +58,13 @@ directory. The important artifacts from this directory are:
 
 \end{itemize}
 
-\subsection{Creating a Local Installation of \dotnet{}}
+\subsection{Creating a Local Installation of \dotnet{}}\label{sec:06-local-dotnet}
 
 Now we need to download the latest \dotnet{}~6 SDK. This zip archive containing this SDK can be
-downloaded from \todo{should this be a citation?} \url{https://github.com/dotnet/installer}. Download the ``Master (6.0.x Runtime)''
-build for your platform and extract it to a convenient location. In the remainder of this guide, the
-directory containing the extracted contents will be referred to as \filename{DOTNET_ROOT}.
-
-\todo{I don't like the paths being like this in the text, but this is the only way I could make them line-break sanely}
+downloaded from a link listed in the official SDK installer GitHub
+repository~\cite{dotnetSdkGithub}. Download the ``Master (6.0.x Runtime)'' build for your platform
+and extract it to a convenient location. In the remainder of this guide, the directory containing
+the extracted contents will be referred to as \filename{DOTNET_ROOT}.
 
 The \SystemNetQuicDll{} produced in the previous subsection must be coppied to appropriate locations
 in the \filename{DOTNET_ROOT}. The reference \SystemNetQuicDll{} assembly should be copied over the
@@ -84,7 +83,7 @@ maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes ar
 Before building the source, check \filename{NOTES.{OS}} file in the repository and make sure you
 have all prerequisities installed on your machine. After that, you can build the \libopenssl{}
 library by running following command inside the repository. Note that for Windows OS, you must run
-these commands using the developer command prompt in order to have the necessary tools in
+these commands using the \textit{Developer command prompt for Visual Studio} in order to have the necessary tools in
 \texttt{PATH}.
 
 \begin{myVerbatim}
@@ -99,10 +98,18 @@ these commands using the developer command prompt in order to have the necessary
 
 This will produce the \libname{libcrypto} and \libname{libssl} libraries in the \libopenssl{}
 repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
-\texttt{libssl-1_1-x64.dll}. These libraries need to be loaded when managed QUIC implementation is
-used by the program. The simplest way is to ensure that is either adding them to a directory in
-\texttt{PATH} or copying them to
-\filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+\texttt{libssl-1_1-x64.dll}. These libraries are loaded by managed QUIC implementation at runtime
+and, therefore, must be present in a location where the OS loader can find them. This can be achieved by putting the libraries in any following location:
+
+\begin{itemize}
+
+  \item Next to the compiled executable
+
+  \item A directory listed in the \texttt{PATH} environment variable
+
+  \item \textit{(preferred)} next to the \SystemNetQuicDll{} library in the \dotnet{} installation directory, i.e., \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+
+\end{itemize}
 
 \subsection{Configuring the Development Environment}\label{sec:06-env-vars}
 
@@ -117,7 +124,6 @@ Lastly, we need to configure the environment variables so that the \dotnet{} SDK
         \ditem{\texttt{PATH}} Prepend the \filename{DOTNET_ROOT} directory to the beginning of the \texttt{PATH} variable to make sure the \filename{dotnet} executable from the \filename{DOTNET_ROOT} is used over the system-wide installed one.
 \end{description}
 
-\todo{more differentiation of the dotnet --info command to make it stand out more}
 After configuring the variables check the output of \verb|dotnet --info| command. Assuming
 \texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the following:
 
@@ -150,8 +156,11 @@ To install additional .NET runtimes or SDKs:
   https://aka.ms/dotnet-download
 \end{myVerbatim}
 
-With environment configured as described, you can now use the \verb|dotnet build| command, or start
-Visual Studio or other IDE to develop programs using the provided SDK installation.
+The important part of the output is the list of installed \dotnet{} runtimes which should contain
+\texttt{Microsoft.NETCore.APP} from the local \dotnet{}~6 SDK installation from
+\autoref{sec:06-local-dotnet}. With environment configured as described, you can now use the
+\verb|dotnet build| command, or start Visual Studio or other IDE to develop programs using the
+provided SDK installation.
 
 \subsection{Creating a Sample \dotnet{}~6 Project}
 
@@ -182,10 +191,10 @@ property to \verb|net6.0|. The modified project file contents are listed in \aut
 </Project>
 \end{myListingXml}
 
-Lastly, the NuGet feed must be configured to use the correct source for the preview packages for
-\dotnet{}~6. This can be done by creating a \filename{NuGet.Config} file in the project directory
-with contents as listed in \autoref{lst:06-nuget-config}. The contents can be also copied from the
-webpage from which the \dotnet{}~6 SDK was downloaded.
+Lastly, the NuGet package feed must be configured to use the correct source for the preview packages
+for \dotnet{}~6. This can be done by creating a \filename{NuGet.Config} file in the project
+directory with contents as listed in \autoref{lst:06-nuget-config}. The contents can be also copied
+from the webpage from which the \dotnet{}~6 SDK was downloaded.
 
 \begin{myListingXml}[basicstyle=\ttfamily\scriptsize]{lst:06-nuget-config}{NuGet configuration file for \dotnet{}~6 projects.}{key,value}
 <configuration>
@@ -227,13 +236,15 @@ Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
 Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 \end{myVerbatim}
 
-
 \section{Using QUIC in \dotnet{}}
 
 This section is a walkthrough on how to use QUIC in \dotnet{}.
 
-\todo{This needs to be thougt out}
+\todo{a most trivial echo example}
 
+\section{An example application}
+
+\todo{deeper explanation of the example throughput testing application that was used in Evaluation}
 
 \section{QUIC API Reference}\label{sec:06-api}
 

@@ -2,7 +2,7 @@
 
 \setglossarystyle{altlist}
 
-\renewcommand{\glsnamefont}[1]{\makefirstuc{#1}}
+\renewcommand{\glsnamefont}[1]{\capitalisewords{#1}}
 
 % we use glossary even for abbreviations, so that we can include a description
 \newcommand{\newdefinedabbreviation}[4]{
@@ -44,9 +44,8 @@
 \newglossaryentry{quic-packet}
 {
     name=QUIC packet,
-    description={A complete processable unit of QUIC that can be
-  encapsulated in a UDP datagram.  Multiple QUIC packets can be
-  encapsulated in a single UDP datagram.}
+    description={A complete processable unit of QUIC that can be encapsulated in a UDP datagram.
+Multiple QUIC packets can be encapsulated in a single UDP datagram.}
 }
 
 \newglossaryentry{out-of-order-packet}
@@ -77,11 +76,27 @@
   description={A behavioral design pattern which allows selecting an internal implementation (algorithm) at runtime.}
 }
 
+\newglossaryentry{traffic-amplification-attack}
+{
+  name=traffic amplification attack,
+  description={A type of distributed denial-of-service (DDoS) attack in which attacker sends a small amount of data to a server and the server responds with larger amount of data to the target. An example of such attack is initiating new connections with a falsified source IP address which make the server flood the victim with handshake attempts.}
+}
+
+\newglossaryentry{path-validation}
+{
+  name=path validation,
+  description={A process during which QUIC endpoint validates that it's peer is reachable via a particular \gls{network-path}. Consists of an exchange of \PATHCHALLENGE{} and \PATHRESPONSE{} frames.}
+}
+
 \newglossaryentry{abstract-factory}
 {
   name=abstract factory pattern,
   description={A design pattern encapsulating creation of families of related classes. A typical example are factories for creating GUI widgets, where different factories can create various types of widgets backed by a particular GUI rendering library.}
 }
+
+\newdefinedabbreviation{alpn}{ALPN}{Application-Layer Protocol Negotiation}{A TLS extension that allows the application layer to negotiate which application protocol will be in the connection. The negotiation is done as part of the TLS handshake and avoids additional round trips. ALPN is used, e.g., for HTTP version negotiation in HTTPS connections.}
+
+\newdefinedabbreviation{sni}{SNI}{Server Name Indication}{A TLS extension that allows the client to specify the hostname it is attempting to connect to at the start of the handshake process. This allows using different security configurations for each different website hosted on the server.}
 
 \newdefinedabbreviation{0rtt}{0-RTT}{Zero round trip time resumption}{TLS mode of operation allowing clients to send application data in the very first but possibly exposing the server to reply attacks.}
 

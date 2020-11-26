@@ -101,7 +101,9 @@ saved in the working directory of the program.
 ### Switching the implementation
 
 The internal implementation of `QuicConnection` and related types allows switching the underlying
-implementation provider. Currently, there are 3 providers:
+implementation provider. This can be done either by explicitly passing the provider into the 
+`QuicConnection` and `QuicListener` constructors, or overriding the default provider by setting the
+`DOTNETQUIC_PROVIDER` to one of the following values:
 
 - `managed` - (default), managed implementation with TLS backed by modified OpenSSL.
 - `managedmocktls` - managed implementation with mocked TLS. This works without additional

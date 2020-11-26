@@ -1,17 +1,23 @@
 \chapter{Developer Documentation}
 
-The Managed QUIC implementation developed in this thesis is contained in the
-\filename{System.Net.Quic} project in a fork of the official \dotnet{} runtime repository. The
-source code is attached in \todo{path to the src in attachments.}
+The Managed QUIC implementation developed in this thesis is contained in a fork of the official
+\dotnet{} runtime repository. The source code of this fork is attached in \todo{path to the src in
+  attachments.}.
 
-The source code for the \filename{System.Net.Quic} project is located inside the
-\filename{src/dotnet-runtime/src/libraries/System.Net.Quic/} directory. The directory listing in
-\autoref{lst:05-system-net-quic-structure} shows the structure of the project directory. The figure
-also emphasises the \filename{Managed} and \filename{UnitTests} directories which contain the code
-developed as part of this thesis. These directories are the main focus of this chapter.
+The documentation inside the \dotnet{} runtime repository contains detailed workflow instructions
+necessary for \dotnet{} runtime development. These instructions explain the necessary
+prerequisities, how to build the product and run tests. The top-level file of the workflow
+instructions is located at \filename{docs/workflow/README.md}.
+
+This chapter will focus on the \filename{System.Net.Quic} library which contains the QUIC protocol
+implementation. The source code for this library is located inside the
+\filename{src/dotnet-runtime/src/libraries/System.Net.Quic/} directory of the \dotnet{} runtime
+codebase. The directory listing in \autoref{lst:05-system-net-quic-structure} shows the structure of
+the \filename{System.Net.Quic} project directory. The listing also emphasises the \filename{Managed}
+and \filename{UnitTests} directories which contain the code developed as part of this thesis. These
+directories are the main focus of this chapter.
 
 \newcommand{\mydtcomment}[1]{\DTcomment{#1}}
-
 % use smaller width to make the tree more compact
 \DTsetlength{0.2em}{0.6em}{0.2em}{0.4pt}{1.6pt}
 \renewcommand{\DTstylecomment}[1]{{\footnotesize\rmfamily #1}}
@@ -48,16 +54,14 @@ developed as part of this thesis. These directories are the main focus of this c
 }
 \end{myListing}
 
-\todo{sections for: development (environment setup, setup for debugging)? running tests?}
-
 \section{QUIC Implementation Providers}
 
-The \filename{System.Net.Quic} project contains multiple implementations of the QUIC protocol. This
-is not achieved via polymorphism of the QUIC API classes, but rather using indirection to
-\textit{implementation providers}. Each \QuicListener{}, \QuicConnection{}, and \QuicStream{}
-instance contains a reference to a \QuicListenerProvider{}, \QuicConnectionProvider{}, or
-\QuicStreamProvider{} instance, respectively. Implementations of each provider are provided by each
-QUIC implementation in the \filename{System.Net.Quic} library. Figure
+The \filename{System.Net.Quic} project internally contains an infrastructure for switching between
+multiple implementations of the QUIC protocol. The API classes themselves are \keyword{sealed} but
+they delegate all methods to polymorphic \textit{implementation providers}. Each \QuicListener{},
+\QuicConnection{}, and \QuicStream{} instance contains a reference to a \QuicListenerProvider{},
+\QuicConnectionProvider{}, or \QuicStreamProvider{} instance, respectively. Implementations of each
+provider are provided by each QUIC implementation in the \filename{System.Net.Quic} library. Figure
 \autoref{fig:05-quic-impl-providers} illustrates this indirection layer using a class diagram.
 
 \begin{myFigure}{fig:05-quic-impl-providers}{Implementation providers for the QUIC API classes}
@@ -70,21 +74,33 @@ Creation of new \QuicListener{} and \QuicConnection{} instances is implemented u
 \gls{abstract-factory}~\cite{wiki:abstract-factory-pattern}. There are multiple implementations of
 \QuicImplementationProvider{} class, one for each QUIC implementation. Instances of
 \QuicImplementationProvider{} class are available as static properties of the
-\class{QuicImplementationProviders} static class. There are five such providers:
+\class{QuicImplementationProviders} static class.
+
+There were two pre-existing providers in the \filename{System.Net.Quic} project. Implementation of
+these two providers is not the primary focus of this text and, therefore, this text will not provide
+further details on these providers:
 
 \begin{itemize}
-
-  \litem[]{\texttt{Managed}} Managed implementation with TLS backed by \libopenssl{} fork with QUIC enabling API.
-
-  \litem[]{\texttt{ManagedMockTls}} Managed implementation with mock TLS, which does not depend on external TLS implementation, but cannot interoperate with other QUIC implementations.
 
   \litem[]{\texttt{MsQuic}} QUIC implementation backed by \libmsquic{} native library.
 
   \litem[]{\texttt{Mock}} A mock QUIC implementation for use in tests.
 
-  \litem[]{\texttt{Default}} The default implementation. Same as \texttt{Managed}, but can be redirected to other implementations by setting \texttt{DOTNETQUIC_PROVIDER} environment variable to the desired provider name.
+\end{itemize}
+
+This thesis provides following two new provideres:
+
+\begin{itemize}
+
+  \litem[]{\texttt{Managed}} Managed implementation with TLS backed by \libopenssl{} fork with QUIC enabling API.
+
+  \litem[]{\texttt{ManagedMockTls}} Managed implementation with mock TLS implementation, which does not depend on external libraries, but cannot interoperate with other QUIC implementations.
 
 \end{itemize}
+
+Additionally, there is the \texttt{Default} provider which in our implementation redirects to
+\texttt{Managed}, but can be redirected to other implementations by setting
+\texttt{DOTNETQUIC_PROVIDER} environment variable to the desired provider name.
 
 The \QuicListener{} and \QuicConnection{} classes have a constructor overload which accepts an
 instance of the \QuicImplementationProvider{} to be used. This way, the QUIC implementation can be
@@ -118,7 +134,7 @@ The source code for the managed implementation developed in this thesis is locat
   .2 {ManagedQuicConnection.Packets.cs}\mydtcomment{Processing of QUIC packets}.
   .2 {ManagedQuicConnection.Recovery.cs}\mydtcomment{Handling packet loss}.
   .2 {ManagedQuicConnection.Stream.cs}\mydtcomment{Stream management}.
-  .2 {ManagedQuicImplementationProvider.cs}\mydtcomment{Abstract factory}.
+  .2 {ManagedQuicImplementationProvider.cs}\mydtcomment{Abstract factory implementation}.
   .2 {ManagedQuicListener.cs}\mydtcomment{Implementation of public API}.
   .2 {ManagedQuicStream.cs}\mydtcomment{Implementation of public API}.
 }
@@ -158,11 +174,18 @@ classes which were also mentioned in \autoref{fig:03-architecture} and
 
 \end{myFigure}
 
+\subsection{ManagedQuicConnection Implementation}
+
+The \ManagedQuicConnection{} class implements the stateful QUIC connection logic which makes up most
+of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
+separated by area into multiple files, as outlined previously in
+\autoref{lst:05-managed-quic-structure}.
+
 \subsection{Matching QUIC Packets to Connections}
 
+\subsection{ManagedQuicListener Implementation}
 
-
-\subsection{ManagedQuicConnection}
+\subsection{ManagedQuicStream Implementation}
 
 \subsection{Supporting Data Structures}
 
@@ -188,7 +211,7 @@ The \PacketNumberWindow{} class is used to test if QUIC packet the given packet 
 been received. Internally, it contains two 64-bit fields: a bitmask marking the received bits and an
 integer representing the packet number represented by the least significant bit of the mask. Marking
 a packet number as received consists of setting a particular bit in the mask, shifting the other
-bits if necessary. \todo{is this clear or does it need an illustration?}
+bits if necessary. \todo{is this clear or does it need an illustration? YES, illustration!}
 
 The data structure can maintain state only for 64 consecutive packet numbers. This leads to packets
 with packet number under the window being defensively marked as already received and, therefore,

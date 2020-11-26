@@ -64,6 +64,7 @@
 \usepackage{underscore}     % underscores which do not screw up hyphenation
 \usepackage[toc,nopostdot,indexonlyfirst]{glossaries}     % lists of terms and abbreviations
 \usepackage{dirtree}        % directory listings with comments
+\usepackage{mdframed}       % fancy frames
 
 %%% src: https://tex.stackexchange.com/questions/57353/how-to-get-caption-above-listing-with-minted
 \captionsetup[listing]{position=top}
@@ -195,25 +196,11 @@ TODO: do the abstract last%
 %%% Code listings used in the thesis (consider if this is needed)
 \lstlistoflistings
 
+\include{attachments}
+
 %%% Abbreviations used in the thesis, if any, including their explanation
 %%% In mathematical theses, it could be better to move the list of abbreviations to the beginning of the thesis.
 \printglossary
-
-%%% Attachments to the master thesis, if any. Each attachment must be
-%%% referred to at least once from the text of the thesis. Attachments
-%%% are numbered.
-%%%
-%%% The printed version should preferably contain attachments, which can be
-%%% read (additional tables and charts, supplementary text, examples of
-%%% program output, etc.). The electronic version is more suited for attachments
-%%% which will likely be used in an electronic form rather than read (program
-%%% source code, data files, interactive charts, etc.). Electronic attachments
-%%% should be uploaded to SIS and optionally also included in the thesis on a~CD/DVD.
-%%% Allowed file formats are specified in provision of the rector no. 72/2017.
-\appendix
-\chapter{Attachments}
-
-\section{First Attachment}
 
 \openright
 \end{document}

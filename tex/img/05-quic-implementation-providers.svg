@@ -320,9 +320,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="544.20186"
-     inkscape:cy="264.83203"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="232.15018"
+     inkscape:cy="428.94884"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -340,7 +340,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -384,26 +384,25 @@
        id="path1873"
        sodipodi:nodetypes="cc" />
     <g
-       id="g1010"
-       transform="translate(0.07010746,5.1168939)">
+       id="g4582">
       <rect
-         style="fill:#eef4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect959"
          width="29.232473"
          height="7.2701492"
-         x="33.685257"
-         y="64.492317"
+         x="33.755363"
+         y="69.609215"
          ry="0" />
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-         x="48.184963"
-         y="69.431351"
+         x="48.25507"
+         y="74.548248"
          id="text851"><tspan
            sodipodi:role="line"
            id="tspan849"
-           x="48.184963"
-           y="69.431351"
+           x="48.25507"
+           y="74.548248"
            style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicListener</tspan></text>
     </g>
     <path
@@ -505,26 +504,25 @@
        id="path2039"
        sodipodi:nodetypes="cc" />
     <g
-       id="g1015"
-       transform="translate(0.07010651,-0.93823815)">
+       id="g4587">
       <rect
-         style="fill:#eef4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect961"
          width="33.720947"
          height="7.2701492"
-         x="31.441021"
-         y="97.799797"
+         x="31.511127"
+         y="96.861557"
          ry="0" />
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-         x="48.360233"
-         y="102.81193"
+         x="48.43034"
+         y="101.87369"
          id="text855"><tspan
            sodipodi:role="line"
            id="tspan853"
-           x="48.360233"
-           y="102.81193"
+           x="48.43034"
+           y="101.87369"
            style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicConnection</tspan></text>
     </g>
     <g
@@ -621,26 +619,25 @@
       </g>
     </g>
     <g
-       id="g1020"
-       transform="translate(0.07010746,0.24859735)">
+       id="g4592">
       <rect
-         style="fill:#eef4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect963"
          width="27.106359"
          height="7.2701492"
-         x="34.748314"
-         y="123.8653"
+         x="34.81842"
+         y="124.1139"
          ry="0" />
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-         x="48.360233"
-         y="128.82196"
+         x="48.43034"
+         y="129.07056"
          id="text859"><tspan
            sodipodi:role="line"
            id="tspan857"
-           x="48.360233"
-           y="128.82196"
+           x="48.43034"
+           y="129.07056"
            style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicStream</tspan></text>
     </g>
     <g
@@ -844,39 +841,39 @@
        id="path1805"
        sodipodi:nodetypes="cc" />
     <g
-       id="g8570"
-       transform="translate(27.78125,8.9958333)">
+       id="g4636">
       <rect
          style="fill:#ffffff;stroke:#000000;stroke-width:0.2;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect8531"
          width="68.307892"
          height="40.397087"
-         x="43.492008"
-         y="138.87021" />
+         x="71.273254"
+         y="147.86604" />
       <g
-         id="g8252">
+         id="g4597">
         <rect
-           style="fill:#eef4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
+           style="fill:#d7f4d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
            id="rect8177"
            width="12.955047"
            height="5.3992529"
-           x="96.852325"
-           y="140.36293"
+           x="124.63358"
+           y="149.35876"
            ry="0" />
         <text
            xml:space="preserve"
            style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-           x="103.30048"
-           y="144.51671"
+           x="131.08173"
+           y="153.51254"
            id="text8181"><tspan
              sodipodi:role="line"
              id="tspan8179"
-             x="103.30048"
-             y="144.51671"
+             x="131.08173"
+             y="153.51254"
              style="font-style:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
       </g>
       <g
-         id="g8267">
+         id="g8267"
+         transform="translate(27.78125,8.9958333)">
         <rect
            style="fill:#d7e3f4;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
            id="rect989"
@@ -898,7 +895,8 @@
              style="text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
       </g>
       <g
-         id="g8262">
+         id="g8262"
+         transform="translate(27.78125,8.9958333)">
         <rect
            style="fill:#f4d7d7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
            id="rect8165"
@@ -920,7 +918,8 @@
              style="text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
       </g>
       <g
-         id="g8257">
+         id="g8257"
+         transform="translate(27.78125,8.9958333)">
         <rect
            style="fill:#f4eed7;stroke:#000000;stroke-width:0.1;stroke-miterlimit:4;stroke-dasharray:none"
            id="rect8171"
@@ -944,77 +943,77 @@
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="144.51671"
+         x="72.78714"
+         y="153.51254"
          id="text8235"><tspan
            sodipodi:role="line"
            id="tspan8233"
-           x="45.00589"
-           y="144.51671"
+           x="72.78714"
+           y="153.51254"
            style="font-style:normal;text-align:start;text-anchor:start;stroke-width:0.264583">Public API</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="164.08208"
+         x="72.78714"
+         y="173.07791"
          id="text8239"><tspan
            sodipodi:role="line"
            id="tspan8237"
-           x="45.00589"
-           y="164.08208"
+           x="72.78714"
+           y="173.07791"
            style="text-align:start;text-anchor:start;stroke-width:0.264583">Managed implementation</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="157.56029"
+         x="72.78714"
+         y="166.55612"
          id="text8243"><tspan
            sodipodi:role="line"
            id="tspan8241"
-           x="45.00589"
-           y="157.56029"
+           x="72.78714"
+           y="166.55612"
            style="text-align:start;text-anchor:start;stroke-width:0.264583">MsQuic implementation</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="151.0385"
+         x="72.78714"
+         y="160.03433"
          id="text8247"><tspan
            sodipodi:role="line"
            id="tspan8245"
-           x="45.00589"
-           y="151.0385"
+           x="72.78714"
+           y="160.03433"
            style="font-style:normal;text-align:start;text-anchor:start;stroke-width:0.264583">Abstract class</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="170.60387"
+         x="72.78714"
+         y="179.5997"
          id="text8313"><tspan
            sodipodi:role="line"
            id="tspan8311"
-           x="45.00589"
-           y="170.60387"
+           x="72.78714"
+           y="179.5997"
            style="text-align:start;text-anchor:start;stroke-width:0.264583">Inheritance</tspan></text>
       <text
          xml:space="preserve"
          style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="45.00589"
-         y="177.12566"
+         x="72.78714"
+         y="186.12149"
          id="text8317"><tspan
            sodipodi:role="line"
            id="tspan8315"
-           x="45.00589"
-           y="177.12566"
+           x="72.78714"
+           y="186.12149"
            style="text-align:start;text-anchor:start;stroke-width:0.264583">Association</tspan></text>
       <path
          style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker8329)"
-         d="M 97.850582,175.96353 H 108.8416"
+         d="m 125.63183,184.95936 h 10.99102"
          id="path8325"
          sodipodi:nodetypes="cc" />
       <path
          style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker5940)"
-         d="M 108.8416,169.53236 H 97.850582"
+         d="M 136.62285,178.52819 H 125.63183"
          id="path8527"
          sodipodi:nodetypes="cc" />
     </g>
