@@ -645,7 +645,7 @@ keys and processes the server's 1-RTT packet. In addition to sending an \ACK{}(0
 server's 1-RTT packet, the client can now start sending application data on stream 0 using a
 \STREAM{}(0, ``...'') frame.
 
-After the server detects that Handshake has completed, it sends a \HANDSHAKEDONE{} frame to
+After the server detects that the handshake has completed, it sends a \HANDSHAKEDONE{} frame to
 communicate it to the client.
 
 \subsection{Connection Termination}
@@ -931,18 +931,17 @@ other side. This way, QUIC is able to offer the same confidentiality level as co
 connections.
 
 The TLS protocol is extensible. Among the standard extensions which are also used by QUIC are
-Application Level Protocol \todo{glossary} Negotiation~\cite{rfc7301} (ALPN for short) and Server
-Name Indication~\cite{rfc6066} (SNI for short).
+\gls{alpn}~\cite{rfc7301} and \gls{sni}~\cite{rfc6066}.
 
 Application Level Protocol Negotiation is used when multiple application protocols are supported on
-the same TCP or UDP port. ALPN allows the application layer to negotiate --- as part of the TLS
+the same TCP or UDP port. \Gls{alpn} allows the application layer to negotiate --- as part of the TLS
 handshake --- which application protocol will be used in the established connection.
 
 Clients use server Name Indication to specify the hostname of the server to which they are
-connecting. When multiple websites are hosted on the same IP address and port, SNI allows the server
-to customize the security configuration for each hosted website. During connection establishment,
-proper security configuration, such as the SSL certificate to be used, can be selected based on the
-value of the hostname.
+connecting. When multiple websites are hosted on the same IP address and port, \gls{sni} allows the
+server to customize the security configuration for each hosted website. During connection
+establishment, proper security configuration, such as the SSL certificate to be used, can be
+selected based on the value of the hostname.
 
 QUIC uses a custom TLS extension to exchange transport parameters during the handshake. The
 transport parameters are described in \autoref{sec:02-transport-parameters}.
@@ -1160,10 +1159,10 @@ QUIC is layered on top of UDP, which is a connection-less protocol. This means t
 endpoint address can also happen without active migration on the endpoint's part, e.g., because of
 NAT rebinding along the \gls{network-path}.
 
-The other endpoint may also spoof the endpoint address in an attempt to perform \textit{traffic
-amplification attack} \todo{ref or gls}. For this reason, the amount of data sent to the new
-endpoint address must be limited until path validation \todo{gls} determines that the address
-belongs to the endpoint. This path validation is performed by sending a \textit{probing packet}
+The other endpoint may also spoof the endpoint address in an attempt to perform
+\textit{\gls{traffic-amplification-attack}}. For this reason, the amount of data sent to the new
+endpoint address must be limited until \textit{\gls{path-validation}} determines that the address
+belongs to the endpoint. Path validation is performed by sending a \textit{probing packet}
 containing a \PATHCHALLENGE{} frame with an unpredictable token. The other endpoint must echo the
 token back in a \PATHRESPONSE{} frame. After that, the new address is considered validated, and the
 sending rate restrictions are lifted.

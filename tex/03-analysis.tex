@@ -104,13 +104,11 @@ endpoint and verify that they are consistent with the behavior defined by the QU
 
 \section{Target \dotnet{} API}
 
-\todo{The majority of this section has been moved to user docs}
-
 The public API, which was designed by the \dotnet{} team for use by other developers, uses similar
-concepts like TCP and UDP networking APIs. There is a \QuicListener{} class intended to be used by
-servers for listening for incoming connections like using the \class{TcpListener} class. The actual
-connection is represented by the \QuicConnection{} class, which serves the same purpose as the
-\class{TcpClient} class. The individual QUIC streams are exposed using the \QuicStream{} class,
+concepts like TCP and UDP \dotnet{} networking APIs. There is a \QuicListener{} class intended to be
+used by servers for listening for incoming connections like using the \class{TcpListener} class. The
+actual connection is represented by the \QuicConnection{} class, which serves the same purpose as
+the \class{TcpClient} class. The individual QUIC streams are exposed using the \QuicStream{} class,
 which implements the \class{Stream} abstraction.
 
 The API is expected to be used asynchronously using the \keyword{async}/\keyword{await} model. Most
@@ -119,8 +117,6 @@ completion. The full list of methods with detailed description can be found late
 \autoref{sec:06-api}.
 
 \section{High-Level Architecture}\label{sec:03-high-level-architecture}
-
-
 
 The \QuicConnection{} implementation will require some sort of background processing
 thread\footnote{To reduce verbosity, this text will be using the term \textit{thread} to mean both a
@@ -142,7 +138,7 @@ relationship between \QuicSocketContext{}, \QuicConnection{} and \QuicListener{}
 
 \begin{myFigure}{fig:03-architecture}{High-level background processing architecture.}
 
-  \input{img/03-architecture.pdf_tex}
+\resizebox{0.8\linewidth}{!}{\input{img/03-architecture.pdf_tex}}
 
 \end{myFigure}
 
@@ -175,9 +171,9 @@ connections receiving datagrams from the same socket, and therefore being served
 \QuicSocketContext{} instance. Servicing multiple \QuicConnection{} instances by only one thread
 could limit the server's throughput.
 
-In order to process multiple QUIC connections in parallel, each \QuicConnection{} should have a
-dedicated thread for background processing. Our implementation separates the per-connection logic
-into separate \QuicConnectionContext{} class. The \QuicSocketContext{} class will be directly
+In order to allow processing multiple QUIC connections in parallel, each \QuicConnection{} should
+have a dedicated thread for background processing. Our implementation separates the per-connection
+logic into separate \QuicConnectionContext{} class. The \QuicSocketContext{} class will be directly
 responsible only for stateless packet processing like sending a Version Negotiation packet for
 incoming packets with unsupported versions. Packets belonging to existing connections will be queued
 for processing by the appropriate \QuicConnectionContext{} instance. A possible runtime structure of
@@ -190,7 +186,7 @@ socket receive call.
 \begin{myFigure}{fig:03-socket-context-architecture}{Architecture of the server-side background
 processing.}
 
-\resizebox{\linewidth}{!}{\input{img/03-server-socket-context.pdf_tex}}
+\resizebox{0.95\linewidth}{!}{\input{img/03-server-socket-context.pdf_tex}}
 
 \end{myFigure}
 
@@ -220,9 +216,6 @@ allowing the \QuicConnectionContext{} to select the right \Socket{} from which t
 datagrams should be sent.
 
 \subsection{Public API Threading model}
-
-\todo{I did not add the second pair of figures, there are too many ``groups'' to represent them
-clearly (only some operations on Connection must be synchronized...)}
 
 The target API uses the \class{ValueTask} type designed for efficient asynchronous methods. The user
 code will start an asynchronous operation that can be completed by a background thread servicing the
@@ -263,8 +256,6 @@ range of allowed values and incomplete or damaged packets.
 
 \subsection{QUIC Packet and Frame Representation}\label{sec:03-data-representation}
 
-\todo{this was slimmed down and parts of this moved to unit testing section}
-
 Some packets contain many fields and, therefore, passing them around as individual variables would
 make the implementation harder to maintain. The QUIC frames form coherent messages that should be
 represented by individual \dotnet{} types. This gives us also an opportunity to keep the
@@ -285,7 +276,7 @@ can be stored only in local variables or inside another \keyword {ref struct}s. 
 usage of \keyword{ref struct}s also forbid their use as generic type arguments, e.g., for
 \class{Func<>} and other generic delegates. This limitation is acceptable for \QuicConnection{}
 implementation because the QUIC frames can be processed one after another right after being
-deserialized from the Quic packet.
+deserialized from the QUIC packet.
 
 \subsection{QuicReader and QuicWriter}
 
@@ -560,12 +551,8 @@ on Windows, unmodified \libopenssl{} on Linux and macOS.
 
 These drawbacks are acceptable for the prototype implementation and will be eliminated once the
 modified \libopenssl{} is replaced with \libschannel{} integration for Windows, and mainstream
-version of \libopenssl{} once the support for QUIC is released.
-
-This thesis will therefore integrate with the forked \libopenssl{} library from Akamai. Because the
-library is written in C, it has to be integrated into the build process to be build together with
-the native code of the \dotnet{} runtime. \todo{this is obsolete, no build integration is going to
-happen}
+version of \libopenssl{} once the support for QUIC is released. This thesis will, therefore,
+integrate with the forked \libopenssl{} library from Akamai.
 
 \section{Packet Protection}
 
@@ -642,6 +629,11 @@ QUIC protocol specification. Additionally, the public API makes use of existing 
 \class{Stream} abstraction for QUIC streams, and it is necessary to ensure that \QuicStream{}
 conforms to the expected \class{Stream} behavior expectations.
 
+The \dotnet{} runtime repository into which we wish to integrate our QUIC implementation uses the
+\xUnit{} testing framework~\cite{xunit}. The \xUnit{} framework is one of the most mature testing
+frameworks for \dotnet{}. Therefore, we will use it as well for writing tests for our
+implementation.
+
 \subsection{Testing the QUIC Protocol}
 
 The QUIC protocol specification~\cite{draft-ietf-quic-transport} mostly specifies the protocol
@@ -682,11 +674,11 @@ provide a declarative way to specify what the QUIC packet or datagram must conta
 callbacks for packet modification to elicit error responses.
 
 \autoref{lst:03-desired-unit-test} shows how the desired testing harness would be used in
-conjunction with \libname{xUnit} testing framework to test if the first UDP datagram sent by the
-client has the correct size. The \method{GetDatagramToSend} method will get the next datagram to be
-sent and present it in a structured manner. Later, the \method{ShouldHaveFrame<\class{TFrame}>}
-method will internally check if a frame represented by \class{TFrame} type is present in the packet
-and will invoke the provided callback for further assertions.
+conjunction with \xUnit{} testing framework to test if the first UDP datagram sent by the client has
+the correct size. The \method{GetDatagramToSend} method will get the next datagram to be sent and
+present it in a structured manner. Later, the \method{ShouldHaveFrame<\class{TFrame}>} method will
+internally check if a frame represented by \class{TFrame} type is present in the packet and will
+invoke the provided callback for further assertions.
 
 \begin{myListingCsharp}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
     [Fact]
@@ -800,17 +792,13 @@ The work of this thesis aims to be eventually mergeable into the \dotnet{} runti
 writing this thesis, there already exists a project for \textit{System.Net.Quic.dll}. Therefore, the
 source code may be placed there directly without additional changes.
 
-There is, however, the issue with the \libopenssl{} dependency. Although it would be possible to
-build the required \libopenssl{} version together with other native parts of the \dotnet{} runtime,
-it would introduce multiple additional requirements on the installed tools. In order not to
-complicate the runtime build requirements, our implementation will expect the appropriate
-\libopenssl{} version to already present and available for loading.
+There is, however, the issue with the \libopenssl{} dependency. The \libopenssl{} library is written
+in C and must be compiled for the target machine. Integrating the \libopenssl{} compilation into the
+\dotnet{} runtime build process would impose additional requirements for the \dotnet{} runtime
+compilation. The additional dependencies would complicate building the \dotnet{} runtime as part of
+continous integration process. For this reason, it is necessary to provide also a mock TLS
+implementation that would be used in automated tests as part of continuous integration.
 
-It could be useful to use the QUIC implementation without the need of \libopenssl{} dependency.
-Because the \libopenssl{} implementation is used only for performing the TLS handshake, it is not
-difficult to replace the TLS implementation with a mock implementation that will work sufficiently
-when used on both sides of the connection. The mock TLS implementation allows the \libopenssl{}
-dependency to be entirely optional and is required only when testing interop with other QUIC
-implementations. Therefore, our implementation will first inspect if required \libopenssl{} version
-is available, and if it is not, then it will fallback to mock TLS implementation. \todo{this also
-does not work like this because of HTTP3 unit tests}
+The mock TLS implementation can be also used locally to avoid building the \libopenssl{} dependency.
+The only limitation of the mock TLS implementation is that it does not allow interop with other QUIC
+implementations.
