@@ -233,8 +233,10 @@
   \endtable{}
 }
 
-% used VS like colors/
-% \usemintedstyle{vs}
+
+\definecolor{colorunimportant}{gray}{0.5}
+
+% use VS like colors/
 \definecolor{codecolorclass}{rgb}{0.12, 0.53, 0.62}
 \definecolor{codecolorenum}{rgb}{0.40, 0.63, 0.23}
 \definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
@@ -246,11 +248,6 @@
 \definecolor{codecolorxmltag}{rgb}{0.64, 0.08, 0.08}
 \definecolor{codecolorxmlstring}{rgb}{0, 0, 1}
 \definecolor{codecolorxmlattribute}{rgb}{1, 0, 0}
-
-\definecolor{darkblue}{rgb}{0, 0, 0.5}
-
-\definecolor{Maroon}{rgb}{0.64, 0.08, 0.08}
-\definecolor{DarkOliveGreen}{rgb}{0, 0.5, 0}
 
 % allow adding known classes to the listings for better syntax highlight
 % https://tex.stackexchange.com/questions/172048/how-can-i-define-a-custom-class-of-keywords-in-listings
@@ -371,7 +368,21 @@
 % settings for uniform verbatim environment
 \DefineVerbatimEnvironment%
 {myVerbatim}{Verbatim}
-{frame=lines,fontsize=\footnotesize,framesep=1em}
+{frame=lines,fontsize=\footnotesize,framesep=1em,commandchars=\&\{\}}
+
+\newenvironment{myListingVerbatim}[3][]{% [short caption], label, caption
+  \mdframed[
+    hidealllines=true,
+    innerleftmargin=0,
+    innerrightmargin=0
+    ]%
+  \myCaptionOf{lstlisting}{#1}{#3}\label{#2}% for tables, the caption goes to the top
+  \myVerbatim
+}{%
+  \endmyVerbatim%
+  \endmdframed%
+}
+
 
 % typesetting binary and other values
 \newcommand{\binary}[1]{0x#1}
@@ -381,10 +392,12 @@
 \definecolor{bytefieldunused}{gray}{0.8}
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
+\newcommand{\genericClass}[2]{\texttt{\textcolor{codecolorclass}{#1}<{#2}>}}
 \newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{#1}}}
 \newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
 \newcommand{\method}[1]{{\color{codecolormethod}{\texttt{#1}}}}
+\newcommand{\enum}[1]{{\color{codecolorenum}{\texttt{#1}}}}
 \newcommand{\xmltag}[1]{{\color{codecolorxmltag}{\texttt{#1}}}}
 
 % macros for typesetting description lists with C# class members
@@ -399,7 +412,7 @@
 \newcommand{\ditemmethodseparator}{}
 
 % method to apply in \foreach macro
-\def\makeditemmethodarg#1#2{\ditemmethodseparator{}\class{#2}%
+\def\makeditemmethodarg#1#2{\ditemmethodseparator{}{#2}%
 \renewcommand{\ditemmethodseparator}{, }%set proper separator for the next item
 }
 
@@ -408,17 +421,17 @@
 \foreach{\makeditemmethodarg}{}{#1}%
 }
 
-\newcommand{\ditemmethod}[3]% type, name, args (types only)
-  {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2}(\ditemmethodmakearglist{#3})}}}
+\newcommand{\ditemmethod}[4][\class]% [type typeset] type, name, args (types only)
+  {\ditem{\ditemsrcsize\texttt{#1{#2} \method{#3}(\ditemmethodmakearglist{#4})}}}
 
-\newcommand{\ditemmethodWithComment}[4]% type, name, args (types only)
-  {\ditemWithComment{\ditemsrcsize\texttt{\class{#1} \method{#2}(\ditemmethodmakearglist{#3})}}{#4}}
+\newcommand{\ditemmethodWithComment}[5][\class]% [type typeset] type, name, args (types only)
+  {\ditemWithComment{\ditemsrcsize\texttt{#1{#2} \method{#3}(\ditemmethodmakearglist{#4})}}{#5}}
 
 \newcommand{\ditemctor}[2]% name, args
   {\ditem{\ditemsrcsize\texttt{\method{#1}(\ditemmethodmakearglist{#2})}}}
 
-\newcommand{\ditemproperty}[3]% type, name, get/set
-  {\ditem{\ditemsrcsize\texttt{\class{#1} \method{#2} #3}}}
+\newcommand{\ditemproperty}[4][\class]% [type typeset] type, name, get/set
+  {\ditem{\ditemsrcsize\texttt{#1{#2} \method{#3} #4}}}
 
 % checkmark
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
@@ -461,6 +474,22 @@
 \newcommand{\HANDSHAKEDONE}{\quicFrame{HAND\-SHAKE\_DONE}}
 
 % macros for commonly used class names
+\newcommand{\ValueTaskOf}[1]{\genericClass{ValueTask}{#1}}
+\newcommand{\MemoryOf}[1]{\genericClass{Memory}{#1}}
+\newcommand{\ReadOnlyMemoryOf}[1]{\genericClass{ReadOnlyMemory}{#1}}
+\newcommand{\ReadOnlySequenceOf}[1]{\genericClass{ReadOnlySequence}{#1}}
+\newcommand{\SpanOf}[1]{\genericClass{Span}{#1}}
+\newcommand{\ChannelOf}[1]{\genericClass{Channel}{#1}}
+\newcommand{\ArrayOf}[1]{\texttt{{#1}[]}}
+\newcommand{\FuncOf}[1]{\genericClass{Func}{#1}}
+\newcommand{\ArrayPoolOf}[1]{\genericClass{ArrayPool}{#1}}
+
+\newcommand{\byte}{\keyword{byte}}
+\newcommand{\Long}{\keyword{long}}
+\newcommand{\Int}{\keyword{int}}
+\newcommand{\bool}{\keyword{bool}}
+\newcommand{\CancellationToken}{\class{CancellationToken}}
+
 \newcommand{\Socket}{\class{Socket}}
 \newcommand{\QuicSocketContext}{\class{Quic\allowbreak{}Socket\allowbreak{}Context}}
 \newcommand{\QuicServerSocketContext}{\class{Quic\allowbreak{}Server\allowbreak{}Socket\allowbreak{}Context}}
@@ -493,6 +522,10 @@
 \newcommand{\ManagedQuicStream}{\class{Managed\allowbreak{}Quic\allowbreak{}Stream}}
 \newcommand{\ManagedQuicListener}{\class{Managed\allowbreak{}Quic\allowbreak{}Listener}}
 \newcommand{\ManagedQuicImplementationProvider}{\class{Managed\allowbreak{}Quic\allowbreak{}Implementation\allowbreak{}Provider}}
+
+\newcommand{\QuicListenerOptions}{\class{Quic\allowbreak{}Listener\allowbreak{}Options}}
+\newcommand{\ServerAuthenticationOptions}{\class{ServerAuthenticationOptions}}
+\newcommand{\QuicClientConnectionOptions}{\class{QuicClientConnectionOptions}}
 
 % macro for the System.Net.Quic.dll library
 \newcommand{\SystemNetQuicDll}{\texttt{System.\allowbreak{}Net.\allowbreak{}Quic.dll}}

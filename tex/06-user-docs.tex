@@ -124,41 +124,39 @@ Lastly, we need to configure the environment variables so that the \dotnet{} SDK
         \ditem{\texttt{PATH}} Prepend the \filename{DOTNET_ROOT} directory to the beginning of the \texttt{PATH} variable to make sure the \filename{dotnet} executable from the \filename{DOTNET_ROOT} is used over the system-wide installed one.
 \end{description}
 
-After configuring the variables check the output of \verb|dotnet --info| command. Assuming
-\texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the following:
+After configuring the variables check the output of the \verb|dotnet --info| command. Assuming
+\texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the
+\autoref{lst:06-dotnet-info-output}. The list of installed \dotnet{} runtimes should contain
+\texttt{Microsoft.NETCore.App} from the local \dotnet{}~6 SDK installation prepared in
+\autoref{sec:06-local-dotnet}. Note that the listing contains version numbers valid at the time of
+writing this text and the SDK installer would be updated since then to a newer version.
 
-\begin{myVerbatim}
+\todo{this has been shortened and greyed out}
+
+\begin{myListingVerbatim}[Output of the \texttt{dotnet --info} command in configured environment]{lst:06-dotnet-info-output}{Output of the \texttt{dotnet --info} command in correctly configured environment. The unimportant portions of the output in grey has been left out brevity.}
 > dotnet --info
-.NET SDK (reflecting any global.json):
- Version:   6.0.100-alpha.1.20563.2
- Commit:    32d179d680
+&color{colorunimportant}.NET SDK (reflecting any global.json):
+&color{colorunimportant} ...
 
-Runtime Environment:
- OS Name:     Windows
- OS Version:  10.0.18363
- OS Platform: Windows
- RID:         win10-x64
- Base Path:   C:\dotnet\sdk\6.0.100-alpha.1.20563.2\
+&color{colorunimportant}Runtime Environment:
+&color{colorunimportant} ...
 
-Host (useful for support):
-  Version: 6.0.0-alpha.1.20560.10
-  Commit:  72b7d236ad
+&color{colorunimportant}Host (useful for support):
+&color{colorunimportant} ...
 
 .NET SDKs installed:
   6.0.100-alpha.1.20563.2 [C:\dotnet\sdk]
 
 .NET runtimes installed:
-  Microsoft.AspNetCore.App 6.0.0-alpha.1.20526.6 [C:\dotnet\shared\...]
-  Microsoft.NETCore.App 6.0.0-alpha.1.20560.10 [C:\dotnet\shared\...]
-  Microsoft.WindowsDesktop.App 6.0.0-alpha.1.20560.7 [C:\dotnet\shared\...]
+  Microsoft.AspNetCore.App 6.0.0-alpha.1.20526.6 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
+  Microsoft.NETCore.App 6.0.0-alpha.1.20560.10 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
+  Microsoft.WindowsDesktop.App 6.0.0-alpha.1.20560.7 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
 
-To install additional .NET runtimes or SDKs:
-  https://aka.ms/dotnet-download
-\end{myVerbatim}
+&color{colorunimportant}To install additional .NET runtimes or SDKs:
+&color{colorunimportant}  https://aka.ms/dotnet-download
+\end{myListingVerbatim}
 
-The important part of the output is the list of installed \dotnet{} runtimes which should contain
-\texttt{Microsoft.NETCore.APP} from the local \dotnet{}~6 SDK installation from
-\autoref{sec:06-local-dotnet}. With environment configured as described, you can now use the
+With environment configured as described, you can now use the
 \verb|dotnet build| command, or start Visual Studio or other IDE to develop programs using the
 provided SDK installation.
 
@@ -261,41 +259,41 @@ class to accept incoming QUIC connections.
 
 \begin{description}
 
-    \ditemctor{QuicListener}{QuicListenerOptions} Constructor.
+    \ditemctor{QuicListener}{\QuicListenerOptions{}} Constructor.
 
     \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new connection. Read-only.
 
-    \ditemmethod{ValueTask<QuicConnection>}{AcceptConnectionAsync}{CancellationToken}
+    \ditemmethod[]{\ValueTaskOf{\QuicConnection{}}}{AcceptConnectionAsync}{\CancellationToken{}}
     Accepts a new incoming QUIC Connection.
 
-    \ditemmethod{void}{Start}{} Starts listening.
+    \ditemmethod[\keyword]{void}{Start}{} Starts listening.
 
-    \ditemmethod{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
+    \ditemmethod[\keyword]{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
 
 \end{description}
 
 \subsection{QuicListenerOptions Class}
 
-The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener}s.
+The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener} instances.
 
 \begin{description}
 
-    \ditemproperty{SslServerAuthenticationOptions}{ServerAuthenticationOptions}{\propgetset}
+    \ditemproperty{SslServerAuthenticationOptions}{\ServerAuthenticationOptions{}}{\propgetset}
         SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
 
-    \ditemproperty{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
+    \ditemproperty[\keyword]{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
 
-    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
 
-    \ditemproperty{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
 
     \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
 
-    \ditemproperty{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
+    \ditemproperty[\keyword]{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
 
-    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
+    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
 
-    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
+    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
 
     \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
 
@@ -309,27 +307,27 @@ Servers receive new connections using the \class{QuicListener} class.
 
 \begin{description}
 
-    \ditemctor{QuicConnection}{QuicClientConnectionOptions} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
+    \ditemctor{QuicConnection}{\QuicClientConnectionOptions{}} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
 
-    \ditemproperty{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is connected (the handshake has completed).
+    \ditemproperty[\keyword]{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is connected (the handshake has completed).
 
     \ditemproperty{IPEndPoint}{LocalEndPoint}{\propget} Local IP endpoint of the connection.
 
     \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propget} Remote IP endpoint of the connection.
 
-    \ditemmethod{ValueTask}{ConnectAsync}{CancellationToken} Connects to the remote endpoint.
+    \ditemmethod{ValueTask}{ConnectAsync}{\CancellationToken{}} Connects to the remote endpoint.
 
     \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
 
     \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
 
-    \ditemmethod{ValueTask<QuicStream>}{AcceptStreamAsync}{Cancellationtoken} Accepts an incoming stream.
+    \ditemmethod[]{\ValueTaskOf{\QuicStream{}}}{AcceptStreamAsync}{\CancellationToken{}} Accepts an incoming stream.
 
-    \ditemmethod{ValueTask}{CloseAsync}{long, CancellationToken} Closes the connection with the specified given error code and terminates all active streams.
+    \ditemmethod{ValueTask}{CloseAsync}{\Long{}, \CancellationToken{}} Closes the connection with the specified given error code and terminates all active streams.
 
-    \ditemmethod{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
+    \ditemmethod[\keyword]{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
 
-    \ditemmethod{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
+    \ditemmethod[\keyword]{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
 
 \end{description}
 
@@ -345,9 +343,9 @@ The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC
 
     \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propgetset} The IP endpoint to connect to.
 
-    \ditemproperty{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
+    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
 
-    \ditemproperty{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
+    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
 
     \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
 
@@ -367,30 +365,30 @@ members inherited from the \class{Stream} class.
 
 \begin{description}
 
-    \ditemproperty{long}{StreamId}{\propget} The Stream ID\@.
+    \ditemproperty[\keyword]{long}{StreamId}{\propget} The Stream ID\@.
 
-    \ditemproperty{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
+    \ditemproperty[\keyword]{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
 
-    \ditemproperty{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
+    \ditemproperty[\keyword]{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
 
-    \ditemmethod{void}{AbortRead}{long} Aborts the receiving part of the stream with the provided error code.
+    \ditemmethod[\keyword]{void}{AbortRead}{\Long} Aborts the receiving part of the stream with the provided error code.
 
-    \ditemmethod{void}{AbortWrite}{long} Aborts the sending part of the stream with the provided error code.
+    \ditemmethod[\keyword]{void}{AbortWrite}{\Long} Aborts the sending part of the stream with the provided error code.
 
-    \ditemmethod{int}{Read}{Span<byte>} Reads the content
+    \ditemmethod[\keyword]{int}{Read}{\SpanOf{\byte{}}} Reads the content
     of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
 
-    \ditemmethod{ValueTask<int>}{ReadAsync}{Memory<byte>, CancellationToken} Reads the content
+    \ditemmethod[]{\ValueTaskOf{\keyword{int}}}{ReadAsync}{\MemoryOf{\byte{}}, \CancellationToken{}} Reads the content
     of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
 
-    \ditemmethod{void}{Write}{Span<byte>} Writes the content
+    \ditemmethod[\keyword]{void}{Write}{\SpanOf{\byte}} Writes the content
     of the provided buffer into the stream, returns when the data have been buffered internally.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, CancellationToken}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \class{ReadOnlyMemory<byte>}, \class{ReadOnlySequence<byte>}, and \class{ReadOnlyMemory\allowbreak<ReadOnlyMemory<byte>>}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \CancellationToken{}}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \ReadOnlyMemoryOf{\byte{}}, \ReadOnlySequenceOf{\byte{}}, and \genericClass{ReadOnlyMemory\allowbreak{}}{\ReadOnlyMemoryOf{\byte{}}}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, bool, CancellationToken}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \bool{}, \CancellationToken{}}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
 
-    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{CancellationToken} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
+    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{\CancellationToken{}} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
 
     \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until shutdown completes.
 

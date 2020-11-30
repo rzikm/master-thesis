@@ -201,7 +201,7 @@ rebinding. In that case, the connection would be eventually terminated due to th
 \autoref{sec:02-idle-timeout}).
 
 Therefore, our implementation will use a separate thread to receive all UDP datagrams and queue them
-into a \class{Channel<>} instance of the appropriate \QuicConnectionContext{} based on the value of
+into a \ChannelOf{} instance of the appropriate \QuicConnectionContext{} based on the value of
 the DCID field of the packet header.
 
 \subsubsection{Future Support for Connection Migration}
@@ -210,7 +210,7 @@ Lastly, we need to review the architecture for possible support for connection m
 the \QuicConnectionContext{} not depending directly on a particular \Socket{} instance, it is
 conceivable that a single \QuicConnectionContext{} instance could be part of two
 \QuicSocketContext{}s --- one for the old endpoint address, and the other for the new one. Use of the
-\class{Channel<>} class already ensures that the incoming datagrams could be queued concurrently by
+\ChannelOf{} class already ensures that the incoming datagrams could be queued concurrently by
 both \QuicSocketContext{} instances. The only modification needed on the architecture level would be
 allowing the \QuicConnectionContext{} to select the right \Socket{} from which the outgoing
 datagrams should be sent.
@@ -266,15 +266,15 @@ Representing QUIC frames as individual classes would introduce many heap allocat
 received QUIC packet. This thesis, therefore, will model QUIC frames and the QUIC packet headers as
 value types. Also, the payload of some frames may consist of large blocks of memory. Examples
 include \STREAM{} and \CRYPTO{} frames, which can fill the entire payload of the QUIC packet.
-Duplicating this block of memory into a separate \class{byte[]} would be another unnecessary memory
-allocation. \dotnet{}~2.1 introduced the \class{Span<T>} type, which can be used to efficiently
+Duplicating this block of memory into a separate \ArrayOf{\byte{}} would be another unnecessary memory
+allocation. \dotnet{}~2.1 introduced the \SpanOf{\class{T}} type, which can be used to efficiently
 reference arbitrary memory block, including memory allocated on the stack using the
 \keyword{stackalloc} keyword.
 
-However, the \class{Span<T>} type is a \keyword{ref struct} --- a special kind of value type which
+However, the \SpanOf{\class{T}} type is a \keyword{ref struct} --- a special kind of value type which
 can be stored only in local variables or inside another \keyword {ref struct}s. Limitations on the
 usage of \keyword{ref struct}s also forbid their use as generic type arguments, e.g., for
-\class{Func<>} and other generic delegates. This limitation is acceptable for \QuicConnection{}
+\FuncOf{} and other generic delegates. This limitation is acceptable for \QuicConnection{}
 implementation because the QUIC frames can be processed one after another right after being
 deserialized from the QUIC packet.
 
@@ -345,16 +345,16 @@ given moment, allocating one large buffer may be inefficient, as the entire buff
 needed at any given point in time. Therefore, our implementation uses multiple smaller buffers and
 allocates only the necessary number of buffers that are needed to buffer currently received data. To
 reduce pressure on the garbage collector, buffers that are no longer necessary are returned to a
-shared instance of \class{ArrayPool<byte>} class to avoid their frequent allocation.
+shared instance of \ArrayPoolOf{\byte{}} class to avoid their frequent allocation.
 
 \subsubsection{Reading Data by Application Code}
 
 Because user code runs on a different thread from the internal \QuicConnection{} logic, there needs
-to be some synchronization. Our implementation uses the \class{Channel<>} class, which provides an
+to be some synchronization. Our implementation uses the \ChannelOf{} class, which provides an
 efficient implementation of the producer-consumer queue with support for asynchronous operations
-using the \class{ValueTask<>} type. Each time an incoming \STREAM{} frame allows a part of the
+using the \ValueTaskOf{} type. Each time an incoming \STREAM{} frame allows a part of the
 stream to be delivered to the application, the relevant region of the buffer is queued into the
-\class{Channel<>} using the \class{Memory<byte>} type.
+\ChannelOf{} using the \MemoryOf{\byte{}} type.
 
 \todo{more of the descriptions of the}
 
@@ -409,7 +409,7 @@ implementation will, as with the receiving part of the stream, use an intermedia
 storing the data.
 
 Our implementation will also use a variable number of fixed-size buffers rented from a shared
-\class{ArrayPool<byte>} instance. These buffers will be used to store data that cannot be discarded
+\ArrayPoolOf{\byte{}} instance. These buffers will be used to store data that cannot be discarded
 yet because the other endpoint did not acknowledge their reception.
 
 \subsubsection{Acknowledgement, Loss, and Retransmission}
@@ -437,8 +437,8 @@ state.
 
 \subsubsection{Writing Data by Application Code}
 
-Again, our implementation will use \class{Channel<>} type to provide synchronization with the
-application thread. However, since \class{Channel<>} does not allow random access to the provided
+Again, our implementation will use \ChannelOf{} type to provide synchronization with the
+application thread. However, since \ChannelOf{} does not allow random access to the provided
 data, a separate list of buffers with yet unacknowledged data need to be maintained as well.
 
 \autoref{fig:03-send-stream} illustrates the process of writing data into the \SendStream{}. The
@@ -702,9 +702,9 @@ invoke the provided callback for further assertions.
 \end{myListingCsharp}
 
 However, in \autoref{sec:03-data-representation}, we mentioned that the types representing QUIC
-frames must be \keyword{ref struct}s in order to contain \class{Span<T>} instances, and that
+frames must be \keyword{ref struct}s in order to contain \SpanOf{\class{T}} instances, and that
 \keyword{ref struct}s cannot be used as type arguments for generic classes or methods. This could be
-overcome by using \class{Memory<T>} instead of \class{Span<T>}, but the use of structs for frame
+overcome by using \MemoryOf{\class{T}} instead of \SpanOf{\class{T}}, but the use of structs for frame
 types still poses a problem for modification of the QUIC frames by a callback.
 
 Structs are normally passed by value; therefore, the callback would either have to accept the frame
