@@ -88,6 +88,12 @@ Multiple QUIC packets can be encapsulated in a single UDP datagram.}
   description={A process during which QUIC endpoint validates that it's peer is reachable via a particular \gls{network-path}. Consists of an exchange of \PATHCHALLENGE{} and \PATHRESPONSE{} frames.}
 }
 
+\newglossaryentry{packet-pacing}
+{
+  name=packet pacing,
+  description={A mechanism which evens out microbursts of packets in order to prevent network congestion. An ideal network pacer spreads entire congestion window worth of traffic evenly over the round trip time period.}
+}
+
 \newglossaryentry{abstract-factory}
 {
   name=abstract factory pattern,

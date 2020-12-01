@@ -239,6 +239,7 @@
 % use VS like colors/
 \definecolor{codecolorclass}{rgb}{0.12, 0.53, 0.62}
 \definecolor{codecolorenum}{rgb}{0.40, 0.63, 0.23}
+\definecolor{codecolorinterface}{rgb}{0.40, 0.63, 0.23}
 \definecolor{codecolorkeyword}{rgb}{0, 0, 0.5}
 \definecolor{codecolormethod}{rgb}{0.45, 0.32, 0.12}
 \definecolor{codecolorkeywordcontrolflow}{rgb}{0.55, 0.03, 0.79}
@@ -393,7 +394,7 @@
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\genericClass}[2]{\texttt{\textcolor{codecolorclass}{#1}<{#2}>}}
-\newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
+\newcommand{\interface}[1]{{\color{codecolorinterface}\texttt{#1}}}
 \newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{#1}}}
 \newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
 \newcommand{\method}[1]{{\color{codecolormethod}{\texttt{#1}}}}
@@ -476,6 +477,7 @@
 % macros for commonly used class names
 \newcommand{\ValueTaskOf}[1]{\genericClass{ValueTask}{#1}}
 \newcommand{\MemoryOf}[1]{\genericClass{Memory}{#1}}
+\newcommand{\ListOf}[1]{\genericClass{List}{#1}}
 \newcommand{\ReadOnlyMemoryOf}[1]{\genericClass{ReadOnlyMemory}{#1}}
 \newcommand{\ReadOnlySequenceOf}[1]{\genericClass{ReadOnlySequence}{#1}}
 \newcommand{\SpanOf}[1]{\genericClass{Span}{#1}}
@@ -498,11 +500,17 @@
 \newcommand{\QuicReader}{\class{Quic\allowbreak{}Reader}}
 \newcommand{\QuicWriter}{\class{Quic\allowbreak{}Writer}}
 \newcommand{\CryptoSeal}{\class{Crypto\allowbreak{}Seal}}
+\newcommand{\CryptoSealAlgorithm}{\class{Crypto\allowbreak{}Seal\allowbreak{}Algorithm}}
 \newcommand{\ReceiveStream}{\class{Receive\allowbreak{}Stream}}
 \newcommand{\SendStream}{\class{Send\allowbreak{}Stream}}
 \newcommand{\RecoveryController}{\class{Recovery\allowbreak{}Controller}}
 \newcommand{\RangeSet}{\class{RangeSet}}
 \newcommand{\PacketNumberWindow}{\class{Packet\allowbreak{}Number\allowbreak{}Window}}
+\newcommand{\PacketNumberSpace}{\class{Packet\allowbreak{}Number\allowbreak{}Space}}
+\newcommand{\SentPacket}{\class{Sent\allowbreak{}Packet}}
+\newcommand{\ICongestionController}{\interface{ICongestion\allowbreak{}Controller}}
+\newcommand{\StreamCollection}{\class{Stream\allowbreak{}Collection}}
+\newcommand{\ProcessPacketResult}{\enum{Process\allowbreak{}Packet\allowbreak{}Result}}
 
 \newcommand{\QuicConnection}{\class{Quic\allowbreak{}Connection}}
 \newcommand{\QuicStream}{\class{Quic\allowbreak{}Stream}}

@@ -82,9 +82,9 @@ further details on these providers:
 
 \begin{itemize}
 
-  \litem[]{\texttt{MsQuic}} QUIC implementation backed by \libmsquic{} native library.
+  \litem[]{\texttt{MsQuic}} QUIC implementation backed by \libmsquic{} native library
 
-  \litem[]{\texttt{Mock}} A mock QUIC implementation for use in tests.
+  \litem[]{\texttt{Mock}} A mock QUIC implementation for use in tests
 
 \end{itemize}
 
@@ -107,7 +107,7 @@ instance of the \QuicImplementationProvider{} to be used. This way, the QUIC imp
 selected during runtime. This also allows reusing a suite of functional tests for all
 implementations by simply changing the implementation provider.
 
-\section{Managed QUIC Implementation}
+\section{Managed QUIC Implementation Overview}
 
 The source code for the managed implementation developed in this thesis is located under the
 \filename{System.Net.Quic/src/System/Net/Quic/Implementations/Managed/} subdirectory.
@@ -144,8 +144,6 @@ The implementation is exposed using the \ManagedQuicListener{}, \ManagedQuicConn
 \ManagedQuicStream{} implementation provider classes and the \ManagedQuicImplementationProvider{}
 factory. The source code for these classes can be found in the root directory of the implementation.
 
-\subsection{Implementation Overview}
-
 The high-level architecture has been described in \autoref{sec:03-high-level-architecture}. This and
 following sections will provide further implementation details. The class diagram in
 \autoref{fig:05-high-level-class-diagram} shows the releationship between the key architecture
@@ -170,30 +168,17 @@ classes which were also mentioned in \autoref{fig:03-architecture} and
 
 \begin{myFigure}{fig:05-high-level-class-diagram}{Relationship between key classes of managed QUIC implementation}
 
-\resizebox{0.87\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
+\resizebox{0.80\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
 
 \end{myFigure}
 
-\subsection{ManagedQuicConnection Implementation}
+\section{Supporting Data Structures}
 
-The \ManagedQuicConnection{} class implements the stateful QUIC connection logic which makes up most
-of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
-separated by area into multiple files, as outlined previously in
-\autoref{lst:05-managed-quic-structure}.
-
-\subsection{Matching QUIC Packets to Connections}
-
-\subsection{ManagedQuicListener Implementation}
-
-\subsection{ManagedQuicStream Implementation}
-
-\subsection{Supporting Data Structures}
-
-The QUIC implementation requires a few specialized data structures.
+The QUIC implementation requires a few specialized data structures for internal implementation.
 
 \todo{should this be in analysis or documentation?}
 
-\subsubsection{RangeSet}
+\subsection{RangeSet}
 
 Efficient representation of acknowledged ranges of packet numbers and maintaining information about
 which parts of the QUIC stream have been sent or acknowledged require a data structure capable of
@@ -201,11 +186,11 @@ efficiently performing set operations on ranges of integers. The \RangeSet{} cla
 set.
 
 It is expected that the number of ranges in one \RangeSet{} instance will be rather small. Therefore
-our implementation uses a sorted \class{List<T>} instance to store individual ranges. The ranges
+our implementation uses a sorted \ListOf{\class{T}} instance to store individual ranges. The ranges
 themselves are represented by \class{RangeSet.\allowbreak{}Range} struct which contains the first and last
 element represented by the range.
 
-\subsubsection{PacketNumberWindow}
+\subsection{PacketNumberWindow}
 
 The \PacketNumberWindow{} class is used to test if QUIC packet the given packet number has already
 been received. Internally, it contains two 64-bit fields: a bitmask marking the received bits and an
@@ -225,6 +210,279 @@ number window is sufficient.
 
 \todo{possibly include segmented ArrayBuffer, if I decide to implement it myself}
 
+\section{ManagedQuicConnection Implementation}
+
+The \ManagedQuicConnection{} class implements the stateful QUIC connection logic which makes up most
+of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
+separated by area into multiple files, as outlined previously in
+\autoref{lst:05-managed-quic-structure}:
+
+\todo{maybe remove this list}
+
+\begin{itemize}
+
+  \litem{Public API} Implementation of the public API methods inherited from the \QuicConnectionProvider{} class.
+
+  \litem{Packets} Processing individual QUIC packets, applying and removing the packet protection, generating packets to be sent.
+
+  \litem{Frames} Processing individual QUIC frames, and generating frames for outgoing packets.
+
+  \litem{Stream} Management of created QUIC streams and flow control limits.
+
+  \litem{Recovery} Tracking of sent QUIC packets, handling of acknowlegements and packet loss. Congestion window management.
+
+\end{itemize}
+
+Following subsections describe the major parts of the implementation.
+
+\subsection{Integration with Socket Management}
+
+The \ManagedQuicConnection{} implementation is separated from socket IO management. Also, to allow
+for deterministic unit testing, the implementation does not maintain an internal timer that would
+automatically invoke some logic on expiration. Instead, all interactions with a \Socket{} are driven
+externally by a \QuicConnectionContext{} class which maintains a background processing thread for
+handling timeouts and sending and receiving of QUIC packets. The interface used by
+\QuicConnectionContext{} consists of following members on \ManagedQuicConnection{}:
+
+\begin{description}
+
+  \ditemproperty[\enum]{QuicConnectionState}{ConnectionState}{\propget} The current state of the connection. Used to detect transitions to, e.g., connected state or closed state.
+
+  \ditemmethod[\keyword]{void}{SendData}{\QuicWriter{},\keyword{out} \class{EndPoint}, \class{QuicSocketContext.SendContext}}
+  Allows the connection to write a UDP datagram to be sent into the \QuicWriter{} instance and specify the \class{EndPoint} to which the UDP datagram should be sent. The \class{SendContext} instance contains additional data like the current timestamp.
+
+  \ditemmethod[\keyword]{void}{ReceiveData}{\QuicReader{}, \class{EndPoint}, \class{QuicSocketContext.RecvContext}}
+  Processes a datagram from the provided \QuicReader{} instance. The \class{Recv\allowbreak{}Context} instance contains additional data like current timestamp.
+
+  \ditemmethod[\keyword]{long}{GetNextTimerTimestamp}{}
+  Retrieves the timestamp when the next internal timer of expires. Examples of such timer are loss detection timer, draining timer before closing the connection, or pacing timer for evening out the outbound packet flow. When the timer expires, the \ManagedQuicConnection{} instance may have more data to send.
+
+\end{description}
+
+The value of \method{GetNextTimerTimestamp} is then used to suspend the background processing thread
+in order not to consume CPU resources. The background processing thread waits until either the timer
+expires using \texttt{\class{Task}.\method{Delay}()} or until a new QUIC packet arrives. However,
+some application code actions like writing data to stream require interrupting the
+\texttt{\class{Task}.\method{Delay}()} wait. This is achieved by calling the
+\texttt{\QuicConnectionContext{}.\method{WakeUp}()} method from the \ManagedQuicConnection{}.
+
+\subsection{Managing Packet Number Spaces}
+
+The \ManagedQuicConnection{} class maintains an internal array of three \PacketNumberSpace{}
+instances which encapsulate all relevant for state individual packet number spaces. The data
+maintained in the \PacketNumberSpace{} include:
+
+\begin{itemize}
+
+  \item next packet number to be sent,
+
+  \item \PacketNumberWindow{} of received packet numbers,
+
+  \item largest received packet number and timestamp when the packet was received,
+
+  \item \RangeSet{} of received packet numbers that are not yet acknowledged,
+
+  \item whether an \gls{ack-eliciting-packet} was received and an \ACK{} needs to be sent,
+
+  \item \CryptoSeal{} instances for protecting and unprotecting QUIC packets, and
+
+  \item \SendStream{} and \ReceiveStream{} for cryptographic data from TLS to be sent in \CRYPTO{} frames.
+
+\end{itemize}
+
+The data in \PacketNumberSpace{}s is updated by the \ManagedQuicConnection{} each time a QUIC packet
+is sent or received.
+
+\subsection{Packet Loss Detection, Recovery and Congestion Control}
+
+The implementation of loss detection and recovery are delegated to \RecoveryController{} class to
+allow easier testing. Each sent packet is represented by an instance of \SentPacket{} which contains
+packet information relevant to loss detection and recovery, such as packet number, timestamp when
+the packet was sent, acked packet number ranges, packet size, and list of data ranges sent in
+\STREAM{} frames.
+
+Similarly to \PacketNumberSpace{} class used to maintain connection-wide state for each packet
+number space, the \RecoveryController{} maintains an array of
+\texttt{\RecoveryController{}.\PacketNumberSpace{}} instances which contain about each packet number
+space that are relevant only for recovery purposes. These include:
+
+\begin{itemize}
+
+  \item largest packet number acknowledged by the peer,
+
+  \item timestap of last \gls{ack-eliciting-packet} sent,
+
+  \item \SentPacket{}s awaiting acknowlegement,
+
+  \item \SentPacket{}s that are newly acknowledged, and
+
+  \item \SentPacket{}s that are newly considered lost,
+
+\end{itemize}
+
+Additionally, the \RecoveryController{} maintains some data that is shared across all packet number
+spaces. In addition to congestion window management, \RecoveryController{} also implements These are
+mostly data relevant for congestion control algorithm and \textit{\gls{packet-pacing}} --- a mechanism that
+evens out outgoing packets to prevent micro bursts. The data managed by \RecoveryController{} itself
+include:
+
+\begin{itemize}
+
+  \item estimates of the current round trip time,
+
+  \item timestamp of the next packet loss event,
+
+  \item timestamp when the last UDP datagram was sent,
+
+  \item number of bytes currently in-flight,
+
+  \item current size of the congestion window, and
+
+  \item \ICongestionController{} instance implementing the selected algorithm for congestion control.
+
+\end{itemize}
+
+The main interface methods exposed to the \ManagedQuicConnection{} implementation are:
+
+\begin{description}
+
+      \ditemproperty[\keyword]{long}{LossRecoveryTimer}{\propget}
+        Timestamp when the next packet loss will occur unless an \ACK{} from peer is received.
+
+      \ditemmethod[\keyword]{void}{OnLossDetectionTimeout}{}
+        Performs loss detection and populates collections of \SentPacket{} instances on appropriate \PacketNumberSpace{} instance with packets which are now considered lost.
+
+      \ditemmethod[\keyword]{void}{OnPacketSent}{\enum{PacketSpace},\SentPacket{}}
+        Registers the \SentPacket{} instance as sent and tracks it in loss detection algorithm.
+
+      \ditemmethod[\keyword]{void}{OnAckReceived}{\enum{PacketSpace}, \RangeSet{}}
+        Acknowledges packet numbers from provided \RangeSet{} and moves appropriate \SentPacket{} instances the collection of newly acknowledged packets.
+
+      \ditemmethod[\keyword]{int}{GetSendingAllowance}{\Long}
+        Gets the maximum size of a UDP datagram that the pacer will allow to be sent at the given timestamp.
+
+      \ditemmethod[\keyword]{long}{GetPacingTimerForNextFullPacket}{}
+        Gets timestamp when the pacer will allow sending next QUIC packet of maximum size\footnote{The maximum size of an outgoing QUIC packet depends on multiple factors. It must be small enough in order to not cause fragmentation of the UDP datagram by lower network layers. An upper limit on the UDP datagram size can be also set during handshake by the peer using an appropriate transport parameter.}.
+
+\end{description}
+
+\subsection{QUIC Stream Management}
+
+The management of QUIC streams is delegated to \StreamCollection{} class. The \StreamCollection{}
+tracks already created streams by their type and checks that maximum number of created streams is
+not exceeded by either endpoint. It also implements efficient lookup of \ManagedQuicStream{}
+instances by their Stream ID and tracks queues of streams which have QUIC frames to be sent in the
+following QUIC packets.
+
+The \StreamCollection{} class maintains two independent queues of \ManagedQuicStream{} instances:
+
+\begin{itemize}
+
+  \litem{Flushable} Streams that have data to send that is within the flow control limits on that stream.
+
+  \litem{Updateable} Streams for which some other than \STREAM{} frame needs to be sent, this includes updating flow control limits or aborting the stream.
+
+\end{itemize}
+
+The reasoning for separate queue for flushable streams is that when composing a packet, \STREAM{}
+frames are the last frames written into the QUIC packet and fill all remaining space in the
+datagram. Processing the updateable queue first ensures that updates for all updateable streams are
+sent as soon as possible.
+
+\subsection{Packet Encryption}
+
+Applying and removing packet protection is delegated to \CryptoSeal{} class, as described in
+\autoref{sec:03-packet-protection}. The \CryptoSeal{} class itself implements only the logic which
+is independent of the specific \gls{aead} cipher used. The steps which are specific to each
+\gls{aead} cipher, such as the actual in-place encryption and decryption and calculating the header
+protection mask, are delegeated to an implementation of \CryptoSealAlgorithm{} abstract class. Each
+supported \gls{aead} cipher has its own \CryptoSealAlgorithm{} implementation.
+
+The interface exposed by \CryptoSeal{} to the \ManagedQuicConnection{} consists of following
+methods:
+
+\begin{description}
+
+    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\byte{}},\Int{},\Int{},\Long{}}
+        Applies packet payload protection and writes \gls{aead} integrity tag at the end of the packet.
+
+    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\byte{}},\Int{}}
+        Applies header protection.
+
+    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\byte{}},\Int{}}
+        Removes header protection.
+
+    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\byte{}},\Int{},\Int{},\Long{}}
+        Attempts to remove the payload protection, returns \keyword{true} on success.
+
+\end{description}
+
+The meaning of the method arguments has been left out for brevity but their purpose should be
+evident from their usage in source code.
+
+\subsection{Incoming QUIC Packet Processing}
+
+The majority of the \ManagedQuicConnection{} implementation is focused on processing QUIC packets
+and the QUIC frames they contain. Processing of a QUIC packet can end with three possible results,
+which are represented by \ProcessPacketResult{} enum:
+
+\begin{itemize}
+
+  \litem[]{\texttt{Ok}} Packet processed without errors.
+
+  \litem[]{\texttt{DropPacket}} Packet should be discarded without informing the peer.
+
+  \litem[]{\texttt{Error}} Received packet violates the protocol. Rest of the UDP Datagram cannot be processed and the connection will be closed with an error code.
+
+\end{itemize}
+
+The process of receiving the UDP datagram with QUIC packets begins in the \texttt{\ManagedQuicConnection{}.\method{ReceiveData}}
+method. The individual QUIC packets are processed independently one after another using following
+steps:
+
+\begin{enumerate}
+
+  \item detect the packet type
+
+  \item remove packet protection
+
+  \item parse and validate the packet header fields
+
+  \item check if the packet with same packet number has already been received
+
+  \item register the packet for future acknowlegement
+
+  \item parse and process all contained QUIC frames
+
+\end{enumerate}
+
+Because the parsed QUIC frames are represented using \keyword{ref struct}s (as explained in
+\autoref{sec:03-data-representation}), each frame is processed immediately after being parsed,
+independently of the other QUIC frames. The code which processes individual frames is organized
+into separate functions, one for each frame type for better maintainability.
+
+\subsection{Generating Outgoing QUIC Packets}
+
+The logic which generates outgoing UDP datagrams starts in the
+\texttt{\ManagedQuicConnection{}.\method{SendData}} method. When generating outgoing packets, the
+implementation must first determine whether it has any data to send and if so, in which QUIC packet
+type it should be sent. This logic is implemented in the
+\texttt{\ManagedQuicConnection{}.\method{GetWriteLevel}} method. Once the packet type to be sent is
+known, the generation of the actual QUIC packet consists of following steps:
+
+\begin{enumerate}
+
+  \item determine the maximum size of the packet that can be sent
+
+  \item
+
+\end{enumerate}
+
+\subsection{TLS Integration}
+
+\section{ManagedQuicListener Implementation}
+
+\section{ManagedQuicStream Implementation}
 
 \section{Tests Implementation}
 
