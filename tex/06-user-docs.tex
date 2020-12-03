@@ -131,9 +131,9 @@ After configuring the variables check the output of the \verb|dotnet --info| com
 \autoref{sec:06-local-dotnet}. Note that the listing contains version numbers valid at the time of
 writing this text and the SDK installer would be updated since then to a newer version.
 
-\todo{this has been shortened and greyed out}
+\todo{put DOTNET_ROOT in bold as it is the most important part of the listing, mention it in preceding paragraph}
 
-\begin{myListingVerbatim}[Output of the \texttt{dotnet --info} command in configured environment]{lst:06-dotnet-info-output}{Output of the \texttt{dotnet --info} command in correctly configured environment. The unimportant portions of the output in grey has been left out brevity.}
+\begin{myListingVerbatim}[Output of the \texttt{dotnet --info} command in configured environment]{lst:06-dotnet-info-output}{Output of the \texttt{dotnet --info} command in correctly configured environment. The unimportant portions of the output in grey has been left out brevity}
 > dotnet --info
 &color{colorunimportant}.NET SDK (reflecting any global.json):
 &color{colorunimportant} ...
@@ -145,12 +145,12 @@ writing this text and the SDK installer would be updated since then to a newer v
 &color{colorunimportant} ...
 
 .NET SDKs installed:
-  6.0.100-alpha.1.20563.2 [C:\dotnet\sdk]
+  6.0.100-alpha.1.20563.2 [&textbf{C:\dotnet\sdk}]
 
 .NET runtimes installed:
-  Microsoft.AspNetCore.App 6.0.0-alpha.1.20526.6 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
-  Microsoft.NETCore.App 6.0.0-alpha.1.20560.10 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
-  Microsoft.WindowsDesktop.App 6.0.0-alpha.1.20560.7 [C:\dotnet\shared\&textcolor{colorunimportant}{...}]
+  Microsoft.AspNetCore.App 6.0.0-alpha.1.20526.6 [&textbf{C:\dotnet\shared\}&textcolor{colorunimportant}{...}]
+  Microsoft.NETCore.App 6.0.0-alpha.1.20560.10 [&textbf{C:\dotnet\shared\}&textcolor{colorunimportant}{...}]
+  Microsoft.WindowsDesktop.App 6.0.0-alpha.1.20560.7 [&textbf{C:\dotnet\shared\}&textcolor{colorunimportant}{...}]
 
 &color{colorunimportant}To install additional .NET runtimes or SDKs:
 &color{colorunimportant}  https://aka.ms/dotnet-download

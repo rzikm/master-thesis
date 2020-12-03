@@ -695,8 +695,8 @@ invoke the provided callback for further assertions.
 
         initial.|ShouldHaveFrame|<CryptoFrame>(crypto =>
         {
-            Assert.Equal(0, crypto.Offset);
-            Assert.NotEmpty(crypto.CryptoData);
+            Assert.|Equal|(0, crypto.Offset);
+            Assert.|NotEmpty|(crypto.CryptoData);
         });
     }
 \end{myListingCsharp}

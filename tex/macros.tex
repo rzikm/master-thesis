@@ -161,7 +161,7 @@
 \newcommand\litem[2][\itshape]{\item{#1 #2}:}
 
 % special item for description lists to make the description go on the next line
-\newcommand\ditem[1]{\pagebreak[3] \item[#1] \leavevmode \\ }
+\newcommand\ditem[1]{\pagebreak[3] \item[{\parbox[t]{0.98\textwidth}{#1}}] \leavevmode \\ }
 \newcommand\ditemWithComment[2]{\pagebreak[3] \item[#1] \hfill \textit{(#2)} \leavevmode \\}
 
 % macro for typesetting library names
@@ -208,7 +208,7 @@
   \endfigure{}
 }
 
-\newenvironment{mySubFigure}[3]{% [width, label, caption]
+\newenvironment{mySubfigure}[3]{% [width, label, caption]
   \renewcommand{\figureArgs}{\caption{#3}\label{#2}}%
   \subfigure[H]{#1}
   \centering
@@ -289,7 +289,7 @@
   \lstset{
     caption={#3},
     label={#2},
-    language=csh,
+    language=[Sharp]C,
     morekeywords={
       abstract, event, new, struct,
       as, explicit, null, switch,
@@ -309,12 +309,28 @@
       delegate, internal, short, void,
       do, is, sizeof, [2]while,
       double, lock, stackalloc,
-      [2]else, long, static,
+      [2]else, long, static, unmanaged, Cdecl,
       enum, namespace, string, var},
     types={#4},
     enums={#5},
+    %morecomment=[s]{//}{},
     morestring=*[s]{\$"}{"},
     moredelim=*[s]{\{}{\}},
+    moredelim=[is][\color{codecolormethod}]{|}{|},
+    #1
+  }
+}{%
+  \endminipage
+}
+
+\lstnewenvironment{myListingC}[5][]{% [extra], label, caption, types, enums
+  \noindent\minipage{\linewidth}\medskip
+  \lstset{
+    caption={#3},
+    label={#2},
+    language=C,
+    types={#4},
+    enums={#5},
     moredelim=[is][\color{codecolormethod}]{|}{|},
     #1
   }
@@ -394,8 +410,8 @@
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\genericClass}[2]{\texttt{\textcolor{codecolorclass}{#1}<{#2}>}}
-\newcommand{\interface}[1]{{\color{codecolorinterface}\texttt{#1}}}
-\newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{#1}}}
+\newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
+\newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{\textbf{#1}}}}
 \newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
 \newcommand{\method}[1]{{\color{codecolormethod}{\texttt{#1}}}}
 \newcommand{\enum}[1]{{\color{codecolorenum}{\texttt{#1}}}}
@@ -423,13 +439,13 @@
 }
 
 \newcommand{\ditemmethod}[4][\class]% [type typeset] type, name, args (types only)
-  {\ditem{\ditemsrcsize\texttt{#1{#2} \method{#3}(\ditemmethodmakearglist{#4})}}}
+  {\ditem{\ditemsrcsize\texttt{#1{#2} \method{#3}(#4)}}}
 
 \newcommand{\ditemmethodWithComment}[5][\class]% [type typeset] type, name, args (types only)
-  {\ditemWithComment{\ditemsrcsize\texttt{#1{#2} \method{#3}(\ditemmethodmakearglist{#4})}}{#5}}
+  {\ditemWithComment{\ditemsrcsize\texttt{#1{#2} \method{#3}(#4)}}{#5}}
 
 \newcommand{\ditemctor}[2]% name, args
-  {\ditem{\ditemsrcsize\texttt{\method{#1}(\ditemmethodmakearglist{#2})}}}
+  {\ditem{\ditemsrcsize\texttt{\method{#1}(#2)}}}
 
 \newcommand{\ditemproperty}[4][\class]% [type typeset] type, name, get/set
   {\ditem{\ditemsrcsize\texttt{#1{#2} \method{#3} #4}}}
@@ -478,6 +494,7 @@
 \newcommand{\ValueTaskOf}[1]{\genericClass{ValueTask}{#1}}
 \newcommand{\MemoryOf}[1]{\genericClass{Memory}{#1}}
 \newcommand{\ListOf}[1]{\genericClass{List}{#1}}
+\newcommand{\ReadOnlySpanOf}[1]{\genericClass{ReadOnlySpan}{#1}}
 \newcommand{\ReadOnlyMemoryOf}[1]{\genericClass{ReadOnlyMemory}{#1}}
 \newcommand{\ReadOnlySequenceOf}[1]{\genericClass{ReadOnlySequence}{#1}}
 \newcommand{\SpanOf}[1]{\genericClass{Span}{#1}}
@@ -511,6 +528,15 @@
 \newcommand{\ICongestionController}{\interface{ICongestion\allowbreak{}Controller}}
 \newcommand{\StreamCollection}{\class{Stream\allowbreak{}Collection}}
 \newcommand{\ProcessPacketResult}{\enum{Process\allowbreak{}Packet\allowbreak{}Result}}
+\newcommand{\TransportParameters}{\class{Transport\allowbreak{}Parameters}}
+\newcommand{\ITls}{\interface{ITls}}
+\newcommand{\QuicTlsProvider}{\class{QuicTlsProvider}}
+\newcommand{\MockQuicTlsProvider}{\class{MockQuicTlsProvider}}
+\newcommand{\OpenSslQuicTlsProvider}{\class{OpenSslQuicTlsProvider}}
+\newcommand{\OpenSslTls}{\class{OpenSslTls}}
+\newcommand{\MockTls}{\class{MockTls}}
+\newcommand{\SSL}{\class{SSL}}
+\newcommand{\SSLCTX}{\class{SSL\_CTX}}
 
 \newcommand{\QuicConnection}{\class{Quic\allowbreak{}Connection}}
 \newcommand{\QuicStream}{\class{Quic\allowbreak{}Stream}}
@@ -520,6 +546,7 @@
 \newcommand{\QuicStreamProvider}{\class{Quic\allowbreak{}Stream\allowbreak{}Provider}}
 \newcommand{\QuicListenerProvider}{\class{Quic\allowbreak{}Listener\allowbreak{}Provider}}
 \newcommand{\QuicImplementationProvider}{\class{Quic\allowbreak{}Implementation\allowbreak{}Provider}}
+\newcommand{\QuicImplementationProviders}{\class{Quic\allowbreak{}Implementation\allowbreak{}Providers}}
 
 \newcommand{\MsQuicConnection}{\class{MsQuic\allowbreak{}Connection}}
 \newcommand{\MsQuicStream}{\class{MsQuic\allowbreak{}Stream}}

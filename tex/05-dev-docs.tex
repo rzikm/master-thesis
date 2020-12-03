@@ -168,15 +168,13 @@ classes which were also mentioned in \autoref{fig:03-architecture} and
 
 \begin{myFigure}{fig:05-high-level-class-diagram}{Relationship between key classes of managed QUIC implementation}
 
-\resizebox{0.80\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
+\resizebox{\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
 
 \end{myFigure}
 
 \section{Supporting Data Structures}
 
 The QUIC implementation requires a few specialized data structures for internal implementation.
-
-\todo{should this be in analysis or documentation?}
 
 \subsection{RangeSet}
 
@@ -192,23 +190,52 @@ element represented by the range.
 
 \subsection{PacketNumberWindow}
 
+\todo{a figure was added, reread entire subsection}
+
 The \PacketNumberWindow{} class is used to test if QUIC packet the given packet number has already
-been received. Internally, it contains two 64-bit fields: a bitmask marking the received bits and an
-integer representing the packet number represented by the least significant bit of the mask. Marking
-a packet number as received consists of setting a particular bit in the mask, shifting the other
-bits if necessary. \todo{is this clear or does it need an illustration? YES, illustration!}
+been received. Internally, it contains two 64-bit \keyword{ulong} fields: a bitmask marking the
+received packet numbers and the offset of the window. All packet numbers above the window are
+considered not received, all packet numbers below the window are considered received. Packet number
+inside the window are considered received if the corresponding bit is set to 1. When a new packet
+number is received, the window is shifted, if necessary, and the corresponding bit is set.
 
-The data structure can maintain state only for 64 consecutive packet numbers. This leads to packets
-with packet number under the window being defensively marked as already received and, therefore,
-discarded. The tollerance of the loss detection algorithm outlined in
-\autoref{sec:02-loss-detection} allow way smaller packet reordering. In fact, the specification
-suggests maximum reordering tollerance of 3, meaning that receiving a packet number should mark all
-packets as lost except the previous two. Therefore, it is very likely that any newly received packet
-with packet number under the window maintained by the \PacketNumberWindow{} instance is already
-deemed lost and its data retransmitted in a different packet. Thus the width of 64 of the packet
+\autoref{fig:05-packet-number-window} illustrates how concept on an 8-bit window. \autoref{fig:05a}
+shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When packet 10 is
+received, the window is shifted by 3 so that the highest bit corresponds to the packet number 10 and
+is set to 1, as shown in \autoref{fig:05b}. \autoref{fig:05c} shows the state of the
+\PacketNumberWindow{} when 15 is received next. The window needs to be shifted by another 5, moving
+some unreceived packet numbers outside the window (marked by red color).
+
+\begin{myFigure}{fig:05-packet-number-window}{Maintaining window of received packet numbers}
+
+  \begin{mySubfigure}{\textwidth}{fig:05a}{State after receiving packets 0--5}
+    offset = 0\hspace{1cm}...\texttt{\textcolor{colorunimportant}{00000000000000}\fbox{00111111}}
+  \end{mySubfigure}
+
+  \medskip
+
+  \begin{mySubfigure}{\textwidth}{fig:05b}{State after receiving packet 10}
+    offset = 3\hspace{1cm}...\texttt{\textcolor{colorunimportant}{00000000000}\fbox{10000111}\textcolor{colorunimportant}{111}}
+  \end{mySubfigure}
+
+  \medskip
+
+  \begin{mySubfigure}{\textwidth}{fig:05c}{State after receiving packet 15}
+    offset = 8\hspace{1cm}...\texttt{\textcolor{colorunimportant}{000000}\fbox{10000100}\textcolor{red}{11}\textcolor{colorunimportant}{111111}}
+  \end{mySubfigure}
+
+\end{myFigure}
+
+The last part of the figure above demonstrates that the data structure may falsely label some old
+packet numbers as already received. In such a case the packets are simply discarded by the
+\ManagedQuicConnection{}. For this to happen, at least 64 other packets must be correctly received.
+However, the tollerance of the loss detection algorithm outlined in \autoref{sec:02-loss-detection}
+allows only significantly smaller packet reordering. The specification suggests maximum reordering
+tollerance of 3, meaning that receiving a packet number should mark all packets as lost except the
+previous two. Therefore, it is very likely that any newly received packet with packet number under
+the window maintained by the \PacketNumberWindow{} instance is already considered lost by the sender
+and its data have been retransmitted in a different packet. Thus the width of 64 of the packet
 number window is sufficient.
-
-\todo{possibly include segmented ArrayBuffer, if I decide to implement it myself}
 
 \section{ManagedQuicConnection Implementation}
 
@@ -216,8 +243,6 @@ The \ManagedQuicConnection{} class implements the stateful QUIC connection logic
 of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
 separated by area into multiple files, as outlined previously in
 \autoref{lst:05-managed-quic-structure}:
-
-\todo{maybe remove this list}
 
 \begin{itemize}
 
@@ -248,7 +273,7 @@ handling timeouts and sending and receiving of QUIC packets. The interface used 
 
   \ditemproperty[\enum]{QuicConnectionState}{ConnectionState}{\propget} The current state of the connection. Used to detect transitions to, e.g., connected state or closed state.
 
-  \ditemmethod[\keyword]{void}{SendData}{\QuicWriter{},\keyword{out} \class{EndPoint}, \class{QuicSocketContext.SendContext}}
+  \ditemmethod[\keyword]{void}{SendData}{\QuicWriter{}, \keyword{out} \class{EndPoint}, \class{QuicSocketContext.SendContext}}
   Allows the connection to write a UDP datagram to be sent into the \QuicWriter{} instance and specify the \class{EndPoint} to which the UDP datagram should be sent. The \class{SendContext} instance contains additional data like the current timestamp.
 
   \ditemmethod[\keyword]{void}{ReceiveData}{\QuicReader{}, \class{EndPoint}, \class{QuicSocketContext.RecvContext}}
@@ -321,10 +346,11 @@ space that are relevant only for recovery purposes. These include:
 \end{itemize}
 
 Additionally, the \RecoveryController{} maintains some data that is shared across all packet number
-spaces. In addition to congestion window management, \RecoveryController{} also implements These are
-mostly data relevant for congestion control algorithm and \textit{\gls{packet-pacing}} --- a mechanism that
-evens out outgoing packets to prevent micro bursts. The data managed by \RecoveryController{} itself
-include:
+spaces. These are mostly data relevant for congestion control algorithm and
+\textit{\gls{packet-pacing}}. Packet-pacing is a mechanism that evens out outgoing packets to
+prevent \textit{\gls{micro-bursting}} --- a phenomenon in which packets arrive in short rapid bursts which may
+overflow the receiver and cause packet loss. The data managed by \RecoveryController{}
+itself include:
 
 \begin{itemize}
 
@@ -352,7 +378,7 @@ The main interface methods exposed to the \ManagedQuicConnection{} implementatio
       \ditemmethod[\keyword]{void}{OnLossDetectionTimeout}{}
         Performs loss detection and populates collections of \SentPacket{} instances on appropriate \PacketNumberSpace{} instance with packets which are now considered lost.
 
-      \ditemmethod[\keyword]{void}{OnPacketSent}{\enum{PacketSpace},\SentPacket{}}
+      \ditemmethod[\keyword]{void}{OnPacketSent}{\enum{PacketSpace}, \SentPacket{}}
         Registers the \SentPacket{} instance as sent and tracks it in loss detection algorithm.
 
       \ditemmethod[\keyword]{void}{OnAckReceived}{\enum{PacketSpace}, \RangeSet{}}
@@ -403,16 +429,16 @@ methods:
 
 \begin{description}
 
-    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\byte{}},\Int{},\Int{},\Long{}}
+    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\byte{}} packet, \Int{} pnOffset, \Long{} pn}
         Applies packet payload protection and writes \gls{aead} integrity tag at the end of the packet.
 
-    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\byte{}},\Int{}}
+    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\byte{}} packet, \Int{} pnOffset}
         Applies header protection.
 
-    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\byte{}},\Int{}}
+    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\byte{}} packet, \Int{} pnOffset}
         Removes header protection.
 
-    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\byte{}},\Int{},\Int{},\Long{}}
+    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\byte{}} packet, \Int{} pnOffset, \Long{} expectedPn}
         Attempts to remove the payload protection, returns \keyword{true} on success.
 
 \end{description}
@@ -442,17 +468,17 @@ steps:
 
 \begin{enumerate}
 
-  \item detect the packet type
+  \item detect the packet type,
 
-  \item remove packet protection
+  \item remove packet protection,
 
-  \item parse and validate the packet header fields
+  \item parse and validate the packet header fields,
 
-  \item check if the packet with same packet number has already been received
+  \item check if the packet with same packet number has already been received,
 
-  \item register the packet for future acknowlegement
+  \item register the packet for future acknowlegement, and
 
-  \item parse and process all contained QUIC frames
+  \item parse and process all contained QUIC frames.
 
 \end{enumerate}
 
@@ -463,6 +489,8 @@ into separate functions, one for each frame type for better maintainability.
 
 \subsection{Generating Outgoing QUIC Packets}
 
+\todo{this section onwards is new}
+
 The logic which generates outgoing UDP datagrams starts in the
 \texttt{\ManagedQuicConnection{}.\method{SendData}} method. When generating outgoing packets, the
 implementation must first determine whether it has any data to send and if so, in which QUIC packet
@@ -472,13 +500,198 @@ known, the generation of the actual QUIC packet consists of following steps:
 
 \begin{enumerate}
 
-  \item determine the maximum size of the packet that can be sent
+  \item determine the maximum size of the packet that can be sent,
 
-  \item
+  \item compose the packet header,
+
+  \item write QUIC frames into the packet payload up to the available packet size,
+
+  \item add padding to the packet if necessary\footnote{QUIC requires valid QUIC packets to be at least 21 bytes.},
+
+  \item apply packet protection, and
+
+  \item add the packet to be tracked by the \RecoveryController{}.
 
 \end{enumerate}
 
-\subsection{TLS Integration}
+The order in which the QUIC frames are generated is based on the relative importance of the frames
+to make sure that the important packets fit into the packet and are not unnecessarily postponed.
+Most importantly, \ACK{} frames are written first to not delay acknowlegements and \STREAM{} frames
+are written last to use up the remainder of the available space.
+
+\section{TLS Integration}
+
+The TLS handshake related logic of the \ManagedQuicConnection{} class is delegated to an
+implementation of \ITls{} interface. The \ITls{} interface defines methods needed by
+\ManagedQuicConnection{}. These methods include:
+
+\begin{description}
+
+  \ditemmethod[\keyword]{bool}{TryAdvanceHandshake}{}
+        Advances the TLS handshake by calling methods on the \ManagedQuicConnection{} (listed later).
+
+  \ditemmethod[\keyword]{void}{OnHandshakeDataReceived}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} data}
+    Provides the TLS implementation with data received from the peer via \CRYPTO{} frames.
+
+  \ditemmethod[\enum]{TlsCipherSuite}{GetNegotiatedCipher}{}
+        Gets the identifier of the \gls{aead} cipher that was negotiated during the handshake.
+
+  \ditemmethod{TransportParameters}{GetPeerTransportParameters}{}
+        Returns \TransportParameters{} containing the transport parameters set by the peer for this connection.
+
+  \ditemproperty[\keyword]{bool}{IsHandshakeComplete}{\propget}
+        Returns true if the TLS handshake is considered complete.
+
+\end{description}
+
+Implementations of \ITls{} are expected to maintain a reference to the \ManagedQuicConnection{} and
+call following functions when appropriate:
+
+\begin{description}
+
+  \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} read, \\ \indent{} \ReadOnlySpanOf{\byte{}} write} Provides the \ManagedQuicConnection{} with read
+and write secrets negotiated for the given encryption level. The encryption level refers to one of
+the four encrypted QUIC packet: \texttt{Initial}, \texttt{Handshake}, \texttt{Application} (1-RTT)
+and \texttt{EarlyData} (0-RTT).
+
+  \ditemmethod[\keyword]{void}{AddHandshakeData}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} data}
+Adds TLS handshake data to be sent to the peer via \CRYPTO{} frames. The encryption level specifies
+which QUIC packet should be used to send the \CRYPTO{} frame. This method can be called multiple
+times.
+
+  \ditemmethod[\keyword]{void}{FlushHandshakeData}{} Called after \method{AddHandshakeData} to
+inform \ManagedQuicConnection{} that the handshake data should be sent.
+
+  \ditemmethod[\keyword]{void}{SendTlsAlert}{\enum{EncryptionLevel} level, \Int{} alertCode} When TLS implementation
+encounters an error, this function is used to provide the TLS alert code which is then used to
+construct \CONNECTIONCLOSE{} frame for terminating the connection.
+
+\end{description}
+
+There are two \ITls{} interface implementations:
+
+\begin{itemize}
+
+  \litem[]{\OpenSslTls{}} Backed by modified \libopenssl{} with QUIC enabling API maintained by
+Akamai~\cite{AkamaiOpensslGithub}. This implementation can be used to interoperate with other QUIC implementation and is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.Managed} provider.
+
+  \litem[]{\MockTls{}} Intended to be used when runing functional tests in continuous integration environment where the modified \libopenssl{} library is not available. This implementation cannot be used to interoperate with other QUIC implementations. \MockTls{} is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.ManagedMockTls}.
+
+\end{itemize}
+
+The integration with TLS uses \gls{abstract-factory} to create new instances of \ITls{} when needed.
+The \ManagedQuicImplementationProvider{} instance keeps a reference to \QuicTlsProvider{} which is
+used to create new \ITls{} instances for \ManagedQuicConnection{}s. The concrete factory classes are
+realized by \OpenSslQuicTlsProvider{} and \MockQuicTlsProvider{} classes.
+
+Following subsections describe the two \ITls{} implementations in greater detail.
+
+\subsection{OpenSslTls Implementation}
+
+The \OpenSslTls{} class is a managed wrapper around the \SSL{} class from \libopenssl{} library
+written in C. As per the established practice in the \dotnet{} runtime repository the managed QUIC
+implementation separates the definitions of the \keyword{extern} methods from the \libopenssl{}
+library into a separate \class{Interop.OpenSslQuic} class. The interop code also uses \csharp{}
+function pointers, a new feature available since \dotnet{}~5. More information about \csharp{}
+function pointers and other native code interop improvements done in \dotnet{}~5 can be found on
+Microsoft dev blog~\cite{dotnet5interopimprovements}.
+
+The primary objects used from the \libopenssl{} library are the \SSLCTX{} class which is a top level
+object maintaining global SSL/TLS configuration, and \SSL{} class which represents one SSL/TLS
+session. The \OpenSslTls{} implementation uses one global \SSLCTX{} object, and one \SSL{}
+object for each \OpenSslTls{} instance.
+
+The main part of the QUIC-enabling API exposed by the \libopenssl{} library consists of
+\method{SSL_set_quic_method} function which registers callbacks from the TLS handshake state
+machine. \autoref{lst:05-c-quic-method} lists the definition of the \libopenssl{} QUIC callback
+functions.
+
+\begin{myListingC}{lst:05-c-quic-method}{Callback definitions in OpenSSL library}{ssl_quic_method_st,SSL_QUIC_METHOD,SSL,SSL_CTX,uint8_t,size_t}{OSSL_ENCRYPTION_LEVEL}
+struct ssl_quic_method_st {
+    int (*set_encryption_secrets)(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
+                                  const uint8_t *read_secret,
+                                  const uint8_t *write_secret,
+                                  size_t secret_len);
+    int (*add_handshake_data)(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
+                              const uint8_t *data, size_t len);
+    int (*flush_flight)(SSL *ssl);
+    int (*send_alert)(SSL *ssl, enum OSSL_ENCRYPTION_LEVEL level,
+                      uint8_t alert);
+};
+typedef struct ssl_quic_method_st SSL_QUIC_METHOD;
+
+int |SSL_CTX_set_quic_method|(SSL_CTX *ctx, const SSL_QUIC_METHOD *quic_method);
+\end{myListingC}
+
+\autoref{lst:05-csharp-quic-method} lists the definition of the \class{QuicMethodCallbacks} defined
+by the interop layer of the managed QUIC implementation which mirrors the \class{ssl_quic_method_st}
+on the managed \dotnet{} side. The \class{QuicMethodCallbacks} class uses the \csharp{} function
+pointers to represent unmanaged pointers to \csharp{} functions.
+
+\begin{myListingCsharp}{lst:05-csharp-quic-method}{[\csharp{} mirror of the \class{ssl_quic_method_st} C struct]\csharp{} mirror of the \class{ssl_quic_method_st} C struct. The comments above the fields list C-like definition of the function pointer type.}{DllImport,IntPtr, UIntPtr, StructLayout, QuicMethodCallbacks,Libraries}{OpenSslEncryptionLevel,LayoutKind}
+[DllImport(Libraries.Ssl, EntryPoint = "SSL_set_quic_method")]
+internal static extern unsafe int |SslSetQuicMethod|(IntPtr ssl,
+    QuicMethodCallbacks* methods);
+
+[StructLayout(LayoutKind.Sequential)]
+internal unsafe struct QuicMethodCallbacks
+{
+    //int (*)(IntPtr ssl, OpenSslEncryptionLevel level, byte* readSecret,
+    //        byte* writeSecret, UIntPtr secretLen)
+    internal delegate* unmanaged[Cdecl]<IntPtr, OpenSslEncryptionLevel,
+        byte*, byte*, UIntPtr, int> SetEncryptionSecrets;
+
+    //int (*)(IntPtr ssl, OpenSslEncryptionLevel level, byte* data,
+    //        UIntPtr len)
+    internal delegate* unmanaged[Cdecl]<IntPtr, OpenSslEncryptionLevel,
+        byte*, UIntPtr, int> AddHandshakeData;
+
+    //int (*)(IntPtr ssl)
+    internal delegate* unmanaged[Cdecl]<IntPtr, int> FlushFlight;
+
+    //int (*)(IntPtr ssl, OpenSslEncryptionLevel level, byte alert)
+    internal delegate* unmanaged[Cdecl]<IntPtr, OpenSslEncryptionLevel, byte,
+        int> SendAlert;
+}
+\end{myListingCsharp}
+
+The pointer to \class{QuicMethodCallbacks} structure passed to the \method{SSL_set_quic_method}
+function must be valid throughout the lifetime of the \SSLCTX{} object. Therefore, the \OpenSslTls{}
+class allocates the \class{QuicMethodCallbacks} instance into an unmanaged memory region using the
+\texttt{\class{Marshal}.\method{AllocHGlobal}()} method and stores the resulting pointer in a
+\keyword{private static} field.
+
+In order to be able to create unmanaged function pointers to \csharp{} methods the actual methods
+must be annotated using the \class{UnmanagedCallersOnlyAttribute} specifying that the caller will
+use the \texttt{cdecl} calling convention.
+
+The last piece of the \libopenssl{} callback integration is calling apropriate methods on the
+\ManagedQuicConnection{} class from the callbacks. Because the callbacks are converted to unmanaged
+function pointers, they must be \keyword{static} methods. Their implementation must, therefore,
+translate the \texttt{\SSL{}*} pointer to the original \OpenSslTls{} instance. This is done by
+allocating a \class{GCHandle} for the \OpenSslTls{} instance and storing the unmanaged pointer to
+the handle as user data inside the \SSL{} instance.
+
+\autoref{fig:05-openssl-callback} illustrates the process of calling the \method{AddHandshakeData}
+callback as an example. The \ManagedQuicConnection{} instance tries to advance the TLS handshake by
+calling \method{TryAdvanceHandshake} which in turn calls the \method{SSL_do_handshake} native method
+in the \libopenssl{} library. This invokes the next step in the internal state automaton and as a
+result, the \libopenssl{} calls the static \texttt{\OpenSslTls{}.\method{AddHandshakeData}} method
+which was registered as the \texttt{add_handshake_data} callback. This function retrieves the
+\class{GCHandle} from the \SSL{} instance passed in the callback and invokes the
+\method{AddHandshakeData} method on the original \ManagedQuicConnection{} instance.
+
+\begin{myFigure}{fig:05-openssl-callback}{Callback integration with \libopenssl{} library}
+
+  \resizebox{\linewidth}{!}{\input{img/05-openssl-callback.pdf_tex}}
+
+\end{myFigure}
+
+\subsection{MockTls Implementation}
+
+The \MockTls{} implementation used for running tests without dependency on the \libopenssl{} library
+and is not intended for production usage. The implementation simultes a successful TLS handshake and
+exchanges randomly generated secrets.
 
 \section{ManagedQuicListener Implementation}
 

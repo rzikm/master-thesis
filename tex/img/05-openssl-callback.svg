@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="191.21974mm"
+   height="91.682442mm"
+   viewBox="0 0 191.21974 91.682441"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
+   sodipodi:docname="05-openssl-callback.svg">
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="marker2442"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path2440" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2402"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path2400" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker2046"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path2044" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path1671" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker1946"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1944" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Lend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Lend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path1683" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="506.295"
+     inkscape:cy="94.300501"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     fit-margin-left="0" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-29.548735,-8.0119529)">
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="54.329887"
+       y="21.968866"
+       id="text837"><tspan
+         sodipodi:role="line"
+         id="tspan835"
+         x="54.329887"
+         y="21.968866"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\class{ManagedQuicConnection}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="113.67215"
+       y="21.968866"
+       id="text841"><tspan
+         sodipodi:role="line"
+         id="tspan839"
+         x="113.67215"
+         y="21.968866"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\class{OpenSslTls}</tspan></text>
+    <rect
+       style="fill:#f2f2f2;stroke:#f2f2f2;stroke-width:0.165"
+       id="rect859"
+       width="62.366058"
+       height="91.517441"
+       x="158.31992"
+       y="8.0944529" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="172.68134"
+       y="21.968866"
+       id="text845"><tspan
+         sodipodi:role="line"
+         id="tspan843"
+         x="172.68134"
+         y="21.968866"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\class{SSL}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="206.13223"
+       y="21.968866"
+       id="text849"><tspan
+         sodipodi:role="line"
+         id="tspan847"
+         x="206.13223"
+         y="21.968866"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\class{SSL_CTX}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 54.351678,24.75783 V 99.748114"
+       id="path851"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 113.70152,24.75783 V 99.748114"
+       id="path853"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 172.81018,24.75783 V 99.748114"
+       id="path857"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 206.1957,24.75783 V 99.748114"
+       id="path855"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="189.4442"
+       y="13.192912"
+       id="text863"><tspan
+         sodipodi:role="line"
+         id="tspan861"
+         x="189.4442"
+         y="13.192912"
+         style="font-weight:bold;text-align:center;text-anchor:middle;stroke-width:0.264583">OpenSSL</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="83.926178"
+       y="13.192912"
+       id="text1656"><tspan
+         sodipodi:role="line"
+         id="tspan1654"
+         x="83.926178"
+         y="13.192912"
+         style="font-weight:bold;text-align:center;text-anchor:middle;stroke-width:0.264583">Managed Code</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Mend)"
+       d="M 54.313381,33.614276 H 113.13755"
+       id="path1660"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="84.124184"
+       y="31.913383"
+       id="text2006"><tspan
+         sodipodi:role="line"
+         id="tspan2004"
+         x="84.124184"
+         y="31.913383"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\method{TryAdvanceHandshake}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2046)"
+       d="m 113.64722,39.093301 h 58.49007"
+       id="path2038"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="143.35344"
+       y="37.39241"
+       id="text2042"><tspan
+         sodipodi:role="line"
+         id="tspan2040"
+         x="143.35344"
+         y="37.39241"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\method{SSL_do_handshake}</tspan></text>
+    <g
+       id="g2646"
+       transform="translate(0.17009621,3.4196493)">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none"
+         id="rect2104"
+         width="39.28862"
+         height="10.15624"
+         x="169.68854"
+         y="41.019741"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="189.43138"
+         y="45.699383"
+         id="text2108"><tspan
+           sodipodi:role="line"
+           id="tspan2106"
+           x="189.43138"
+           y="45.699383"
+           style="font-style:italic;text-align:center;text-anchor:middle;stroke-width:0.264583">TLS handshake</tspan><tspan
+           sodipodi:role="line"
+           x="189.43138"
+           y="49.385914"
+           style="font-style:italic;text-align:center;text-anchor:middle;stroke-width:0.264583"
+           id="tspan2110">state automaton</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="82.887367"
+       y="70.934738"
+       id="text2210"><tspan
+         sodipodi:role="line"
+         id="tspan2208"
+         x="82.887367"
+         y="70.934738"
+         style="text-align:start;text-anchor:start;stroke-width:0.264583" /></text>
+    <g
+       id="g2745">
+      <rect
+         style="fill:#ffffff;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none"
+         id="rect2204"
+         width="108.69531"
+         height="22.93261"
+         x="59.353863"
+         y="64.13855"
+         ry="0" />
+      <text
+         xml:space="preserve"
+         style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+         x="61.735725"
+         y="69.083038"
+         id="text2214"><tspan
+           sodipodi:role="line"
+           id="tspan2212"
+           x="61.735725"
+           y="69.083038"
+           style="stroke-width:0.264583">\texttt{\keyword{var} ptr = \class{Interop}.\class{OpenSslQuic}.\method{SslGetExData}(...);}</tspan><tspan
+           sodipodi:role="line"
+           x="61.735725"
+           y="73.933739"
+           style="stroke-width:0.264583"
+           id="tspan2220">\texttt{\keyword{var} handle = \class{GCHandle}.\method{FromIntPtr}(ptr);}</tspan><tspan
+           sodipodi:role="line"
+           x="61.735725"
+           y="78.784439"
+           style="stroke-width:0.264583"
+           id="tspan2216">\texttt{\keyword{var} tls = (\class{OpenSslTls})handle.Target;}</tspan><tspan
+           sodipodi:role="line"
+           x="61.735725"
+           y="83.635139"
+           style="stroke-width:0.264583"
+           id="tspan2218">...</tspan></text>
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2402)"
+       d="M 172.84851,59.941716 H 114.16945"
+       id="path2296"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="143.35344"
+       y="58.240826"
+       id="text2300"><tspan
+         sodipodi:role="line"
+         id="tspan2298"
+         x="143.35344"
+         y="58.240826"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{add_handshake_data}</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2442)"
+       d="M 114.20312,96.169336 H 55.002606"
+       id="path2434"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       x="84.124184"
+       y="94.468445"
+       id="text2438"><tspan
+         sodipodi:role="line"
+         id="tspan2436"
+         x="84.124184"
+         y="94.468445"
+         style="text-align:center;text-anchor:middle;stroke-width:0.264583">\method{AddHandshakeData}</tspan></text>
+  </g>
+</svg>
