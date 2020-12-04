@@ -116,17 +116,17 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="2.8"
-     inkscape:cx="451.91663"
-     inkscape:cy="98.793741"
+     inkscape:zoom="1.979899"
+     inkscape:cx="308.99504"
+     inkscape:cy="101.29499"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1005"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-height="1017"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1" />
   <metadata
      id="metadata5">
@@ -136,7 +136,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -146,28 +146,33 @@
      id="layer1"
      transform="translate(-28.580786,-13.428533)">
     <rect
-       style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+       style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264583"
        id="rect849"
-       width="43.873775"
-       height="28.268545"
+       width="45.611027"
+       height="28.268543"
        x="28.713078"
        y="13.560824"
        ry="0" />
     <text
        xml:space="preserve"
        style="font-weight:bold;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-       x="50.69265"
+       x="51.616173"
        y="18.009026"
        id="text835"><tspan
          sodipodi:role="line"
          id="tspan833"
-         x="50.69265"
+         x="51.616173"
          y="18.009026"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSeal</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{CryptoSeal}</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="m 28.783497,19.735851 h 43.75888"
+       d="m 28.783497,19.735851 45.429315,0"
        id="path851"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DiamondLend)"
+       d="M 77.479541,24.106072 H 100.63794"
+       id="path1457"
        sodipodi:nodetypes="cc" />
     <text
        xml:space="preserve"
@@ -179,80 +184,80 @@
          x="31.379141"
          y="25.766964"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
-         id="tspan883">- ProtectHeader()</tspan><tspan
+         id="tspan883">- \texttt{ProtectHeader()}</tspan><tspan
          sodipodi:role="line"
          x="31.379141"
          y="29.453495"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
-         id="tspan885">- UnprotectHeader()</tspan><tspan
+         id="tspan885">- \texttt{UnprotectHeader()}</tspan><tspan
          sodipodi:role="line"
          x="31.379141"
          y="33.140026"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
-         id="tspan887">- ProtectPayload()</tspan><tspan
+         id="tspan887">- \texttt{ProtectPayload()}</tspan><tspan
          sodipodi:role="line"
          x="31.379141"
          y="36.826561"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
-         id="tspan889">- UnprotectPayload()</tspan></text>
+         id="tspan889">- \texttt{UnprotectPayload()}</tspan></text>
     <g
-       id="g1053"
-       transform="translate(19.823098,-12.458554)">
+       id="g8170"
+       transform="translate(-6.4144687)">
       <rect
-         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         style="fill:#f4eed7;stroke:#000000;stroke-width:0.264583"
          id="rect900"
-         width="61.878204"
+         width="70.497627"
          height="23.97702"
-         x="79.284546"
-         y="26.019379"
+         x="99.107643"
+         y="13.560824"
          ry="0" />
       <path
          style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="M 79.309501,32.194405 H 141.22412"
+         d="M 99.132599,19.735851 H 169.53303"
          id="path902"
          sodipodi:nodetypes="cc" />
       <text
          xml:space="preserve"
          style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-         x="109.96947"
-         y="30.799675"
+         x="134.26456"
+         y="18.341122"
          id="text839"><tspan
            sodipodi:role="line"
            id="tspan837"
-           x="109.96947"
-           y="30.799675"
-           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';stroke-width:0.264583">CryptoSealAlgorithm</tspan></text>
+           x="134.26456"
+           y="18.341122"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';stroke-width:0.264583">\texttt{CryptoSealAlgorithm}</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;text-anchor:start;stroke-width:0.264583"
-         x="82.24894"
-         y="38.225517"
+         x="102.07204"
+         y="25.766964"
          id="text930"><tspan
            sodipodi:role="line"
-           x="82.24894"
-           y="38.225517"
+           x="102.07204"
+           y="25.766964"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
-           id="tspan922">- Protect()</tspan><tspan
+           id="tspan922">- \texttt{Protect()}</tspan><tspan
            sodipodi:role="line"
-           x="82.24894"
-           y="41.912048"
+           x="102.07204"
+           y="29.453495"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
-           id="tspan924">- Unprotect()</tspan><tspan
+           id="tspan924">- \texttt{Unprotect()}</tspan><tspan
            sodipodi:role="line"
-           x="82.24894"
-           y="45.598579"
+           x="102.07204"
+           y="33.140026"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:start;text-anchor:start;stroke-width:0.264583"
-           id="tspan926">- CreateHeaderProtectionMask()</tspan><tspan
+           id="tspan926">- \texttt{CreateHeaderProtectionMask()}</tspan><tspan
            sodipodi:role="line"
-           x="82.24894"
-           y="49.285114"
+           x="102.07204"
+           y="36.826561"
            style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start;stroke-width:0.264583"
            id="tspan928" /></text>
     </g>
     <text
        xml:space="preserve"
        id="text932"
-       style="font-style:italic;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;white-space:pre;shape-inside:url(#rect934)" />
+       style="font-style:italic;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;white-space:pre;shape-inside:url(#rect934);" />
     <g
        aria-label="CryptoSealChaCha"
        id="text964"
@@ -277,7 +282,7 @@
     <g
        id="g1661">
       <rect
-         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264583"
          id="rect983"
          width="38.468357"
          height="7.5258408"
@@ -294,13 +299,13 @@
            id="tspan985"
            x="130.09137"
            y="62.711391"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSealAesCcm</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{CryptoSealAesCcm}</tspan></text>
     </g>
     <g
        id="g1063"
        transform="translate(11.268925,11.537428)">
       <rect
-         style="fill:#ffffff;stroke:#000000;stroke-width:0.264583"
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264583"
          id="rect994"
          width="38.468357"
          height="7.5258408"
@@ -317,7 +322,7 @@
            id="tspan996"
            x="74.419785"
            y="51.173962"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">CryptoSealAesGcm</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{CryptoSealAesGcm}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1425)"
@@ -331,20 +336,15 @@
        style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker1397)"
        d="M 130.04675,57.395604 V 37.605318"
        id="path1117" />
-    <path
-       style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DiamondLend)"
-       d="M 75.873142,24.106072 H 99.03154"
-       id="path1457"
-       sodipodi:nodetypes="cc" />
     <g
        id="g1666">
       <path
          id="rect958"
-         style="fill:#ffffff;stroke:#b3b3b3;stroke-width:0.264583"
+         style="fill:#f2fdf2;stroke:#b3b3b3;stroke-width:0.264583;fill-opacity:1"
          d="m 155.21524,57.444445 h 38.46835 v 7.525841 h -38.46835 z" />
       <text
          xml:space="preserve"
-         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583;fill:#b3b3b3;"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;letter-spacing:0px;text-anchor:middle;fill:#b3b3b3;stroke-width:0.264583"
          x="174.49403"
          y="62.711391"
          id="text1656"><tspan
@@ -352,7 +352,7 @@
            id="tspan1654"
            x="174.49403"
            y="62.711391"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583;fill:#b3b3b3;">CryptoSealChaCha</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#b3b3b3;stroke-width:0.264583">\texttt{CryptoSealChaCha}</tspan></text>
     </g>
   </g>
 </svg>

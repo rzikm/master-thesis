@@ -112,9 +112,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="414.47666"
-     inkscape:cy="186.65207"
+     inkscape:zoom="1.979899"
+     inkscape:cx="359.77352"
+     inkscape:cy="90.540562"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -132,7 +132,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -181,12 +181,12 @@
            id="tspan849"
            x="39.0406"
            y="43.07803"
-           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">ManagedQuic</tspan><tspan
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{ManagedQuic}</tspan><tspan
            sodipodi:role="line"
            x="39.0406"
            y="46.764561"
            style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan851">Connection</tspan></text>
+           id="tspan851">\texttt{Connection}</tspan></text>
     </g>
     <rect
        style="fill:#f2f2f2;stroke:#000000;stroke-width:0.264999"
@@ -210,11 +210,11 @@
        xml:space="preserve"
        style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
        x="39.155235"
-       y="74.328804"
+       y="74.729706"
        id="text871"><tspan
          sodipodi:role="line"
          x="39.155235"
-         y="74.328804"
+         y="74.729706"
          style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
          id="tspan869">Raw UDP datagram</tspan></text>
     <text
@@ -303,12 +303,12 @@
            id="tspan935"
            x="39.0406"
            y="43.07803"
-           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">ManagedQuic</tspan><tspan
+           style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{ManagedQuic}</tspan><tspan
            sodipodi:role="line"
            x="39.0406"
            y="46.764561"
            style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan937">Connection</tspan></text>
+           id="tspan937">\texttt{Connection}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker1409)"
@@ -337,11 +337,11 @@
        xml:space="preserve"
        style="font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;stroke-width:0.264583"
        x="162.63376"
-       y="74.328804"
+       y="74.729706"
        id="text1000"><tspan
          sodipodi:role="line"
          x="162.63376"
-         y="74.328804"
+         y="74.729706"
          style="font-weight:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
          id="tspan998">Raw UDP datagram</tspan></text>
     <g

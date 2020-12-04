@@ -8,7 +8,7 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    sodipodi:docname="03-architecture.svg"
-   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
    id="svg8"
    version="1.1"
    viewBox="0 0 136.40681 58.061691"
@@ -245,9 +245,9 @@
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="97.970705"
-     inkscape:cx="243.66264"
-     inkscape:zoom="1.979899"
+     inkscape:cy="92.700167"
+     inkscape:cx="147.36206"
+     inkscape:zoom="3.959798"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -319,18 +319,23 @@
        height="11.548114"
        width="36.039749"
        id="rect979"
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <text
        id="text983"
        y="44.231541"
        x="38.026199"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
        xml:space="preserve"><tspan
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
          y="44.231541"
          x="38.026199"
          id="tspan981"
-         sodipodi:role="line">QuicSocketContext</tspan></text>
+         sodipodi:role="line">\texttt{QuicSocket}</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+         y="47.918072"
+         x="38.026199"
+         sodipodi:role="line"
+         id="tspan4013">\texttt{Context}</tspan></text>
     <circle
        r="2.2781122"
        cy="47.10215"
@@ -343,18 +348,23 @@
        height="11.548114"
        width="36.039749"
        id="rect964"
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
+       style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
     <text
        id="text908"
        y="44.231541"
        x="130.19945"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:0.95;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
        xml:space="preserve"><tspan
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
          y="44.231541"
          x="130.19945"
          id="tspan906"
-         sodipodi:role="line">QuicSocketContext</tspan></text>
+         sodipodi:role="line">\texttt{QuicSocket}</tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
+         y="47.918072"
+         x="130.19945"
+         sodipodi:role="line"
+         id="tspan4011">\texttt{Context}</tspan></text>
     <text
        id="text898"
        y="45.151302"
@@ -383,30 +393,33 @@
          x="83.906326"
          id="tspan918"
          sodipodi:role="line">Network</tspan></text>
-    <rect
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
-       id="rect924"
-       width="30.414762"
-       height="6.2912498"
-       x="115.05001"
-       y="17.912214" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-       x="130.31754"
-       y="22.381109"
-       id="text928"><tspan
-         sodipodi:role="line"
-         id="tspan926"
-         x="130.31754"
+    <g
+       id="g5094">
+      <rect
+         style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+         id="rect924"
+         width="32.777107"
+         height="6.2912502"
+         x="113.78592"
+         y="17.912214" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+         x="130.27206"
          y="22.381109"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">QuicConnection</tspan></text>
+         id="text928"><tspan
+           sodipodi:role="line"
+           id="tspan926"
+           x="130.27206"
+           y="22.381109"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{QuicConnection}</tspan></text>
+    </g>
     <rect
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect948"
-       width="25.563246"
+       width="27.169645"
        height="6.2912502"
-       x="62.892277"
+       x="61.94104"
        y="17.912214" />
     <text
        xml:space="preserve"
@@ -418,7 +431,7 @@
          id="tspan950"
          x="75.623444"
          y="22.381111"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">QuicListener</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{QuicListener}</tspan></text>
     <text
        id="text989"
        y="45.151302"
@@ -444,60 +457,6 @@
          d="m 128.86967,24.325417 c 0,0 -7.70976,7.752613 0,14.577957"
          style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Mend)" />
     </g>
-    <rect
-       y="17.912214"
-       x="24.181223"
-       height="6.2912498"
-       width="30.414762"
-       id="rect922"
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
-    <text
-       id="text912"
-       y="22.381109"
-       x="39.448753"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-       xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
-         y="22.381109"
-         x="39.448753"
-         id="tspan910"
-         sodipodi:role="line">QuicConnection</tspan></text>
-    <rect
-       y="19.041658"
-       x="22.876766"
-       height="6.2912498"
-       width="30.414762"
-       id="rect940"
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
-    <text
-       id="text944"
-       y="23.510553"
-       x="38.144295"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-       xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
-         y="23.510553"
-         x="38.144295"
-         id="tspan942"
-         sodipodi:role="line">QuicConnection</tspan></text>
-    <rect
-       y="20.171103"
-       x="21.572304"
-       height="6.2912498"
-       width="30.414762"
-       id="rect1565"
-       style="fill:#f9f9f9;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0" />
-    <text
-       id="text1569"
-       y="24.639997"
-       x="36.839832"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
-       xml:space="preserve"><tspan
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583"
-         y="24.639997"
-         x="36.839832"
-         id="tspan1567"
-         sodipodi:role="line">QuicConnection</tspan></text>
     <g
        transform="translate(-91.606628)"
        id="g1615">
@@ -621,5 +580,75 @@
        id="path2623"
        d="M 64.862734,9.7974966 75.460306,17.577018"
        style="fill:none;stroke:#000000;stroke-width:0.264583px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#marker2627);marker-end:url(#marker2637)" />
+    <g
+       id="g5132"
+       transform="translate(1.4365742)">
+      <g
+         id="g5102"
+         transform="translate(-92.090338)">
+        <rect
+           style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect5096"
+           width="32.777107"
+           height="6.2912502"
+           x="113.78592"
+           y="17.912214" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+           x="130.27206"
+           y="22.381109"
+           id="text5100"><tspan
+             sodipodi:role="line"
+             id="tspan5098"
+             x="130.27206"
+             y="22.381109"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{QuicConnection}</tspan></text>
+      </g>
+      <g
+         id="g5110"
+         transform="translate(-93.526914,1.1024875)">
+        <rect
+           style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect5104"
+           width="32.777107"
+           height="6.2912502"
+           x="113.78592"
+           y="17.912214" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+           x="130.27206"
+           y="22.381109"
+           id="text5108"><tspan
+             sodipodi:role="line"
+             id="tspan5106"
+             x="130.27206"
+             y="22.381109"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{QuicConnection}</tspan></text>
+      </g>
+      <g
+         id="g5118"
+         transform="translate(-94.963486,2.2049736)">
+        <rect
+           style="fill:#d7f4d7;stroke:#000000;stroke-width:0.264999;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+           id="rect5112"
+           width="32.777107"
+           height="6.2912502"
+           x="113.78592"
+           y="17.912214" />
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.88056px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:center;letter-spacing:0px;text-anchor:middle;stroke-width:0.264583"
+           x="130.27206"
+           y="22.381109"
+           id="text5116"><tspan
+             sodipodi:role="line"
+             id="tspan5114"
+             x="130.27206"
+             y="22.381109"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.264583">\texttt{QuicConnection}</tspan></text>
+      </g>
+    </g>
   </g>
 </svg>

@@ -320,9 +320,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="232.15018"
-     inkscape:cy="428.94884"
+     inkscape:zoom="2.0000001"
+     inkscape:cx="308.56461"
+     inkscape:cy="455.34403"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
@@ -403,7 +403,7 @@
            id="tspan849"
            x="48.25507"
            y="74.548248"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicListener</tspan></text>
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicListener}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker2861)"
@@ -431,12 +431,12 @@
            id="tspan861"
            x="94.420959"
            y="69.431351"
-           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">QuicListener</tspan><tspan
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicListener}</tspan><tspan
            sodipodi:role="line"
            x="94.420959"
            y="73.117882"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan873">Provider</tspan></text>
+           id="tspan873">\texttt{Provider}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -467,12 +467,12 @@
              x="147.5927"
              y="63.383728"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan891">Managed</tspan><tspan
+             id="tspan891">\texttt{Managed}</tspan><tspan
              sodipodi:role="line"
              x="147.5927"
              y="67.070259"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan917">QuicListener</tspan></text>
+             id="tspan917">\texttt{QuicListener}</tspan></text>
       </g>
       <g
          id="g1065"
@@ -495,7 +495,7 @@
              id="tspan919"
              x="147.68721"
              y="78.880753"
-             style="text-align:center;text-anchor:middle;stroke-width:0.264583">MsQuicListener</tspan></text>
+             style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{MsQuicListener}</tspan></text>
       </g>
     </g>
     <path
@@ -523,7 +523,7 @@
            id="tspan853"
            x="48.43034"
            y="101.87369"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicConnection</tspan></text>
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicConnection}</tspan></text>
     </g>
     <g
        id="g1032"
@@ -546,12 +546,12 @@
            id="tspan865"
            x="94.59623"
            y="102.81193"
-           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">QuicConnection</tspan><tspan
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicConnection}</tspan><tspan
            sodipodi:role="line"
            x="94.59623"
            y="106.49846"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan877">Provider</tspan></text>
+           id="tspan877">\texttt{Provider}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -587,12 +587,12 @@
              x="147.76796"
              y="96.764305"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan897">Managed</tspan><tspan
+             id="tspan897">\texttt{Managed}</tspan><tspan
              sodipodi:role="line"
              x="147.76796"
              y="100.45084"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan913">QuicConnection</tspan></text>
+             id="tspan913">\texttt{QuicConnection}</tspan></text>
       </g>
       <g
          id="g1054"
@@ -615,7 +615,7 @@
              id="tspan923"
              x="148.42943"
              y="110.56043"
-             style="text-align:center;text-anchor:middle;stroke-width:0.264583">MsQuicConnection</tspan></text>
+             style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{MsQuicConnection}</tspan></text>
       </g>
     </g>
     <g
@@ -638,7 +638,7 @@
            id="tspan857"
            x="48.43034"
            y="129.07056"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583">QuicStream</tspan></text>
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicStream}</tspan></text>
     </g>
     <g
        id="g8111">
@@ -660,12 +660,12 @@
            id="tspan869"
            x="103.10069"
            y="127.31638"
-           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">QuicStream</tspan><tspan
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicStream}</tspan><tspan
            sodipodi:role="line"
            x="103.10069"
            y="131.00291"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan881">Provider</tspan></text>
+           id="tspan881">\texttt{Provider}</tspan></text>
     </g>
     <g
        id="g1130"
@@ -691,12 +691,12 @@
              x="147.76796"
              y="122.77434"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan903">Managed</tspan><tspan
+             id="tspan903">\texttt{Managed}</tspan><tspan
              sodipodi:role="line"
              x="147.76796"
              y="126.46087"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan909">QuicStream</tspan></text>
+             id="tspan909">\texttt{QuicStream}</tspan></text>
       </g>
       <g
          id="g1043"
@@ -719,7 +719,7 @@
              id="tspan927"
              x="148.24045"
              y="137.13744"
-             style="text-align:center;text-anchor:middle;stroke-width:0.264583">MsQuicStream</tspan></text>
+             style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{MsQuicStream}</tspan></text>
       </g>
     </g>
     <g
@@ -743,12 +743,12 @@
            id="tspan883"
            x="48.360233"
            y="38.661636"
-           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">QuicImplementation</tspan><tspan
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{QuicImplementation}</tspan><tspan
            sodipodi:role="line"
            x="48.360233"
            y="42.348167"
            style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Italic';text-align:center;text-anchor:middle;stroke-width:0.264583"
-           id="tspan885">Provider</tspan></text>
+           id="tspan885">\texttt{Provider}</tspan></text>
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.165;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
@@ -779,17 +779,17 @@
              x="147.76796"
              y="32.614017"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan939">Managed</tspan><tspan
+             id="tspan939">\texttt{Managed}</tspan><tspan
              sodipodi:role="line"
              x="147.76796"
              y="36.300549"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan943">QuicImplementation</tspan><tspan
+             id="tspan943">\texttt{QuicImplementation}</tspan><tspan
              sodipodi:role="line"
              x="147.76796"
              y="39.98708"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan945">Provider</tspan></text>
+             id="tspan945">\texttt{Provider}</tspan></text>
       </g>
       <g
          id="g1077"
@@ -812,12 +812,12 @@
              x="148.42943"
              y="48.300026"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan949">MsQuicImplementation</tspan><tspan
+             id="tspan949">\texttt{MsQuicImplementation}</tspan><tspan
              sodipodi:role="line"
              x="148.42943"
              y="51.986557"
              style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-             id="tspan951">Provider</tspan></text>
+             id="tspan951">\texttt{Provider}</tspan></text>
       </g>
     </g>
     <path
@@ -869,7 +869,7 @@
              id="tspan8179"
              x="131.08173"
              y="153.51254"
-             style="font-style:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
+             style="font-style:normal;text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{Class}</tspan></text>
       </g>
       <g
          id="g8267"
@@ -892,7 +892,7 @@
              id="tspan8113"
              x="103.30048"
              y="164.08208"
-             style="text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
+             style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{Class}</tspan></text>
       </g>
       <g
          id="g8262"
@@ -915,7 +915,7 @@
              id="tspan8167"
              x="103.30048"
              y="157.56029"
-             style="text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
+             style="text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{Class}</tspan></text>
       </g>
       <g
          id="g8257"
@@ -938,7 +938,7 @@
              id="tspan8173"
              x="103.30048"
              y="151.0385"
-             style="font-style:italic;text-align:center;text-anchor:middle;stroke-width:0.264583">Class</tspan></text>
+             style="font-style:italic;text-align:center;text-anchor:middle;stroke-width:0.264583">\texttt{Class}</tspan></text>
       </g>
       <text
          xml:space="preserve"
