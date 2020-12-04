@@ -644,7 +644,7 @@ the unit tests can be written against internal \QuicConnection{} API, exchanging
 sent and received UDP datagrams. This way, the background processing threads are avoided, and the
 tests can be made single-threaded with manual time-stepping, making the tests deterministic.
 
-\subsubsection{Testing Harness}
+\subsubsection{Testing Harness}\label{sec:03-testing-harness}
 
 A large number of the tests will consist of inspecting contents of QUIC packets exchanged between a
 pair of \QuicConnection{} instances or checking the internal state of a connection after a

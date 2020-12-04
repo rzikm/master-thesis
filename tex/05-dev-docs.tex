@@ -802,12 +802,55 @@ destination buffer. The copied data is transitoned into \textit{in-flight} state
 \section{Tests Implementation}
 
 The QUIC implementation is covered by an extensive suite of unit tests and functional tests. The
-unit tests focus on the correctness of the individual parts of the managed QUIC implementation, and
-that the QUIC packets sent by the implementation conform to the QUIC protocol specification.
-Functional tests, on the other hand, tests high-level functionality like being able to send and
-receive data, and that the public API behavior conforms to the public API specification.
+unit tests are located in the \filename{System.Net.Quic/tests/UnitTests} directory and focus on the
+correctness of the individual parts of the managed QUIC implementation. The unit tests also check
+that that the QUIC packets sent by the implementation conform to the QUIC protocol specification.
+
+The functional tests are located in the
+\filename{System.Net.Quic/tests/Functional}\allowbreak{}\filename{Tests} directory and test
+high-level functionality like being able to send and receive data, and that the public API behavior
+conforms to the public API specification.
 
 \subsection{Unit Tests}
+
+The most important part of the unit tests are tests that inspect the contents of the individual QUIC
+packets sent between the server and client. To simplify writing these tests, the
+\filename{System.Net.Quic.Unit.Tests} project implements a testing harness which provides helper
+methods for inspecting and modifying QUIC packets, as discussed in \autoref{sec:03-testing-harness}.
+The functionality of the test harness is provided as a \ManualTransmissionQuicTestBase{} class
+intended to be used as a base class for all unit tests. This class provides:
+
+\begin{itemize}
+
+  \item prepared connected \ManagedQuicConnection{} instances,
+
+  \item automatic logging of sent QUIC packets to the test output,
+
+  \item manual time stepping to make tests deterministic, and
+
+  \item helper functions for writing short, declarative unit tests.
+
+\end{itemize}
+
+Because the \ManagedQuicConnection{} implementation uses \keyword{ref struct}s to represent
+individual QUIC frames. The testing harness must duplicate the types for QUIC frames and QUIC
+packets as classes. The classes used to represent QUIC packets and QUIC frames in test harness
+derive from \class{FrameBase} and \class{PacketBase} abstract classes which provide a common type
+for aggregating QUIC packets and QUIC frames in collections.
+
+The classes representing QUIC frames and QUIC packets are mutable, which allows modification by the
+testing code in order to elicit a particular error response. \autoref{fig:05-test-harness-intercept}
+illustrates the process. First, the \ManagedQuicConnection{} produces the UDP datagram containing
+the QUIC packets to be sent. The testing harness then parses the datagram into mutable
+representation. The parsed packets are then passed into the callback provided by the test method
+which can perform any assertions and modifications. The QUIC packet is then serialized back into
+binary representation and provided to the receiver \ManagedQuicConnection{} instance.
+
+\begin{myFigure}{fig:05-test-harness-intercept}{Intercepting a QUIC packet by the testing harness}
+
+  \resizebox{\textwidth}{!}{\input{img/05-test-harness-intercept.pdf_tex}}
+
+\end{myFigure}
 
 \subsection{Functional Tests}
 
