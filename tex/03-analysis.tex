@@ -290,7 +290,7 @@ The \QuicReader{} and \QuicWriter{} classes also take care of converting the end
 between big-endian used by QUIC and the endianity used by the machine running the application. This
 is done by forwarding the calls to respective methods on the \class{BinaryPrimitives} class.
 
-\section{Stream Implementation}
+\section{Stream Implementation}\label{sec:03-stream-implementation}
 
 QUIC is a transport protocol, and, therefore, its entire purpose is transferring streams of data.
 Since it is likely to be the hot path of the implementation, the internal handling of streams must
@@ -303,7 +303,7 @@ that stream. Otherwise, all streams are handled equally. As mentioned in
 streams. Therefore, our implementation will divide the QUIC stream logic into \SendStream{} and
 \ReceiveStream{} classes, which will handle the sending and receiving behavior of the stream.
 
-\subsection{Receiving Part of the Stream}
+\subsection{Receiving Part of the Stream}\label{sec:03-receive-stream}
 
 The implementation of \ReceiveStream{} must buffer the received data in case the QUIC packets send
 by the peer were lost or reordered. It also needs to track the amount of buffered memory and how
@@ -390,7 +390,7 @@ Our implementation will send a \MAXSTREAMDATA{} frame after the client uses more
 limit provided since the last update. This should prevent updates being too often and at the same
 time early enough that the sender does not run out of flow control credit.
 
-\subsection{Sending Part of the Stream}
+\subsection{Sending Part of the Stream}\label{sec:03-send-stream}
 
 The sending part of a QUIC stream must keep track of state of all outbound data on the stream. Any
 part of the stream can be lost during transmission and the has to be retransmitted, and any part of

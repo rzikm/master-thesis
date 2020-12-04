@@ -409,7 +409,7 @@
 \definecolor{bytefieldunused}{gray}{0.8}
 
 \newcommand{\class}[1]{{\color{codecolorclass}\texttt{#1}}}
-\newcommand{\genericClass}[2]{\texttt{\textcolor{codecolorclass}{#1}<{#2}>}}
+\newcommand{\genericClass}[2]{\texttt{\class{#1}\allowbreak{}<{#2}>}}
 \newcommand{\interface}[1]{{\color{codecolorclass}\texttt{#1}}}
 \newcommand{\keyword}[1]{{\color{codecolorkeyword}\texttt{\textbf{#1}}}}
 \newcommand{\namespace}[1]{{\color{codecolornamespace}\texttt{#1}}}
@@ -510,6 +510,7 @@
 \newcommand{\CancellationToken}{\class{CancellationToken}}
 
 \newcommand{\Socket}{\class{Socket}}
+\newcommand{\Stream}{\class{Stream}}
 \newcommand{\QuicSocketContext}{\class{Quic\allowbreak{}Socket\allowbreak{}Context}}
 \newcommand{\QuicServerSocketContext}{\class{Quic\allowbreak{}Server\allowbreak{}Socket\allowbreak{}Context}}
 \newcommand{\QuicClientSocketContext}{\class{Quic\allowbreak{}Client\allowbreak{}Socket\allowbreak{}Context}}
@@ -537,6 +538,10 @@
 \newcommand{\MockTls}{\class{MockTls}}
 \newcommand{\SSL}{\class{SSL}}
 \newcommand{\SSLCTX}{\class{SSL\_CTX}}
+\newcommand{\QuicTestBase}{\genericClass{Quic\allowbreak{}Test\allowbreak{}Base}{\class{T}}}
+\newcommand{\QuicListenerTests}{\genericClass{Quic\allowbreak{}Listener\allowbreak{}Tests}{\class{T}}}
+\newcommand{\QuicConnectionTests}{\genericClass{Quic\allowbreak{}Connection\allowbreak{}Tests}{\class{T}}}
+\newcommand{\QuicStreamTests}{\genericClass{Quic\allowbreak{}Stream\allowbreak{}Tests}{\class{T}}}
 
 \newcommand{\QuicConnection}{\class{Quic\allowbreak{}Connection}}
 \newcommand{\QuicStream}{\class{Quic\allowbreak{}Stream}}

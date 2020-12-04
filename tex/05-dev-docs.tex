@@ -690,12 +690,114 @@ which was registered as the \texttt{add_handshake_data} callback. This function 
 \subsection{MockTls Implementation}
 
 The \MockTls{} implementation used for running tests without dependency on the \libopenssl{} library
-and is not intended for production usage. The implementation simultes a successful TLS handshake and
-exchanges randomly generated secrets.
+and is not intended for production usage. The implementation imitates the \OpenSslTls{} behavior by
+simulting a successful TLS handshake and exchanging randomly generated secrets.
 
 \section{ManagedQuicListener Implementation}
 
+The \ManagedQuicListener{} class is only a simple wrapper around the \QuicServerSocketContext{}
+instance and a \ChannelOf{\ManagedQuicConnection{}} of newly accepted connections. The
+\QuicServerSocketContext{} implementation observes changes in the
+\texttt{\ManagedQuicConnection{}.ConnectionState} property and inserts the newly established
+connections in the \class{Channel}. The application then retrieves these connections using the
+\texttt{\ManagedQuicListener{}.\method{AcceptConnectionAsync()}} method.
+
+When the \ManagedQuicListener{} is closed, it is necessary to keep the currently established
+connections alive. Disposing the \ManagedQuicListener{}, therefore, means only that the
+\QuicServerSocketContext{} instance will not accept new connections. The \QuicServerSocketContext{}
+class tracks active connections and is disposed when the last \ManagedQuicConnection{} is
+closed.
+
 \section{ManagedQuicStream Implementation}
+
+As described in \autoref{sec:03-stream-implementation}, the behavior of sending and receiving parts
+of the stream is implemented by \ReceiveStream{} and \SendStream{} classes. The \ManagedQuicStream{}
+class itself performs only argument checking on the public API and informs the
+\ManagedQuicConnection{} about the amount of data read/written in order to update flow control
+limits.
+
+\subsection{ReceiveStream Implementation}
+
+Buffering and control flow considerations for the \ReceiveStream{} class have been analyzed in
+detail in \autoref{sec:03-receive-stream}. The \ReceiveStream{} class exposes following interface to
+be used by the \ManagedQuicStream{} class from the application thread:
+
+\begin{description}
+
+  \ditemproperty[\texttt]{\Long{}?}{Error}{\propget}
+  If the stream was aborted by the sender, contains the application-level error code to be
+  communicated to the application.
+
+  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode}
+  Requests that the stream is aborted by the sender. Results in sending a \STOPSENDING{} frame with
+  specified application-level error code.
+
+  \ditemmethod[\keyword]{int}{Deliver}{\SpanOf{\byte{}} destination}
+  Copies the stream data into the provided \SpanOf{\byte{}}. Blocks until data are available.
+
+  \ditemmethod[]{\ValueTaskOf{\Int{}}}{DeliverAsync}{\MemoryOf{\byte{}} destination, \CancellationToken{}}
+  Asynchronous version of the \method{Deliver} method.
+
+\end{description}
+
+From the internal background processing thread, the main methods called from the
+\ManagedQuicConnection{} are:
+
+\begin{description}
+
+  \ditemmethod[\keyword]{void}{OnResetStream}{\Long{} errorCode}
+    Called when \RESETSTREAM{} frame for this stream was received.
+
+  \ditemmethod[\keyword]{void}{Receive}{\Long{} offset, \ReadOnlySpanOf{\byte{}} data, \bool{} fin}
+    Called when \STREAM{} frame has been received.
+
+\end{description}
+
+\subsection{SendStream Implementation}
+
+Buffering and control flow considerations for the \SendStream{} class have been analyzed in detail
+in \autoref{sec:03-send-stream}. The \SendStream{} class exposes following interface to be used by
+the \ManagedQuicStream{} class from the application thread:
+
+\begin{description}
+
+  \ditemmethod[\keyword]{int}{Enqueue}{\ReadOnlySpanOf{\byte{}} data}
+    Adds the provided range of data into the stream. If the
+internal buffering capacity is full, this method blocks until the data can be buffered.
+
+  \ditemmethod[]{\ValueTaskOf{\Int}}{EnqueueAsync}{\ReadOnlyMemoryOf{\byte{}} data}
+    Asynchronous version of the \method{Enqueue} method.
+
+  \ditemmethod[\keyword]{void}{MarkEndOfData}{}
+    Marks the stream as finished, no more data can be written after calling this function. The
+    \texttt{FIN} bit will be set in the appropriate \STREAM{} frame.
+
+  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode}
+    Requests that the stream be aborted with specified errorCode. This method is also called when
+    \STOPSENDING{} frame was received for this stream.
+
+\end{description}
+
+From the internal background processing thread, the main methods called from the
+\ManagedQuicConnection{} are:
+
+\begin{description}
+
+    \ditemmethod[\texttt]{(\Long{} offset, \Long{} count)}{GetNextSendableRange}{}
+        Returns the next consecutive range of data that is in \textit{pending} state. The next data
+to be sent in STREAM{} frame will be from this range.
+
+    \ditemmethod[\keyword]{void}{CheckOut}{\SpanOf{\byte} destination}
+        Copies the data from the range returned from \method{GetNextSendableRange} into the
+destination buffer. The copied data is transitoned into \textit{in-flight} state.
+
+    \ditemmethod[\keyword]{void}{OnLost}{\Long{} offset, \Long{} count}
+        Marks the range of data as lost, transitioning them back to \textit{pending} state.
+
+    \ditemmethod[\keyword]{void}{OnAck}{\Long{} offset, \Long{} count, \bool{} fin}
+        Marks the range of data as \textit{acknowleged}. Allowing the underlying buffers to be reused.
+
+\end{description}
 
 \section{Tests Implementation}
 
@@ -708,3 +810,26 @@ receive data, and that the public API behavior conforms to the public API specif
 \subsection{Unit Tests}
 
 \subsection{Functional Tests}
+
+The \filename{System.Net.Quic} project contains a large suite functional tests against the public
+QUIC API. The tests are structured in a way that allows them to run against all QUIC implementation
+providers in the library. Also, the \QuicStream{} class is tested using \textit{stream conformance
+  tests} --- a suite of tests run for each implementation of the \Stream{} class to ensure consistent
+behavior of all implementations.
+
+In order to allow running tests against different implementation providers, the test methods are
+defined in \QuicListenerTests{}, \QuicConnectionTests{} and \QuicStreamTests{} generic classes,
+which share a common base class \QuicTestBase{}. The type argument for all four of these classes is
+constrained to be an implementation of \interface{IQuicImplProviderFactory} interface which allows
+creating \QuicListener{} and \QuicConnection{} instances with desired implementation provider.
+
+The \xUnit{} framework does not run tests from generic classes by itself. Instead, the generic test
+suite must be ``instantiated'' by declaring a non-generic class deriving from the generic type. For
+example, \class{QuicStreamTests_Managed\allowbreak{}Provider} derives from the
+\genericClass{QuicStreamTests}{\class{ManagedProvider\allowbreak{}Factory}} class which makes
+\xUnit{} run the tests from \QuicStreamTests{} class against the
+\texttt{\QuicImplementationProviders{}.Managed} provider. These specific test classes are also
+annotated by \class{ConditionalClassAttribute} which instructs \xUnit{} to run the tests only if the
+given provider is supported in the current environment.
+
+Similar mechanism is used to run stream conformance tests against all QUIC implementation providers.
