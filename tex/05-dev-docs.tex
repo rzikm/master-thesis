@@ -628,7 +628,7 @@ by the interop layer of the managed QUIC implementation which mirrors the \class
 on the managed \dotnet{} side. The \class{QuicMethodCallbacks} class uses the \csharp{} function
 pointers to represent unmanaged pointers to \csharp{} functions.
 
-\begin{myListingCsharp}{lst:05-csharp-quic-method}{[\csharp{} mirror of the \class{ssl_quic_method_st} C struct]\csharp{} mirror of the \class{ssl_quic_method_st} C struct. The comments above the fields list C-like definition of the function pointer type.}{DllImport,IntPtr, UIntPtr, StructLayout, QuicMethodCallbacks,Libraries}{OpenSslEncryptionLevel,LayoutKind}
+\begin{myListingCsharpNoPageBreak}{lst:05-csharp-quic-method}{[\csharp{} mirror of the \class{ssl_quic_method_st} C struct]\csharp{} mirror of the \class{ssl_quic_method_st} C struct. The comments above the fields list C-like definition of the function pointer type.}{DllImport,IntPtr, UIntPtr, StructLayout, QuicMethodCallbacks,Libraries}{OpenSslEncryptionLevel,LayoutKind}
 [DllImport(Libraries.Ssl, EntryPoint = "SSL_set_quic_method")]
 internal static extern unsafe int |SslSetQuicMethod|(IntPtr ssl,
     QuicMethodCallbacks* methods);
@@ -653,7 +653,7 @@ internal unsafe struct QuicMethodCallbacks
     internal delegate* unmanaged[Cdecl]<IntPtr, OpenSslEncryptionLevel, byte,
         int> SendAlert;
 }
-\end{myListingCsharp}
+\end{myListingCsharpNoPageBreak}
 
 The pointer to \class{QuicMethodCallbacks} structure passed to the \method{SSL_set_quic_method}
 function must be valid throughout the lifetime of the \SSLCTX{} object. Therefore, the \OpenSslTls{}

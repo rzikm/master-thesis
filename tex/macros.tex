@@ -277,50 +277,51 @@
   escapeinside={(*@}{@*)},
   commentstyle=\color{codecolorcomment},
   keywordstyle=\color{codecolorkeyword}\bfseries,
-  keywordstyle=[2]\color{codecolorkeywordcontrolflow}\bfseries,
   stringstyle=\color{codecolorstring},
   typestyle=\color{codecolorclass},
   enumstyle=\color{codecolorenum},
   basicstyle=\ttfamily\footnotesize
 }
 
-\lstnewenvironment{myListingCsharp}[5][]{% [extra], label, caption, types, enums
-  \noindent\minipage{\linewidth}\medskip
+\newcommand{\lstsetcsharp}[5]{% [extra], label, caption, types, enums
   \lstset{
     caption={#3},
     label={#2},
     language=[Sharp]C,
-    morekeywords={
-      abstract, event, new, struct,
-      as, explicit, null, switch,
-      base, extern, object, this,
-      bool, false, operator, [2]throw,
-      break, finally, out, true,
-      byte, fixed, override, try,
-      case, float, params, typeof,
-      catch, [2]for, private, uint,
-      char, [2]foreach, protected, ulong,
-      checked, [2]goto, public, unchecked,
-      class, [2]if, readonly, unsafe,
-      const, implicit, ref, ushort,
-      continue, in, [2]return, using,
-      decimal, int, sbyte, virtual,
-      default, interface, sealed, volatile,
-      delegate, internal, short, void,
-      do, is, sizeof, [2]while,
-      double, lock, stackalloc,
-      [2]else, long, static, unmanaged, Cdecl,
-      enum, namespace, string, var},
+    keywords={
+      abstract, event, new, struct, as, explicit, null, switch, base, extern,
+      object, this, bool, false, operator, break, out, true, byte, fixed, override,
+      case, float, params, typeof, catch, private, uint, char, protected, ulong,
+      checked, public, unchecked, class, readonly, unsafe, const, implicit, ref, ushort,
+      continue, in, using, decimal, int, sbyte, virtual, default, interface, sealed, volatile,
+      delegate, internal, short, void, do, is, sizeof, double, lock, stackalloc, async, await,
+      long, static, unmanaged, Cdecl, enum, namespace, string, var
+    },
+    morekeywords=[2]{% Execution control flow keywords
+      throw, finally, try, for, foreach, goto, if, return, while, else,
+    },
     types={#4},
     enums={#5},
+    keywordstyle=\color{codecolorkeyword}\bfseries,
+    keywordstyle=[2]{\color{codecolorkeywordcontrolflow}\bfseries},
     %morecomment=[s]{//}{},
     morestring=*[s]{\$"}{"},
     moredelim=*[s]{\{}{\}},
     moredelim=[is][\color{codecolormethod}]{|}{|},
     #1
   }
+}
+
+\lstnewenvironment{myListingCsharp}[5][]{% [extra], label, caption, types, enums
+  \lstsetcsharp{#1}{#2}{#3}{#4}{#5}%
+}{
+}
+
+\lstnewenvironment{myListingCsharpNoPageBreak}[5][]{% [extra], label, caption, types, enums
+  \noindent\minipage{\linewidth}\medskip
+  \lstsetcsharp{#1}{#2}{#3}{#4}{#5}%
 }{%
-  \endminipage
+  \endminipage%
 }
 
 \lstnewenvironment{myListingC}[5][]{% [extra], label, caption, types, enums

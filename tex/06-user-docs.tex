@@ -128,10 +128,9 @@ After configuring the variables check the output of the \verb|dotnet --info| com
 \texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the
 \autoref{lst:06-dotnet-info-output}. The list of installed \dotnet{} runtimes should contain
 \texttt{Microsoft.NETCore.App} from the local \dotnet{}~6 SDK installation prepared in
-\autoref{sec:06-local-dotnet}. Note that the listing contains version numbers valid at the time of
-writing this text and the SDK installer would be updated since then to a newer version.
-
-\todo{put DOTNET_ROOT in bold as it is the most important part of the listing, mention it in preceding paragraph}
+\autoref{sec:06-local-dotnet} (check the path inside the brackets). Note that the listing contains
+version numbers valid at the time of writing this text and the SDK installer would be updated since
+then to a newer version.
 
 \begin{myListingVerbatim}[Output of the \texttt{dotnet --info} command in configured environment]{lst:06-dotnet-info-output}{Output of the \texttt{dotnet --info} command in correctly configured environment. The unimportant portions of the output in grey has been left out brevity}
 > dotnet --info
@@ -236,11 +235,191 @@ Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 
 \section{Using QUIC in \dotnet{}}
 
-This section is a walkthrough on how to use QUIC in \dotnet{}.
+This section is a walkthrough on how to use QUIC in \dotnet{}. In this section, we will create a
+trivial echo server. When a new connection is established, clients will open a single bidirectional
+stream and send arbitrary data over it. The server will then echo the data back to the client. For
+simplicity, We will use a single \dotnet{} program to represent both client and server and conduct
+the connection over the loopback network interface.
 
-\todo{a most trivial echo example}
+\subsection{Echo Server Implementation}
 
-\section{An example application}
+Use of TLS 1.3 for encryption is mandatory for QUIC. This requires providing an X.509 certificate on
+the server side. The current QUIC API requires that the certificate and the private key be saved in
+separate files. A certificate that can be used in this example is provided in the attachments
+\todo{path in the attachments}. \todo{creating a new ssl certificate using openssl cli?}
+
+In order to accept incoming QUIC connections, we need to create an instance of \QuicListener{}.
+\autoref{lst:06-echo-quic-listener} shows how the \QuicListener{} can be created and provided with:
+
+\begin{itemize}
+
+  \item listening endpoint,
+
+  \item \texttt{"echo"} identifier of the application-layer protocol to use in \gls{alpn}, and
+
+  \item paths to the X.509 certificate and private key file.
+
+\end{itemize}
+
+The \QuicListener{} class implements \interface{IDisposable} and, therefore, we can also use
+\keyword{using} statement to make sure the \QuicListener{} is closed when the method returns.
+
+\begin{myListingCsharp}{lst:06-echo-quic-listener}{Creating and starting a new \QuicListener{} for the echo server}{Task,QuicListener,QuicListenerOptions,SslServerAuthenticationOptions,List,SslApplicationProtocol,IPEndPoint,CancellationToken}{}
+public static async Task<int> |RunServer|(IPEndPoint listenEp,
+    string certificateFile, string privateKeyFile, CancellationToken token)
+{
+    using QuicListener listener = new QuicListener(new QuicListenerOptions
+    {
+        ListenEndPoint = listenEp,
+        CertificateFilePath = certificateFile,
+        PrivateKeyFilePath = privateKeyFile,
+        ServerAuthenticationOptions = new SslServerAuthenticationOptions
+        {
+            ApplicationProtocols = new List<SslApplicationProtocol>
+            {
+                new SslApplicationProtocol("echo")
+            }
+        }
+    });
+
+    // ...
+}
+\end{myListingCsharp}
+
+We can then use the \method{AcceptConnectionAsync} method to asynchronously wait for new incoming connections. \autoref{lst:06-echo-server-accept} shows how
+
+\begin{myListingCsharp}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
+    // QuicListener must be started before accepting connections.
+    listener.|Start|();
+
+    // tasks that need to be awaited when trying to exit gracefully
+    List<Task> tasks = new List<Task>();
+
+    try
+    {
+        QuicConnection conn;
+        while ((conn = await listener.|AcceptConnectionAsync|(token)) != null)
+        {
+            // copy the connection into a variable with narrower scope so
+            //that it is not shared among multiple lambdas
+            QuicConnection captured = conn;
+            var task = Task.|Run|(
+                () => |HandleServerConnection|(captured, token));
+            tasks.|Add|(task);
+        }
+    }
+    finally
+    {
+        // wait until all connections are closed
+        await Task.|WhenAll|(tasks);
+    }
+\end{myListingCsharp}
+
+\autoref{lst:06-echo-server-loop} Shows the implementation of \method{HandleServerConnection} which
+does the actual echoing of incoming data. The \QuicStream{} is accepted using the
+\method{AcceptStreamAsync} method on the \QuicConnection{} class and, because it is a bidirectional
+stream, we can use it to send the data back to the clien. Lastly, once all data is sent, we
+gracefully close the connection using the \method{CloseAsync} method.
+
+\begin{myListingCsharp}{lst:06-echo-server-loop}{Echo server reading and writing data to \QuicStream{}}{Task,QuicConnection,CancellationToken,QuicStream}{}
+public static async Task |HandleServerConnection|(QuicConnection connection,
+    CancellationToken token)
+{
+    try
+    {
+        QuicStream stream = await connection.|AcceptStreamAsync|(token);
+
+        byte[] buffer = new byte[4 * 1024];
+
+        int read;
+        while ((read = await stream.|ReadAsync|(buffer, token)) > 0)
+        {
+            await stream.|WriteAsync|(buffer, 0, read, token);
+            await stream.|FlushAsync|(token);
+        }
+    }
+    finally
+    {
+        // gracefully close the connection with 0 error code
+        await connection.|CloseAsync|(0);
+    }
+}
+\end{myListingCsharp}
+
+\subsection{Echo Client Implementation}
+
+The client implementation is more straightforward than that of the server.
+\autoref{lst:06-echo-client-connection} shows how to create a client \QuicConnection{} using the
+using the server endpoint address and the \gls{alpn} identifier. The connection can be then
+established by calling the \method{ConnectAsync} method.
+
+\begin{myListingCsharpNoPageBreak}{lst:06-echo-client-connection}{Creating a client \QuicConnection{} instance}{Task,IPEndPoint,CancellationToken,QuicConnection,QuicClientConnectionOptions,SslClientAuthenticationOptions,List,SslApplicationProtocol}{}
+public static async Task<int> |RunClient|(IPEndPoint serverEp,
+    CancellationToken token)
+{
+    using var client = new QuicConnection(new QuicClientConnectionOptions
+    {
+        RemoteEndPoint = serverEp,
+        ClientAuthenticationOptions = new SslClientAuthenticationOptions
+        {
+            ApplicationProtocols = new List<SslApplicationProtocol>
+            {
+                new SslApplicationProtocol("echo")
+            }
+        }
+    });
+
+    await client.|ConnectAsync|(token);
+
+    // ...
+}
+\end{myListingCsharpNoPageBreak}
+
+Once the connection is established, the client opens a bidirectional \QuicStream{} using the
+\method{OpenBidirectionalStream} method. The \QuicStream{} can be used like any other \Stream{}
+instance. \autoref{lst:06-echo-client-loop} shows the rest of the echo client implementation.
+
+\begin{myListingCsharp}{lst:06-echo-client-loop}{Sending standard input via \QuicStream{}}{QuicStream,Task,Encoding,Console}{}
+    try
+    {
+        await using QuicStream stream = client.|OpenBidirectionalStream|();
+
+        // spawn a reader task to not let server be flow-control blocked
+        _ = Task.|Run|(async () =>
+        {
+            byte[] arr = new byte[4 * 1024];
+            int read;
+            while ((read = await stream.|ReadAsync|(arr, token)) > 0)
+            {
+                string s = Encoding.ASCII.|GetString|(arr, 0, read);
+                Console.|WriteLine|($"Received: {s}");
+            }
+        });
+
+        string line;
+        while ((line = Console.|ReadLine|()) != null)
+        {
+            // convert into ASCII byte array before sending
+            byte[] bytes = Encoding.ASCII.|GetBytes|(line);
+            await stream.|WriteAsync|(bytes, token);
+            // flush the stream to send the data immediately
+            await stream.|FlushAsync|();
+        }
+
+        // once all stdin is written, close the stream
+        stream.|Shutdown|();
+
+        // wait until the server receives all data
+        await stream.|ShutdownWriteCompleted|(token);
+    }
+    finally
+    {
+        // gracefully close the connection with 0 error code
+        await client.|CloseAsync|(0, token);
+    }
+\end{myListingCsharp}
+
+\section{A More Complex Example Application}
 
 \todo{deeper explanation of the example throughput testing application that was used in Evaluation}
 
@@ -281,11 +460,11 @@ The \class{QuicListenerOptions} class holds all configuration used to construct 
     \ditemproperty{SslServerAuthenticationOptions}{\ServerAuthenticationOptions{}}{\propgetset}
         SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
 
-    \ditemproperty[\keyword]{string}{CertificateFilePath}{\propgetset} Path to the X509 certificate used by the server.
+    \ditemproperty[\keyword]{string}{CertificateFilePath}{\propgetset} Path to the X.509 certificate used by the server.
 
-    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X.509 certificate.
 
-    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X.509 certificate.
 
     \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
 
