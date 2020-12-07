@@ -10,8 +10,11 @@ namespace ThroughputTests
         [Option('c', "connections", Default = 256, HelpText = "Number of connections made.")]
         public int Connections { get; set; }
 
-        [Option('s', "streams", Default = 1, HelpText = "Number of streams each client opens.")]
+        [Option('s', "streams", Default = 1, HelpText = "Number of streams each client opens. Valid only for QUIC.")]
         public int Streams { get; set; }
+        
+        [Option('t', "tcp", Default = false, HelpText = "Use TCP+TLS instead of QUIC.")]
+        public bool Tcp { get; set; }
 
         [Option('m', "message-size", Default = 256, HelpText = "Message size.")]
         public int MessageSize { get; set; }
@@ -21,9 +24,12 @@ namespace ThroughputTests
         
         [Option('w', "warmup-time", Default = 5, HelpText = "Time before starting measurements")] // Seconds
         public double WarmupTime { get; set; }
+        
+        [Option('n', "no-wait", Default = false, HelpText = "Don't wait for the previous request to finish before sending another one")]
+        public bool NoWait { get; set; }
     }
 
-    [Verb("client", HelpText = "Run client connecting to the specified address.")]
+    [Verb("client", HelpText = "Run client connecting to the specified address")]
     internal class ClientOptions : ClientCommonOptions
     {
         [Option('e', "endpoint", Required = true, HelpText = "Endpoint to connect to.")]
@@ -35,10 +41,10 @@ namespace ThroughputTests
         public IPEndPoint EndPoint { get; private set; }
     }
 
-    [Verb("server", HelpText = "Run server listening on the specified address.")]
+    [Verb("server", HelpText = "Run server listening on the specified address")]
     internal class ServerOptions
     {
-        [Option('e', "endpoint", Default = "*:5000", HelpText = "Endpoint to listen on.")]
+        [Option('e', "endpoint", Default = "*:5000", HelpText = "Endpoint to listen on")]
         public string EndPointString
         {
             set => EndPoint = Helpers.ResolveEndPoint(value);
@@ -66,7 +72,7 @@ namespace ThroughputTests
         public string PrivateKeyFile { get; set; }
     }
 
-    [Verb("inproc", HelpText = "Run client and server locally over loopback.")]
+    [Verb("inproc", HelpText = "Run client and server locally over loopback")]
     internal class InProcOptions : ClientCommonOptions
     {
 
@@ -82,6 +88,8 @@ namespace ThroughputTests
         private static int Main(string[] args)
         {
             // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "qlog");
+            // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "console");
+            // Environment.SetEnvironmentVariable("DOTNETQUIC_PROVIDER", "managed");
             
             using CancellationTokenSource cts = new CancellationTokenSource();
 

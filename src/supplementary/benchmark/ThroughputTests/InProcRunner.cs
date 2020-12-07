@@ -10,8 +10,11 @@ namespace ThroughputTests
     {
         public static int Run(InProcOptions opts, CancellationToken cancellationToken)
         {
-            var ep = ServerListener.Start(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationToken);
-            var clients = Client.StartClients(opts.Connections, opts.MessageSize, ep, opts.Streams, cancellationToken);
+            var ep = opts.Tcp
+                ? ServerListener.StartTcpTls(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationToken)
+                : ServerListener.StartQuic(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationToken);
+            
+            var clients = Client.StartClients(ep, opts, cancellationToken);
             ResultMonitor.MonitorResults(clients, opts, cancellationToken);
             Task.WaitAll(clients.Select(c => c.Close()).ToArray());
             

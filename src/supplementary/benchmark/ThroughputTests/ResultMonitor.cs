@@ -26,8 +26,16 @@ namespace ThroughputTests
         internal static void MonitorResults(Client[] clients, ClientCommonOptions options,
             CancellationToken cancellationToken)
         {
-            Console.WriteLine(
-                $"Test running with {options.Connections} connections, {options.Streams} per connection and {options.MessageSize}B messages");
+            if (options.Tcp)
+            {
+                Console.WriteLine(
+                    $"Test running SSL with {options.Connections} connections and {options.MessageSize}B messages");
+            }
+            else
+            {
+                Console.WriteLine(
+                    $"Test running QUIC with {options.Connections} connections, {options.Streams} streams per connection and {options.MessageSize}B messages");
+            }
 
             int GetCurrentRequestCount()
             {
@@ -51,15 +59,30 @@ namespace ThroughputTests
             double dataThroughput = 0;
             double previousAverageRps = 0;
             double drift = 0;
+            double avgLatency = 0;
+            double p95Latency = 0;
+            double p99Latency = 0;
+
+            List<TimeSpan>[][] latencies = Enumerable.Range(0, options.Connections).Select(_ =>
+                    Enumerable.Range(0, Math.Max(options.Streams, 1)).Select(_ => new List<TimeSpan>()).ToArray())
+                .ToArray();
 
             List<Column> columns = new List<Column>
             {
                 new Column("Timestamp", 16, () => $"{elapsed}"),
                 new Column("Current RPS", 16, () => $"{currentRps:####.0}"),
                 new Column("Average RPS", 16, () => $"{averageRps:####.0}"),
-                new Column("Drift", 10, () => previousAverageRps == 0.0? "" : $"{drift:0.00}%"),
-                new Column("Throughput", 14, () => $"{dataThroughput:####.0} MiB/s"),
+                new Column("Drift (%)", 11, () => previousAverageRps == 0.0 ? "" : $"{drift:0.00}"),
+                new Column("Throughput (MiB/s)", 20, () => $"{dataThroughput:####.0}"),
             };
+
+            if (!options.NoWait)
+            {
+                // latency measurements make sense only when we are waiting for the server's reply
+                columns.Add(new Column("Latency-avg (ms)", 20, () => $"{avgLatency:####.000}"));
+                columns.Add(new Column("Latency-p95 (ms)", 20, () => $"{p95Latency:####.000}"));
+                columns.Add(new Column("Latency-p99 (ms)", 20, () => $"{p99Latency:####.000}"));
+            }
 
             PrintHeader(columns);
 
@@ -75,12 +98,63 @@ namespace ThroughputTests
                 dataThroughput = currentRps * options.MessageSize / (1024 * 1024);
                 drift = (averageRps - previousAverageRps) / previousAverageRps * 100;
 
+                if (!options.NoWait)
+                {
+                    (avgLatency, p95Latency, p99Latency) = CalculateLatencies(clients, latencies);
+                }
+
                 PrintColumns(columns);
 
                 previousElapsed = elapsed;
                 previousCount = totalCount;
                 previousAverageRps = averageRps;
             }
+        }
+        
+        static List<double> gatheredLatencies = new List<double>();
+
+        private static (double avg, double p95, double p99) CalculateLatencies(Client[] clients, List<TimeSpan>[][] latencies)
+        {
+            // swap latency measurements lists
+            for (var i = 0; i < clients.Length; i++)
+            {
+                var c = clients[i];
+                latencies[i] = c.ExchangeMeasurements(latencies[i]);
+            }
+            
+            // gather them into one list
+            gatheredLatencies.Clear();
+            foreach (var c in latencies) {
+                foreach (var list in c)
+                {
+                    gatheredLatencies.AddRange(list.Select(l => l.TotalMilliseconds));
+                }
+            }
+            
+            int count = gatheredLatencies.Count;
+            double total = gatheredLatencies.Sum();
+
+            gatheredLatencies.Sort();
+            double CalculatePercentile(float percentile)
+            {
+                // TODO: interpolate between 2 elements
+                return gatheredLatencies[(int) MathF.Floor(gatheredLatencies.Count * percentile)];
+            }
+            
+            var avg = total / count;
+            var p95 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.95f) : double.NaN;
+            var p99 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.99f) : double.NaN;
+
+            // clean up the lists for future use
+            foreach (var c in latencies)
+            {
+                foreach (var list in c)
+                {
+                    list.Clear();
+                }
+            }
+
+            return (avg, p95, p99);
         }
 
         private static void PrintColumns(List<Column> columns)

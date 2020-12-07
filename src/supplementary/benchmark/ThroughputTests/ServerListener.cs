@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Quic;
 using System.Net.Security;
+using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,7 +13,8 @@ namespace ThroughputTests
 {
     public static class ServerListener
     {
-        public static IPEndPoint Start(IPEndPoint endpoint, string certPath, string keyPath, CancellationToken cancellationToken)
+        public static IPEndPoint StartQuic(IPEndPoint endpoint, string certPath, string keyPath,
+            CancellationToken cancellationToken)
         {
             var options = new QuicListenerOptions
             {
@@ -29,7 +33,7 @@ namespace ThroughputTests
 
             var listener = new QuicListener(QuicImplementationProviders.Default, options);
             listener.Start();
-            
+
             Helpers.Dispatch(async () =>
             {
                 while (true)
@@ -43,7 +47,43 @@ namespace ThroughputTests
             return listener.ListenEndPoint;
         }
 
-        public static async Task ServerConnectionTask(QuicConnection connection, CancellationToken cancellationToken)
+        public static IPEndPoint StartTcpTls(IPEndPoint endpoint, string certPath, string keyPath,
+            CancellationToken cancellationToken)
+        {
+            var cert = Helpers.LoadCertificate(certPath, keyPath);
+            TcpListener listener = new TcpListener(endpoint.Address, endpoint.Port);
+            listener.Start();
+
+            Helpers.Dispatch(async () =>
+            {
+                while (true)
+                {
+                    var connection = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
+                    Helpers.Trace("New connection");
+                    _ = Helpers.Dispatch(() => ServerConnectionTask(connection, cert, cancellationToken));
+                }
+            });
+
+            return (IPEndPoint) listener.LocalEndpoint;
+        }
+
+        private static async Task ServerConnectionTask(TcpClient connection, X509Certificate2 cert,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var stream = new SslStream(connection.GetStream());
+                await stream.AuthenticateAsServerAsync(cert).ConfigureAwait(false);
+
+                await ServerStreamTask(stream).ConfigureAwait(false);
+            }
+            finally
+            {
+                connection.Dispose();
+            }
+        }
+
+        private static async Task ServerConnectionTask(QuicConnection connection, CancellationToken cancellationToken)
         {
             try
             {
@@ -57,7 +97,7 @@ namespace ThroughputTests
                         return;
                     }
 
-                    _ = Helpers.Dispatch(() => ServerStreamTask(connection, stream));
+                    _ = Helpers.Dispatch(() => ServerQuicStreamTask(connection, stream));
                 }
             }
             catch (QuicConnectionAbortedException e) when (e.ErrorCode == 0)
@@ -73,50 +113,13 @@ namespace ThroughputTests
             }
         }
 
-        public static async Task ServerStreamTask(QuicConnection connection, QuicStream stream)
+        private static async Task ServerQuicStreamTask(QuicConnection connection, QuicStream stream)
         {
-            var recvBuffer = new byte[4 * 1024];
-            byte[] sendBuffer = null;
-
             try
             {
-                var messageSize = 0;
-
-                while (true)
+                if (!await ServerStreamTask(stream).ConfigureAwait(false))
                 {
-                    var count = await stream.ReadAsync(recvBuffer).ConfigureAwait(false);
-                    if (count == 0)
-                        // EOF: shut down
-                        break;
-
-                    // the message ends with 0
-                    var index = Array.IndexOf<byte>(recvBuffer, 0, 0, count);
-                    if (index < 0)
-                    {
-                        // not yet received entirely
-                        messageSize += count;
-                        continue;
-                    }
-
-                    messageSize += index + 1;
-                    if (sendBuffer == null)
-                    {
-                        sendBuffer = Helpers.CreateMessageBuffer(messageSize);
-                    }
-                    else
-                    {
-                        if (messageSize != sendBuffer.Length)
-                        {
-                            Console.WriteLine("Wrong message size received");
-                            await connection.CloseAsync(1).ConfigureAwait(false);
-                        }
-                    }
-
-                    // send reply message back
-                    await stream.WriteAsync(sendBuffer).ConfigureAwait(false);
-                    await stream.FlushAsync().ConfigureAwait(false);
-
-                    messageSize = 0;
+                    await connection.CloseAsync(1).ConfigureAwait(false);
                 }
             }
             catch (QuicStreamAbortedException e) when (e.ErrorCode == 0)
@@ -130,8 +133,58 @@ namespace ThroughputTests
             }
             finally
             {
-                await stream.DisposeAsync();
+                await stream.DisposeAsync().ConfigureAwait(false);
             }
+        }
+
+        private static async Task<bool> ServerStreamTask(Stream stream)
+        {
+            var recvBuffer = new byte[4 * 1024];
+            byte[] sendBuffer = null;
+
+            var messageSize = 0;
+            while (true)
+            {
+                var count = await stream.ReadAsync(recvBuffer).ConfigureAwait(false);
+                if (count == 0)
+                    // EOF: shut down
+                    break;
+
+                // process all received messages
+                int offset = 0;
+                while (true)
+                {
+                    var index = Array.IndexOf<byte>(recvBuffer, 0, offset, count - offset);
+                    if (index < 0)
+                    {
+                        // not yet received entirely
+                        messageSize += count - offset;
+                        break;
+                    }
+
+                    messageSize += index + 1 - offset;
+                    if (sendBuffer == null)
+                    {
+                        sendBuffer = Helpers.CreateMessageBuffer(messageSize);
+                    }
+                    else
+                    {
+                        if (messageSize != sendBuffer.Length)
+                        {
+                            return false;
+                        }
+                    }
+
+                    // send reply message back
+                    await stream.WriteAsync(sendBuffer).ConfigureAwait(false);
+                    await stream.FlushAsync().ConfigureAwait(false);
+
+                    offset = index + 1;
+                    messageSize = 0;
+                }
+            }
+
+            return true;
         }
     }
 }

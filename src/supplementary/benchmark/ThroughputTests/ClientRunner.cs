@@ -9,7 +9,7 @@ namespace ThroughputTests
     {
         public static int Run(ClientOptions opts, CancellationToken cancellationToken)
         {
-            var clients = Client.StartClients(opts.Connections, opts.MessageSize, opts.EndPoint, opts.Streams, cancellationToken);
+            var clients = Client.StartClients(opts.EndPoint, opts, cancellationToken);
             ResultMonitor.MonitorResults(clients, opts, cancellationToken);
 
             Task.WaitAll(clients.Select(c => c.Close()).ToArray());
