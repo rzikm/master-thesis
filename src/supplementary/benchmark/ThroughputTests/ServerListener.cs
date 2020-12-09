@@ -159,7 +159,7 @@ namespace ThroughputTests
 
         private static async Task<bool> ServerStreamTask(Stream stream)
         {
-            var recvBuffer = new byte[4 * 1024];
+            var recvBuffer = new byte[32 * 1024];
             byte[] sendBuffer = null;
 
             var messageSize = 0;
@@ -195,13 +195,15 @@ namespace ThroughputTests
                         }
                     }
 
-                    // send reply message back
+                    // send a reply message back
                     await stream.WriteAsync(sendBuffer).ConfigureAwait(false);
-                    await stream.FlushAsync().ConfigureAwait(false);
 
                     offset = index + 1;
                     messageSize = 0;
                 }
+                
+                // flush all sent messages
+                await stream.FlushAsync().ConfigureAwait(false);
             }
 
             return true;

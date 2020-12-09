@@ -95,7 +95,7 @@ namespace ThroughputTests
         {
             // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "qlog");
             // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "console");
-            Environment.SetEnvironmentVariable("DOTNETQUIC_PROVIDER", "msquic");
+            // Environment.SetEnvironmentVariable("DOTNETQUIC_PROVIDER", "msquic");
             
             using CancellationTokenSource cts = new CancellationTokenSource();
 
