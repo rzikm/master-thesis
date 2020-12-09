@@ -1,5 +1,28 @@
 \chapter{Evaluation}
 
+In this chapter we evaluate the managed QUIC implementation developed as part of this thesis. We
+will evaluate interoperability of our implementation with other QUIC implementations, mainly
+\libmsquic{}. \todo{can I get others?}. We will also compare the performance characteristics of the
+managed and \libmsquic{}-based QUIC implementation providers, and how they compare to using
+\class{SslStream} which TCP and TLS.
+
+\subsection{Performance Comparison}
+
+There are two performance characteristics which are relevant for networking protocol implementations:
+
+\begin{itemize}
+
+  \litem{Throughput} The rate at which the application data is sent.
+
+  \litem{Round Trip Time Latency} The delay between sending a request and receiving a response.
+
+\end{itemize}
+
+\subsection{}
+
+\todo{interoperability?}
+\todo{performance?}
+
 \todo{what we want to measure}
 
 \todo{how we will measure it (high-level structure of the application)}
