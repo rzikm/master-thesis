@@ -190,14 +190,14 @@ element represented by the range.
 
 \subsection{PacketNumberWindow}
 
-\todo{a figure was added, reread entire subsection}
-
 The \PacketNumberWindow{} class is used to test if QUIC packet the given packet number has already
 been received. Internally, it contains two 64-bit \keyword{ulong} fields: a bitmask marking the
 received packet numbers and the offset of the window. All packet numbers above the window are
 considered not received, all packet numbers below the window are considered received. Packet number
 inside the window are considered received if the corresponding bit is set to 1. When a new packet
 number is received, the window is shifted, if necessary, and the corresponding bit is set.
+
+\todo{make it more explicit that the implementation uses 64bit window}
 
 \autoref{fig:05-packet-number-window} illustrates how concept on an 8-bit window. \autoref{fig:05a}
 shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When packet 10 is
@@ -225,6 +225,8 @@ some unreceived packet numbers outside the window (marked by red color).
   \end{mySubfigure}
 
 \end{myFigure}
+
+\todo{another figure explaining the following paragraph, use concrete packet numbers in the explanation}
 
 The last part of the figure above demonstrates that the data structure may falsely label some old
 packet numbers as already received. In such a case the packets are simply discarded by the
@@ -506,7 +508,7 @@ known, the generation of the actual QUIC packet consists of following steps:
 
   \item write QUIC frames into the packet payload up to the available packet size,
 
-  \item add padding to the packet if necessary\footnote{QUIC requires valid QUIC packets to be at least 21 bytes.},
+  \item add padding to the packet if necessary\footnote{QUIC requires valid QUIC packets to be at least 21 bytes.\todo{link to specification}},
 
   \item apply packet protection, and
 
@@ -547,6 +549,8 @@ implementation of \ITls{} interface. The \ITls{} interface defines methods neede
 Implementations of \ITls{} are expected to maintain a reference to the \ManagedQuicConnection{} and
 call following functions when appropriate:
 
+\todo{check vertical spacing for multiline function signatures}
+
 \begin{description}
 
   \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} read, \\ \indent{} \ReadOnlySpanOf{\byte{}} write} Provides the \ManagedQuicConnection{} with read
@@ -573,7 +577,7 @@ There are two \ITls{} interface implementations:
 \begin{itemize}
 
   \litem[]{\OpenSslTls{}} Backed by modified \libopenssl{} with QUIC enabling API maintained by
-Akamai~\cite{AkamaiOpensslGithub}. This implementation can be used to interoperate with other QUIC implementation and is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.Managed} provider.
+Akamai~\cite{AkamaiOpensslGithub}. This implementation can be used to interoperate with other QUIC implementations and is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.Managed} provider.
 
   \litem[]{\MockTls{}} Intended to be used when runing functional tests in continuous integration environment where the modified \libopenssl{} library is not available. This implementation cannot be used to interoperate with other QUIC implementations. \MockTls{} is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.ManagedMockTls}.
 
@@ -592,9 +596,9 @@ The \OpenSslTls{} class is a managed wrapper around the \SSL{} class from \libop
 written in C. As per the established practice in the \dotnet{} runtime repository the managed QUIC
 implementation separates the definitions of the \keyword{extern} methods from the \libopenssl{}
 library into a separate \class{Interop.OpenSslQuic} class. The interop code also uses \csharp{}
-function pointers, a new feature available since \dotnet{}~5. More information about \csharp{}
-function pointers and other native code interop improvements done in \dotnet{}~5 can be found on
-Microsoft dev blog~\cite{dotnet5interopimprovements}.
+function pointers\footnote{More information about \csharp{} function pointers and other native code
+  interop improvements done in \dotnet{}~5 can be found on Microsoft dev
+  blog~\cite{dotnet5interopimprovements}.}, a new feature available since \dotnet{}~5.
 
 The primary objects used from the \libopenssl{} library are the \SSLCTX{} class which is a top level
 object maintaining global SSL/TLS configuration, and \SSL{} class which represents one SSL/TLS
@@ -605,6 +609,8 @@ The main part of the QUIC-enabling API exposed by the \libopenssl{} library cons
 \method{SSL_set_quic_method} function which registers callbacks from the TLS handshake state
 machine. \autoref{lst:05-c-quic-method} lists the definition of the \libopenssl{} QUIC callback
 functions.
+
+\todo{mention that following listing is in C}
 
 \begin{myListingC}{lst:05-c-quic-method}{Callback definitions in OpenSSL library}{ssl_quic_method_st,SSL_QUIC_METHOD,SSL,SSL_CTX,uint8_t,size_t}{OSSL_ENCRYPTION_LEVEL}
 struct ssl_quic_method_st {
@@ -845,6 +851,8 @@ the QUIC packets to be sent. The testing harness then parses the datagram into m
 representation. The parsed packets are then passed into the callback provided by the test method
 which can perform any assertions and modifications. The QUIC packet is then serialized back into
 binary representation and provided to the receiver \ManagedQuicConnection{} instance.
+
+\todo{mention the ``inspection'' word in the preceding paragraph}
 
 \begin{myFigure}{fig:05-test-harness-intercept}{Intercepting a QUIC packet by the testing harness}
 
