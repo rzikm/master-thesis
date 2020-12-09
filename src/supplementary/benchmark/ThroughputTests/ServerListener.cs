@@ -13,9 +13,11 @@ namespace ThroughputTests
 {
     public static class ServerListener
     {
-        public static IPEndPoint StartQuic(IPEndPoint endpoint, string certPath, string keyPath,
+        public static (IPEndPoint listenEp, Task finished) StartQuic(IPEndPoint endpoint, string certPath, string keyPath,
             CancellationToken cancellationToken)
         {
+            TaskCompletionSource completionSource = new TaskCompletionSource();
+            
             var options = new QuicListenerOptions
             {
                 CertificateFilePath = certPath,
@@ -31,8 +33,10 @@ namespace ThroughputTests
                 MaxBidirectionalStreams = 1024
             };
 
-            var listener = new QuicListener(QuicImplementationProviders.Default, options);
+            var listener = new QuicListener(options);
             listener.Start();
+            
+            List<Task> currentConnectionTasks = new List<Task>();
 
             Helpers.Dispatch(async () =>
             {
@@ -40,19 +44,27 @@ namespace ThroughputTests
                 {
                     var connection = await listener.AcceptConnectionAsync().ConfigureAwait(false);
                     Helpers.Trace("New connection");
-                    _ = Helpers.Dispatch(() => ServerConnectionTask(connection, cancellationToken));
+                    var task = Helpers.Dispatch(() => ServerConnectionTask(connection, cancellationToken));
+                    currentConnectionTasks.Add(task);
                 }
             });
 
-            return listener.ListenEndPoint;
+            cancellationToken.Register(() =>
+                Task.WhenAll(currentConnectionTasks).ContinueWith(_ => completionSource.SetResult()));
+            
+            return (listener.ListenEndPoint, completionSource.Task);
         }
 
-        public static IPEndPoint StartTcpTls(IPEndPoint endpoint, string certPath, string keyPath,
+        public static (IPEndPoint listenEp, Task finished) StartTcpTls(IPEndPoint endpoint, string certPath, string keyPath,
             CancellationToken cancellationToken)
         {
+            TaskCompletionSource completionSource = new TaskCompletionSource();
+            
             var cert = Helpers.LoadCertificate(certPath, keyPath);
             TcpListener listener = new TcpListener(endpoint.Address, endpoint.Port);
             listener.Start();
+            
+            List<Task> currentConnectionTasks = new List<Task>();
 
             Helpers.Dispatch(async () =>
             {
@@ -60,11 +72,15 @@ namespace ThroughputTests
                 {
                     var connection = await listener.AcceptTcpClientAsync().ConfigureAwait(false);
                     Helpers.Trace("New connection");
-                    _ = Helpers.Dispatch(() => ServerConnectionTask(connection, cert, cancellationToken));
+                    var task = Helpers.Dispatch(() => ServerConnectionTask(connection, cert, cancellationToken));
+                    currentConnectionTasks.Add(task);
                 }
             });
 
-            return (IPEndPoint) listener.LocalEndpoint;
+            cancellationToken.Register(() =>
+                Task.WhenAll(currentConnectionTasks).ContinueWith(_ => completionSource.SetResult()));
+            
+            return ((IPEndPoint)listener.LocalEndpoint, completionSource.Task);
         }
 
         private static async Task ServerConnectionTask(TcpClient connection, X509Certificate2 cert,
@@ -76,6 +92,10 @@ namespace ThroughputTests
                 await stream.AuthenticateAsServerAsync(cert).ConfigureAwait(false);
 
                 await ServerStreamTask(stream).ConfigureAwait(false);
+            }
+            catch (IOException)
+            {
+                // connection forcibly closed by the client, do nothing
             }
             finally
             {

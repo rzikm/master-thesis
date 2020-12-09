@@ -7,12 +7,12 @@ namespace ThroughputTests
 {
     internal class ClientRunner
     {
-        public static int Run(ClientOptions opts, CancellationToken cancellationToken)
+        public static int Run(ClientOptions opts, CancellationTokenSource cancellationSource)
         {
-            var clients = Client.StartClients(opts.EndPoint, opts, cancellationToken);
-            ResultMonitor.MonitorResults(clients, opts, cancellationToken);
+            var clients = Client.StartClients(opts.EndPoint, opts, cancellationSource.Token);
+            ResultMonitor.MonitorResults(clients, opts, cancellationSource);
 
-            Task.WaitAll(clients.Select(c => c.Close()).ToArray());
+            Task.WaitAll(clients.Select(c => c.CloseAsync()).ToArray());
             return 1;
         }
     }

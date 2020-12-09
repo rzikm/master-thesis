@@ -22,11 +22,17 @@ namespace ThroughputTests
         [Option('i', "reporting-interval", Default = 3, HelpText = "Reporting interval in seconds.")] // Seconds
         public double ReportingInterval { get; set; }
         
+        [Option('d', "test-duration", Default = 0, HelpText = "Duration of the test in seconds")] // Seconds
+        public double DurationTime { get; set; }
+        
         [Option('w', "warmup-time", Default = 5, HelpText = "Time before starting measurements")] // Seconds
         public double WarmupTime { get; set; }
         
         [Option('n', "no-wait", Default = false, HelpText = "Don't wait for the previous request to finish before sending another one")]
         public bool NoWait { get; set; }
+        
+        [Option("csv-output", Default = false, HelpText = "Prints output formatted as CSV with , separators")]
+        public bool CsvOutput { get; set; }
     }
 
     [Verb("client", HelpText = "Run client connecting to the specified address")]
@@ -89,7 +95,7 @@ namespace ThroughputTests
         {
             // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "qlog");
             // Environment.SetEnvironmentVariable("DOTNETQUIC_TRACE", "console");
-            // Environment.SetEnvironmentVariable("DOTNETQUIC_PROVIDER", "managed");
+            Environment.SetEnvironmentVariable("DOTNETQUIC_PROVIDER", "msquic");
             
             using CancellationTokenSource cts = new CancellationTokenSource();
 
@@ -105,9 +111,9 @@ namespace ThroughputTests
             return new Parser(settings => { settings.HelpWriter = Console.Out; })
                 .ParseArguments<ClientOptions, ServerOptions, InProcOptions>(args)
                 .MapResult(
-                    (ClientOptions opts) => ClientRunner.Run(opts, cts.Token),
+                    (ClientOptions opts) => ClientRunner.Run(opts, cts),
                     (ServerOptions opts) => ServerRunner.Run(opts, cts.Token),
-                    (InProcOptions opts) => InProcRunner.Run(opts, cts.Token),
+                    (InProcOptions opts) => InProcRunner.Run(opts, cts),
                     _ => 1);
         }
     }

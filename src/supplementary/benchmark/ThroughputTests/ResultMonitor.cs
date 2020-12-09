@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Quic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,17 +25,20 @@ namespace ThroughputTests
     internal static class ResultMonitor
     {
         internal static void MonitorResults(Client[] clients, ClientCommonOptions options,
-            CancellationToken cancellationToken)
+            CancellationTokenSource cancellationSource)
         {
-            if (options.Tcp)
+            if (!options.CsvOutput)
             {
-                Console.WriteLine(
-                    $"Test running SSL with {options.Connections} connections and {options.MessageSize}B messages");
-            }
-            else
-            {
-                Console.WriteLine(
-                    $"Test running QUIC with {options.Connections} connections, {options.Streams} streams per connection and {options.MessageSize}B messages");
+                if (options.Tcp)
+                {
+                    Console.WriteLine(
+                        $"Test running SSL with {options.Connections} connections and {options.MessageSize}B messages.");
+                }
+                else
+                {
+                    Console.WriteLine(
+                        $"Test running QUIC with {options.Connections} connections, {options.Streams} streams per connection and {options.MessageSize}B messages. Provider: {QuicImplementationProviders.Default.GetType().Name}.");
+                }
             }
 
             int GetCurrentRequestCount()
@@ -42,11 +46,16 @@ namespace ThroughputTests
                 return clients.Sum(c => c.GetRequestCount());
             }
 
+            List<TimeSpan>[][] latencies = Enumerable.Range(0, options.Connections).Select(_ =>
+                    Enumerable.Range(0, Math.Max(options.Streams, 1)).Select(_ => new List<TimeSpan>()).ToArray())
+                .ToArray();
+
             long startCount = 0;
             if (options.WarmupTime > 0)
             {
-                Helpers.InterruptibleWait((int) (options.WarmupTime * 1000), cancellationToken);
+                Helpers.InterruptibleWait((int) (options.WarmupTime * 1000), cancellationSource.Token);
                 startCount = GetCurrentRequestCount();
+                CalculateLatencies(clients, latencies);
             }
 
             long previousCount = startCount;
@@ -60,36 +69,32 @@ namespace ThroughputTests
             double previousAverageRps = 0;
             double drift = 0;
             double avgLatency = 0;
+            double p50Latency = 0;
             double p95Latency = 0;
             double p99Latency = 0;
-
-            List<TimeSpan>[][] latencies = Enumerable.Range(0, options.Connections).Select(_ =>
-                    Enumerable.Range(0, Math.Max(options.Streams, 1)).Select(_ => new List<TimeSpan>()).ToArray())
-                .ToArray();
-
+            
             List<Column> columns = new List<Column>
             {
                 new Column("Timestamp", 16, () => $"{elapsed}"),
-                new Column("Current RPS", 16, () => $"{currentRps:####.0}"),
-                new Column("Average RPS", 16, () => $"{averageRps:####.0}"),
-                new Column("Drift (%)", 11, () => previousAverageRps == 0.0 ? "" : $"{drift:0.00}"),
-                new Column("Throughput (MiB/s)", 20, () => $"{dataThroughput:####.0}"),
+                new Column("Current RPS", 16, () => $"{currentRps:0.000}"),
+                new Column("Average RPS", 16, () => $"{averageRps:0.000}"),
+                new Column("Drift (%)", 11, () =>  $"{drift:0.000}"),
+                new Column("Throughput (MiB/s)", 20, () => $"{dataThroughput:0.000}"),
             };
 
             if (!options.NoWait)
             {
                 // latency measurements make sense only when we are waiting for the server's reply
-                columns.Add(new Column("Latency-avg (ms)", 20, () => $"{avgLatency:####.000}"));
-                columns.Add(new Column("Latency-p95 (ms)", 20, () => $"{p95Latency:####.000}"));
-                columns.Add(new Column("Latency-p99 (ms)", 20, () => $"{p99Latency:####.000}"));
+                columns.Add(new Column("Latency-avg (ms)", 20, () => $"{avgLatency:0.000}"));
+                columns.Add(new Column("Latency-p50 (ms)", 20, () => $"{p50Latency:0.000}"));
+                columns.Add(new Column("Latency-p95 (ms)", 20, () => $"{p95Latency:0.000}"));
+                columns.Add(new Column("Latency-p99 (ms)", 20, () => $"{p99Latency:0.000}"));
             }
 
-            PrintHeader(columns);
+            PrintHeader(columns, options.CsvOutput);
 
-            while (!cancellationToken.IsCancellationRequested)
+            void UpdateMeasurements()
             {
-                Helpers.InterruptibleWait((int) (options.ReportingInterval * 1000), cancellationToken);
-
                 elapsed = sw.Elapsed;
                 long totalCount = GetCurrentRequestCount();
 
@@ -100,20 +105,35 @@ namespace ThroughputTests
 
                 if (!options.NoWait)
                 {
-                    (avgLatency, p95Latency, p99Latency) = CalculateLatencies(clients, latencies);
+                    (avgLatency, p50Latency, p95Latency, p99Latency) = CalculateLatencies(clients, latencies);
                 }
-
-                PrintColumns(columns);
 
                 previousElapsed = elapsed;
                 previousCount = totalCount;
                 previousAverageRps = averageRps;
             }
+
+            if (options.DurationTime > 0)
+            {
+                cancellationSource.CancelAfter(TimeSpan.FromSeconds(options.DurationTime));
+            }
+            
+            int delay = options.ReportingInterval > 0 
+                ? (int) (options.ReportingInterval * 1000)
+                : -1;
+            
+            while (!cancellationSource.IsCancellationRequested)
+            {
+                Helpers.InterruptibleWait(delay, cancellationSource.Token);
+                
+                UpdateMeasurements();
+                PrintColumns(columns, options.CsvOutput);
+            }
         }
         
         static List<double> gatheredLatencies = new List<double>();
 
-        private static (double avg, double p95, double p99) CalculateLatencies(Client[] clients, List<TimeSpan>[][] latencies)
+        private static (double avg, double p50, double p95, double p99) CalculateLatencies(Client[] clients, List<TimeSpan>[][] latencies)
         {
             // swap latency measurements lists
             for (var i = 0; i < clients.Length; i++)
@@ -142,6 +162,7 @@ namespace ThroughputTests
             }
             
             var avg = total / count;
+            var p50 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.50f) : double.NaN;
             var p95 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.95f) : double.NaN;
             var p99 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.99f) : double.NaN;
 
@@ -154,28 +175,32 @@ namespace ThroughputTests
                 }
             }
 
-            return (avg, p95, p99);
+            return (avg, p50, p95, p99);
         }
 
-        private static void PrintColumns(List<Column> columns)
+        private static void PrintColumns(List<Column> columns, bool csv)
         {
-            foreach (var c in columns)
+            if (!csv)
             {
-                Console.Write(c.ValueFactory().PadLeft(c.Width));
+                Console.WriteLine(string.Join("", columns.Select(c => c.ValueFactory().PadLeft(c.Width))));
             }
-
-            Console.WriteLine();
+            else
+            {
+                Console.WriteLine(string.Join(",", columns.Select(c => c.ValueFactory())));
+            }
         }
 
-        private static void PrintHeader(List<Column> columns)
+        private static void PrintHeader(List<Column> columns, bool csv)
         {
-            foreach (var c in columns)
+            if (!csv)
             {
-                Console.Write(c.Header.PadLeft(c.Width));
+                Console.WriteLine(string.Join("", columns.Select(c => c.Header.PadLeft(c.Width))));
+                Console.WriteLine("".PadLeft(columns.Sum(c => c.Width), '-'));
             }
-
-            Console.WriteLine();
-            Console.WriteLine("".PadLeft(columns.Sum(c => c.Width), '-'));
+            else
+            {
+                Console.WriteLine(string.Join(",", columns.Select(c => c.Header)));
+            }
         }
     }
 }

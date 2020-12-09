@@ -8,15 +8,15 @@ namespace ThroughputTests
 {
     internal class InProcRunner
     {
-        public static int Run(InProcOptions opts, CancellationToken cancellationToken)
+        public static int Run(InProcOptions opts, CancellationTokenSource cancellationSource)
         {
-            var ep = opts.Tcp
-                ? ServerListener.StartTcpTls(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationToken)
-                : ServerListener.StartQuic(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationToken);
+            var (ep, finished) = opts.Tcp
+                ? ServerListener.StartTcpTls(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationSource.Token)
+                : ServerListener.StartQuic(new IPEndPoint(IPAddress.Loopback, 0), opts.CertificateFile, opts.PrivateKeyFile, cancellationSource.Token);
             
-            var clients = Client.StartClients(ep, opts, cancellationToken);
-            ResultMonitor.MonitorResults(clients, opts, cancellationToken);
-            Task.WaitAll(clients.Select(c => c.Close()).ToArray());
+            var clients = Client.StartClients(ep, opts, cancellationSource.Token);
+            ResultMonitor.MonitorResults(clients, opts, cancellationSource);
+            Task.WaitAll(clients.Select(c => c.CloseAsync()).Concat(new []{finished}).ToArray());
             
             return 0;
         }

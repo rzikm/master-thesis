@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ThroughputTests
 {
-    internal abstract class Client
+    internal abstract class Client : IDisposable
     {
         protected readonly ClientCommonOptions _options;
 
@@ -62,7 +62,7 @@ namespace ThroughputTests
             return Interlocked.Exchange(ref _latencies, empty);
         }
 
-        public abstract Task Close();
+        public abstract Task CloseAsync();
 
         protected async Task RunStreamContinuous(Stream stream, CancellationToken cancellationToken)
         {
@@ -151,6 +151,10 @@ namespace ThroughputTests
 
         protected abstract Task RunStreamSingleMessage(int stream, CancellationToken cancellationToken);
         protected abstract Task RunStreamContinuous(CancellationToken cancellationToken);
+        public void Dispose()
+        {
+            CloseAsync().GetAwaiter().GetResult();
+        }
     }
 
     internal class TcpTlsClient : Client
@@ -168,7 +172,7 @@ namespace ThroughputTests
             await _client.ConnectAsync(_endPoint).ConfigureAwait(false);
         }
 
-        public override Task Close()
+        public override Task CloseAsync()
         {
             _client.Close();
             return Task.CompletedTask;
@@ -200,7 +204,7 @@ namespace ThroughputTests
 
         public QuicClient(EndPoint endPoint, ClientCommonOptions options) : base(endPoint, options)
         {
-            _connection = new QuicConnection(QuicImplementationProviders.Managed, new QuicClientConnectionOptions
+            _connection = new QuicConnection(new QuicClientConnectionOptions
             {
                 RemoteEndPoint = endPoint,
                 ClientAuthenticationOptions = new SslClientAuthenticationOptions
@@ -234,7 +238,7 @@ namespace ThroughputTests
             await RunStreamContinuous(stream, cancellationToken).ConfigureAwait(false);
         }
 
-        public override async Task Close()
+        public override async Task CloseAsync()
         {
             await _connection.CloseAsync(0).ConfigureAwait(false);
             _connection.Dispose();
