@@ -1,22 +1,30 @@
 \chapter{Evaluation}
 
-In this chapter we evaluate the managed QUIC implementation developed as part of this thesis. We
-will evaluate interoperability of our implementation with other QUIC implementations, mainly
-\libmsquic{}. \todo{can I get others?}. We will also compare the performance characteristics of the
-managed and \libmsquic{}-based QUIC implementation providers, and how they compare to using
-\class{SslStream} which TCP and TLS.
-
-\subsection{Performance Comparison}
+In this chapter we evaluate the performance of the managed QUIC implementation developed as part of
+this thesis and compare it to the existing \libmsquic{}-based implementation. We will also compare
+both QUIC implementations to \class{SslStream} which uses a combination of TCP and TLS. Due to lack
+of resources for proper end-to-end testing, we will run the performance tests locally on a single
+machine. In order to evaluate the implementations in a non-ideal network environment, we will use
+the Clumsy~\cite{clumsy} utility to simulate network issues such as lag and packet loss.
 
 There are two performance characteristics which are relevant for networking protocol implementations:
 
 \begin{itemize}
 
-  \litem{Throughput} The rate at which the application data is sent.
+  \litem{Throughput} The rate at which the application data is sent. This metric is important mainly
+for servers. High throughput indicates a capacity of a server to process large amounts of requests.
 
-  \litem{Round Trip Time Latency} The delay between sending a request and receiving a response.
+  \litem{Round Trip Time Latency} The delay between sending a request and receiving a response. This
+metric is important mainly for clients. Rather than measuring average latency, a certain percentile
+is measured. For example, if 99th percentile of latency is 10ms indicates that for 99\% requests,
+the latency is at most 10ms.
 
 \end{itemize}
+
+\subsubsection{Evaluation Environment}
+
+In order to obtain realistic measurements, our measurements will
+
 
 \subsection{}
 
