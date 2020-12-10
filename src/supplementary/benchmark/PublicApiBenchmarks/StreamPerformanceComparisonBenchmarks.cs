@@ -100,7 +100,7 @@ namespace PublicApiBenchmarks
             ClientSslStream.AuthenticateAsClient("localhost");
         }
 
-        // [Benchmark(Baseline = true)]
+        [Benchmark(Baseline = true)]
         public async Task SslStream()
         {
             await RecvData(ClientSslStream);
@@ -112,7 +112,7 @@ namespace PublicApiBenchmarks
         }
 
         // MsQuic is not present in the platform by default
-        // [Benchmark(Description = "MsQuicStream")]
+        [Benchmark(Description = "MsQuicStream")]
         public async Task MsQuic()
         {
             await using var stream = await QuicClient.AcceptStreamAsync();
