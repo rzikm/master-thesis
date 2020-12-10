@@ -6,7 +6,52 @@ $colors = @{
     'tcp' = 'sea-green' #2e8b57
 }
 
+$messageSizeLabel = "Message Size (B)"
+$latencyLabel = "99th percentile latency (ms)"
+$throughputLabel = "Throughput (MiB/s)"
+$connectionsLabel = "Connections"
+
 $DataRoot = "$PSScriptRoot\..\measurements"
+
+function CreateTexPlot
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string] $DataFile,
+
+        [Parameter(Mandatory)]
+        [PSObject] $Query,
+
+        [Parameter()]
+        [string] $GnuplotExtra,
+
+        [Parameter()]
+        [double] $Width = 2.8,
+
+        [Parameter()]
+        [double] $Height = 2.0,
+
+        [Parameter(Mandatory)]
+        [string] $XAxis,
+
+        [Parameter(Mandatory)]
+        [string] $YAxis
+    )
+
+    # create the tex output file
+    $outFile = $filename = (Resolve-Path -Relative $MyInvocation.PSCommandPath) -replace 'ps1$','tex'
+
+    $data = Import-Csv $DataFile
+
+    $plotData = @(@{
+        Data = TransformPlotData -Data $data -GroupBy Impl -Query $Query -XAxis $XAxis -YAxis $YAxis
+        Title = ""
+        ExtraGnuplotScript = $GnuplotExtra
+    })
+
+    New-PlotData -Data $plotData -Filename $outFile -OutputTerminal 'epslatex' -Width $Width -Height $Height
+}
 
 function ProduceParameterSets([Parameter(ValueFromPipeline)]$Parameters)
 {
@@ -95,31 +140,46 @@ function New-PlotData
         [string]$Filename,
 
         [Parameter()]
-        $PlotColumns = 1
+        $PlotColumns = 1,
+
+        [Parameter()]
+        [string]$OutputTerminal = 'svg',
+
+        [Parameter()]
+        [double]$Width = 500,
+
+        [Parameter()]
+        [double]$Height = 300
     )
 
 
     $plotCount = $Data.Length
 
     $gnuplotScript = @"
-#set terminal latex size 5.0, 3.0
-#set output "out.tex"
+set terminal $OutputTerminal size $($Width * $PlotColumns),$($Height * $plotCount / $PlotColumns)
+set output "$($Filename.Replace("\","/"))"
 
-set terminal svg size $(500 * $PlotColumns),$(300 * $plotCount / $PlotColumns)
-set output "$Filename"
-
-set multiplot layout $($plotCount/$PlotColumns),$PlotColumns
+$(if ($plotCount -ne 1) { "set multiplot layout $($plotCount/$PlotColumns),$PlotColumns" })
 
 set datafile separator ","
 
 set style data histograms
 set style fill solid border -1
+
 set boxwidth 0.8
 set bmargin
+
 set key center top horizontal outside
 set key auto columnheader
+set key samplen 1
+set key font ",15"
 
+set grid ytics
 set yrange [0:]
+
+set xtics nomirror
+
+set rmargin 0.5
 
 "@
 
@@ -129,11 +189,13 @@ set yrange [0:]
         $columnCount = $columns.Length
 
         $gnuplotScript += "set title '$($dataSet.Title)'`n"
+        $gnuplotScript += "$($Data.ExtraGnuplotScript)`n"
+
 
         $gnuplotScript += "plot " +
         ((2..$columnCount | ForEach-Object {
                 #"'-' using $($_):xtic(1) with histogram, '' using (`$0):$($_):$($_) with labels notitle offset 0,1"
-                "'-' using $($_):xtic(1) with histogram lt rgb '$($colors.($columns[$_ - 1]))'"
+                "'-' using $($_):xtic(1) lt rgb '$($colors.($columns[$_ - 1]))'"
           }) -join ",\`n") + "`n"
 
         $plotDataCsv = $dataSet.Data | ForEach-Object { [PSCustomObject]$_ } | ConvertTo-Csv -UseQuotes AsNeeded | Out-String
@@ -151,7 +213,7 @@ function PlotData
     [CmdLetBinding()]
     param(
         [Parameter()]
-        [string]$Filename,
+        [string] $Filename,
 
         [Parameter()]
         [PSObject] $Query,
@@ -192,8 +254,6 @@ function PlotAndDisplayData
     )
 
     $columns = $ParameterSets.(@($ParameterSets.Keys)[0]).Count
-
-    $columns
 
     $sets = $ParameterSets | ProduceParameterSets
 
@@ -238,8 +298,8 @@ function PlotMultiStreamThroughput
     $filename = 'multi-stream-throughput.svg'
 
     $sets = [ordered]@{
-        Streams = 1,4,16
-        MessageSize = 256, 1024, 4096
+        Streams = 1,32
+        MessageSize = 256, 4096
     }
 
     PlotAndDisplayData -Data $data -Filename $filename -ParameterSets $sets -XAxis Connections -YAxis $throughputColumn

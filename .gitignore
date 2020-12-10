@@ -378,3 +378,7 @@ linker
 # ln -s $(pwd)/src/libraries/Common/src src/coreclr/src/System.Private.CoreLib/common
 src/coreclr/src/System.Private.CoreLib/shared
 src/coreclr/src/System.Private.CoreLib/common
+/tex/plots/*.eps
+/tex/plots/*.pdf
+/tex/plots/*.tex
+/tex/utils/*.svg
