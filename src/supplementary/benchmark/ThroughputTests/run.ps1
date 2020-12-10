@@ -222,15 +222,10 @@ function RunAll
         AugmentParameterSet -ParameterSet $multiStreamSetsBase -Augment $_
     }
 
-    # $singleStreamSets = @{
-    #     Impl = "tcp", "managed", 'msquic'
-    #     Connections = 1, 8, 32, 128, 512
-    #     MessageSize = 256, 4096
-    # } | ProduceParameterSets
     $singleStreamSets = @{
         Impl = "tcp", "managed", 'msquic'
-        Connections = 512
-        MessageSize = 4096
+        Connections = 1, 8, 32, 128, 512
+        MessageSize = 256, 4096
     } | ProduceParameterSets
 
     $lossSets = @{
@@ -240,59 +235,67 @@ function RunAll
         NetworkOpts = @(@{Lag=1; Ood=5}, @{Lag=1; Drop=1; Ood=5})
     } | ProduceParameterSets
 
+    $multiLossSets = @{
+        Impl = "managed", 'msquic'
+        Connections = 1
+        Streams = 1, 2, 4, 8, 16, 32
+        MessageSize = 256
+        NetworkOpts = @(@{Lag=1; Ood=5}, @{Lag=1; Drop=1; Ood=5})
+    } | ProduceParameterSets
+
 
     $cols = "Impl","Connections","MessageSize"
     $Runs = @{
-        # "Single stream perf - latency" = @{
-        #     Parameters = $singleStreamSets
+        "Single stream perf - latency" = @{
+            Parameters = $singleStreamSets
 
-        #     ExtraArgs = @{
-        #         Duration = 5
-        #         WarmupTime = 5
-        #     }
+            ExtraArgs = @{
+                Duration = 5
+                WarmupTime = 5
+            }
 
-        #     Columns = $cols + $extraColumnsLatency
+            Columns = $cols + $extraColumnsLatency
 
-        #     OutFile = "single-stream-latency.csv"
-        # }
-        # "Single stream perf - throughput" = @{
-        #     Parameters = $singleStreamSets
+            OutFile = "single-stream-latency.csv"
+        }
+        "Single stream perf - throughput" = @{
+            Parameters = $singleStreamSets
 
-        #     ExtraArgs = @{
-        #         Duration = 5
-        #         WarmupTime = 5
-        #         Throughput = $true
-        #     }
+            ExtraArgs = @{
+                Duration = 5
+                WarmupTime = 5
+                Throughput = $true
+            }
 
-        #     Columns = $cols + $extraColumns
+            Columns = $cols + $extraColumns
 
-        #     OutFile = "single-stream-throughput_append.csv"
-        # }
-        # "Multi stream perf - throughput" = @{
-        #     Parameters = $multiStreamSets
+            OutFile = "single-stream-throughput.csv"
+        }
+        "Multi stream perf - throughput" = @{
+            Parameters = $multiStreamSets
 
-        #     ExtraArgs = @{
-        #         Duration = 5
-        #         WarmupTime = 5
-        #         Throughput = $true
-        #     }
+            ExtraArgs = @{
+                Duration = 5
+                WarmupTime = 5
+                Throughput = $true
+            }
 
-        #     Columns = $cols + "Streams" + $extraColumns
+            Columns = $cols + "Streams" + $extraColumns
 
-        #     OutFile = "multi-stream-throughput.csv"
-        # }
-        # "Multi stream perf - latency" = @{
-        #     Parameters = $multiStreamSets
+            OutFile = "multi-stream-throughput.csv"
+        }
+        "Multi stream perf - latency" = @{
+            Parameters = $multiStreamSets
 
-        #     ExtraArgs = @{
-        #         Duration = 5
-        #         WarmupTime = 5
-        #     }
+            ExtraArgs = @{
+                Duration = 5
+                WarmupTime = 5
+            }
 
-        #     Columns = $cols + "Streams" + $extraColumnsLatency
+            Columns = $cols + "Streams" + $extraColumnsLatency
 
-        #     OutFile = "multi-stream-latency.csv"
-        # }
+            OutFile = "multi-stream-latency.csv"
+        }
         "Loss - latency" = @{
             Parameters = $lossSets
 
@@ -303,7 +306,7 @@ function RunAll
 
             Columns = $cols  + ,"Drop" + $extraColumnsLatency
 
-            OutFile = "loss-latency_append.csv"
+            OutFile = "loss-latency.csv"
         }
         "Loss - Throughput" = @{
             Parameters = $lossSets
@@ -316,7 +319,32 @@ function RunAll
 
             Columns = $cols + ,"Drop" + $extraColumns
 
-            OutFile = "loss-throughput_append.csv"
+            OutFile = "loss-throughput.csv"
+        }
+        "Multi loss - latency" = @{
+            Parameters = $multiLossSets
+
+            ExtraArgs = @{
+                Duration = 10
+                WarmupTime = 10
+            }
+
+            Columns = $cols + "Streams", "Drop" + $extraColumnsLatency
+
+            OutFile = "multi-loss-latency.csv"
+        }
+        "Multi loss - Throughput" = @{
+            Parameters = $multiLossSets
+
+            ExtraArgs = @{
+                Duration = 10
+                WarmupTime = 10
+                Throughput = $true
+            }
+
+            Columns = $cols + "Streams", "Drop" + $extraColumns
+
+            OutFile = "multi-loss-throughput.csv"
         }
     }
 
