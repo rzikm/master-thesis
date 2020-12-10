@@ -266,7 +266,7 @@ Representing QUIC frames as individual classes would introduce many heap allocat
 received QUIC packet. This thesis, therefore, will model QUIC frames and the QUIC packet headers as
 value types. Also, the payload of some frames may consist of large blocks of memory. Examples
 include \STREAM{} and \CRYPTO{} frames, which can fill the entire payload of the QUIC packet.
-Duplicating this block of memory into a separate \ArrayOf{\byte{}} would be another unnecessary memory
+Duplicating this block of memory into a separate \ArrayOf{\Byte{}} would be another unnecessary memory
 allocation. \dotnet{}~2.1 introduced the \SpanOf{\class{T}} type, which can be used to efficiently
 reference arbitrary memory block, including memory allocated on the stack using the
 \keyword{stackalloc} keyword.
@@ -345,7 +345,7 @@ given moment, allocating one large buffer may be inefficient, as the entire buff
 needed at any given point in time. Therefore, our implementation uses multiple smaller buffers and
 allocates only the necessary number of buffers that are needed to buffer currently received data. To
 reduce pressure on the garbage collector, buffers that are no longer necessary are returned to a
-shared instance of \ArrayPoolOf{\byte{}} class to avoid their frequent allocation.
+shared instance of \ArrayPoolOf{\Byte{}} class to avoid their frequent allocation.
 
 \subsubsection{Reading Data by Application Code}
 
@@ -354,7 +354,7 @@ to be some synchronization. Our implementation uses the \ChannelOf{} class, whic
 efficient implementation of the producer-consumer queue with support for asynchronous operations
 using the \ValueTaskOf{} type. Each time an incoming \STREAM{} frame allows a part of the
 stream to be delivered to the application, the relevant region of the buffer is queued into the
-\ChannelOf{} using the \MemoryOf{\byte{}} type.
+\ChannelOf{} using the \MemoryOf{\Byte{}} type.
 
 \todo{more of the descriptions of the}
 
@@ -409,7 +409,7 @@ implementation will, as with the receiving part of the stream, use an intermedia
 storing the data.
 
 Our implementation will also use a variable number of fixed-size buffers rented from a shared
-\ArrayPoolOf{\byte{}} instance. These buffers will be used to store data that cannot be discarded
+\ArrayPoolOf{\Byte{}} instance. These buffers will be used to store data that cannot be discarded
 yet because the other endpoint did not acknowledge their reception.
 
 \subsubsection{Acknowledgement, Loss, and Retransmission}

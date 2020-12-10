@@ -51,7 +51,7 @@
 \usepackage{paralist}       % improved enumerate and itemize
 \usepackage{xcolor}         % typesetting in color
 \usepackage{booktabs}       % better horizontal lines for tables
-\usepackage{siunitx}        % thousands separators for large numbers in text
+\usepackage[binary-units]{siunitx}        % thousands separators for large numbers in text and units typesetting
 \usepackage[labelfont=bf]{caption} % use bold captions lables (Figure X.X:)
 \usepackage{subcaption}     % subfigures
 \usepackage{tikz}           % for drawing (checkmark etc)
@@ -65,6 +65,7 @@
 \usepackage[toc,nopostdot,indexonlyfirst]{glossaries}     % lists of terms and abbreviations
 \usepackage{dirtree}        % directory listings with comments
 \usepackage{mdframed}       % fancy frames
+\usepackage{epstopdf}       % render output from gnuplot to epslatex terminal
 
 %%% src: https://tex.stackexchange.com/questions/57353/how-to-get-caption-above-listing-with-minted
 \captionsetup[listing]{position=top}
@@ -180,8 +181,7 @@ TODO: do the abstract last%
 \include{04-evaluation}
 \include{05-dev-docs}
 \include{06-user-docs}
-
-\include{epilog}
+\include{06-conclusion}
 
 %%% Bibliography
 \include{bibliography}

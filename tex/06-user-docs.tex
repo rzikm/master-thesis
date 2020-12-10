@@ -559,16 +559,16 @@ members inherited from the \class{Stream} class.
 
     \ditemmethod[\keyword]{void}{AbortWrite}{\Long} Aborts the sending part of the stream with the provided error code.
 
-    \ditemmethod[\keyword]{int}{Read}{\SpanOf{\byte{}}} Reads the content
+    \ditemmethod[\keyword]{int}{Read}{\SpanOf{\Byte{}}} Reads the content
     of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
 
-    \ditemmethod[]{\ValueTaskOf{\keyword{int}}}{ReadAsync}{\MemoryOf{\byte{}}, \CancellationToken{}} Reads the content
+    \ditemmethod[]{\ValueTaskOf{\keyword{int}}}{ReadAsync}{\MemoryOf{\Byte{}}, \CancellationToken{}} Reads the content
     of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
 
-    \ditemmethod[\keyword]{void}{Write}{\SpanOf{\byte}} Writes the content
+    \ditemmethod[\keyword]{void}{Write}{\SpanOf{\Byte{}}} Writes the content
     of the provided buffer into the stream, returns when the data have been buffered internally.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \CancellationToken{}}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \ReadOnlyMemoryOf{\byte{}}, \ReadOnlySequenceOf{\byte{}}, and \genericClass{ReadOnlyMemory\allowbreak{}}{\ReadOnlyMemoryOf{\byte{}}}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \CancellationToken{}}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \ReadOnlyMemoryOf{\Byte{}}, \ReadOnlySequenceOf{\Byte{}}, and \genericClass{ReadOnlyMemory\allowbreak{}}{\ReadOnlyMemoryOf{\Byte{}}}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
 
     \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \bool{}, \CancellationToken{}}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
 

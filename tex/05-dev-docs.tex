@@ -431,16 +431,16 @@ methods:
 
 \begin{description}
 
-    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\byte{}} packet, \Int{} pnOffset, \Long{} pn}
+    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{} pn}
         Applies packet payload protection and writes \gls{aead} integrity tag at the end of the packet.
 
-    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\byte{}} packet, \Int{} pnOffset}
+    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset}
         Applies header protection.
 
-    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\byte{}} packet, \Int{} pnOffset}
+    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset}
         Removes header protection.
 
-    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\byte{}} packet, \Int{} pnOffset, \Long{} expectedPn}
+    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{} expectedPn}
         Attempts to remove the payload protection, returns \keyword{true} on success.
 
 \end{description}
@@ -532,7 +532,7 @@ implementation of \ITls{} interface. The \ITls{} interface defines methods neede
   \ditemmethod[\keyword]{bool}{TryAdvanceHandshake}{}
         Advances the TLS handshake by calling methods on the \ManagedQuicConnection{} (listed later).
 
-  \ditemmethod[\keyword]{void}{OnHandshakeDataReceived}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} data}
+  \ditemmethod[\keyword]{void}{OnHandshakeDataReceived}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} data}
     Provides the TLS implementation with data received from the peer via \CRYPTO{} frames.
 
   \ditemmethod[\enum]{TlsCipherSuite}{GetNegotiatedCipher}{}
@@ -553,12 +553,12 @@ call following functions when appropriate:
 
 \begin{description}
 
-  \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} read, \\ \indent{} \ReadOnlySpanOf{\byte{}} write} Provides the \ManagedQuicConnection{} with read
+  \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} read, \\ \indent{} \ReadOnlySpanOf{\Byte{}} write} Provides the \ManagedQuicConnection{} with read
 and write secrets negotiated for the given encryption level. The encryption level refers to one of
 the four encrypted QUIC packet: \texttt{Initial}, \texttt{Handshake}, \texttt{Application} (1-RTT)
 and \texttt{EarlyData} (0-RTT).
 
-  \ditemmethod[\keyword]{void}{AddHandshakeData}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\byte{}} data}
+  \ditemmethod[\keyword]{void}{AddHandshakeData}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} data}
 Adds TLS handshake data to be sent to the peer via \CRYPTO{} frames. The encryption level specifies
 which QUIC packet should be used to send the \CRYPTO{} frame. This method can be called multiple
 times.
@@ -738,10 +738,10 @@ be used by the \ManagedQuicStream{} class from the application thread:
   Requests that the stream is aborted by the sender. Results in sending a \STOPSENDING{} frame with
   specified application-level error code.
 
-  \ditemmethod[\keyword]{int}{Deliver}{\SpanOf{\byte{}} destination}
-  Copies the stream data into the provided \SpanOf{\byte{}}. Blocks until data are available.
+  \ditemmethod[\keyword]{int}{Deliver}{\SpanOf{\Byte{}} destination}
+  Copies the stream data into the provided \SpanOf{\Byte{}}. Blocks until data are available.
 
-  \ditemmethod[]{\ValueTaskOf{\Int{}}}{DeliverAsync}{\MemoryOf{\byte{}} destination, \CancellationToken{}}
+  \ditemmethod[]{\ValueTaskOf{\Int{}}}{DeliverAsync}{\MemoryOf{\Byte{}} destination, \CancellationToken{}}
   Asynchronous version of the \method{Deliver} method.
 
 \end{description}
@@ -754,7 +754,7 @@ From the internal background processing thread, the main methods called from the
   \ditemmethod[\keyword]{void}{OnResetStream}{\Long{} errorCode}
     Called when \RESETSTREAM{} frame for this stream was received.
 
-  \ditemmethod[\keyword]{void}{Receive}{\Long{} offset, \ReadOnlySpanOf{\byte{}} data, \bool{} fin}
+  \ditemmethod[\keyword]{void}{Receive}{\Long{} offset, \ReadOnlySpanOf{\Byte{}} data, \bool{} fin}
     Called when \STREAM{} frame has been received.
 
 \end{description}
@@ -767,11 +767,11 @@ the \ManagedQuicStream{} class from the application thread:
 
 \begin{description}
 
-  \ditemmethod[\keyword]{int}{Enqueue}{\ReadOnlySpanOf{\byte{}} data}
+  \ditemmethod[\keyword]{int}{Enqueue}{\ReadOnlySpanOf{\Byte{}} data}
     Adds the provided range of data into the stream. If the
 internal buffering capacity is full, this method blocks until the data can be buffered.
 
-  \ditemmethod[]{\ValueTaskOf{\Int}}{EnqueueAsync}{\ReadOnlyMemoryOf{\byte{}} data}
+  \ditemmethod[]{\ValueTaskOf{\Int}}{EnqueueAsync}{\ReadOnlyMemoryOf{\Byte{}} data}
     Asynchronous version of the \method{Enqueue} method.
 
   \ditemmethod[\keyword]{void}{MarkEndOfData}{}
@@ -793,7 +793,7 @@ From the internal background processing thread, the main methods called from the
         Returns the next consecutive range of data that is in \textit{pending} state. The next data
 to be sent in STREAM{} frame will be from this range.
 
-    \ditemmethod[\keyword]{void}{CheckOut}{\SpanOf{\byte} destination}
+    \ditemmethod[\keyword]{void}{CheckOut}{\SpanOf{\Byte{}} destination}
         Copies the data from the range returned from \method{GetNextSendableRange} into the
 destination buffer. The copied data is transitoned into \textit{in-flight} state.
 

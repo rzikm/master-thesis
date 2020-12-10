@@ -11,9 +11,9 @@
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
    id="svg8"
    version="1.1"
-   viewBox="0 0 136.40681 58.061691"
-   height="58.061691mm"
-   width="136.4068mm">
+   viewBox="0 0 142.01614 58.037475"
+   height="58.037476mm"
+   width="142.01613mm">
   <defs
      id="defs2">
     <marker
@@ -245,9 +245,9 @@
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="92.700167"
-     inkscape:cx="147.36206"
-     inkscape:zoom="3.959798"
+     inkscape:cy="100.10512"
+     inkscape:cx="275.95516"
+     inkscape:zoom="1.979899"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -267,14 +267,22 @@
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(-12.752819,5.1725983)"
+     transform="translate(-10.052921,5.1696273)"
      id="layer1"
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
+    <rect
+       style="fill:#f2f2f2;stroke:#f2f2f2;stroke-width:0.1"
+       id="rect2012"
+       width="141.91612"
+       height="31.76001"
+       x="10.102921"
+       y="21.057838" />
     <path
        id="path2201"
-       d="M 149.15962,21.057838 H 13.17652"
-       style="fill:#b3b3b3;stroke:#b3b3b3;stroke-width:0.264583;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.793749, 0.264583;stroke-dashoffset:0;stroke-opacity:1" />
+       d="M 149.15962,21.057838 H 10.10292"
+       style="fill:#b3b3b3;stroke:#000000;stroke-width:0.265;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:nodetypes="cc" />
     <text
        id="text835"
        y="33.546707"

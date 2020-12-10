@@ -52,19 +52,18 @@ function Run
             $clumsyArgs += "--ood", "on", "--ood-outbound", "on", "--ood-chance", $NetworkOpts.Ood
         }
 
-        $clumsyArgs
-
         $clumsy = clumsy $clumsyArgs &
     }
 
     $arguments = @(
-        "--certificate-file", "$PSScriptRoot\..\..\..\..\certs\cert.crt",
-        "--key-file", "$PSScriptRoot\..\..\..\..\certs\cert.key",
+        "--certificate-file", "certs\cert.crt",
+        "--key-file", "certs\cert.key",
         "--connections", $Connections,
         "--streams", $Streams,
         "--message-size", $MessageSize,
-        "--reporting-interval", 0,
-        "--test-duration", $Duration,
+        "--reporting-interval", $Duration,
+        # "--test-duration", $Duration,
+        # "--reporting-interval", 0,
         "--csv-output"
     )
 
@@ -85,62 +84,90 @@ function Run
 
     while ($true)
     {
-        $procArgs = "run", "-c", "Release", "--no-build", "--", "inproc" + $arguments
+        $procArgs = "$PSScriptRoot\bin\Release\net6.0\ThroughputTests.dll", "inproc" + $arguments
+
+        Write-Debug "$procArgs"
 
         $pinfo = New-Object System.Diagnostics.ProcessStartInfo
         $pinfo.FileName = "dotnet"
         $pinfo.RedirectStandardOutput = $true
         $pinfo.UseShellExecute = $false
-        $pinfo.WorkingDirectory = $PSScriptRoot
+        $pinfo.WorkingDirectory = "$PSScriptRoot\bin\Release\net6.0"
         $procArgs | ForEach-Object { $pinfo.ArgumentList.Add($_) }
         $p = New-Object System.Diagnostics.Process
         $p.StartInfo = $pinfo
         $p.Start() | Out-Null
 
-        $res = $p.StandardOutput.ReadLine(),$p.StandardOutput.ReadLine()
+        $out = $p.StandardOutput.ReadLine(),$p.StandardOutput.ReadLine()
+
+        Write-Debug "$res"
+
+        if ($p.HasExited)
+        {
+            Write-Warning "Process exited prematurely, trying again"
+            continue
+        }
 
         # we have what we need
         $p | kill
 
-
-        $p | Wait-Process -Timeout ($WarmupTime + $Duration + 15) -ErrorAction SilentlyContinue -ErrorVariable timeouted
-        if ($timeouted)
-        {
-            # just to be sure, check the output
-            $p | kill
-            $res = $p.StandardOutput.ReadToEnd().Split([Environment]::NewLine)[0,1]
-            if (!$res[0] -or !$res[1] -or $res.Length -ne 2)
-            {
-                Write-Warning "Run failed due to timeout, trying again"
-                continue
-            }
-        }
-        elseif ($p.ExitCode -ne 0)
-        {
-            Write-Warning "Process exited with nonzero, trying again"
-            continue
-        }
-        else
-        {
-            $res = $p.StandardOutput.ReadToEnd().Split([Environment]::NewLine)[0,1]
-        }
-
-        $res = $res | ConvertFrom-Csv |
-        Add-Member -MemberType NoteProperty -Name Impl -Value $Impl -PassThru |
-        Add-Member -MemberType NoteProperty -Name Streams -Value $Streams -PassThru |
-        Add-Member -MemberType NoteProperty -Name Connections -Value $Connections -PassThru |
-        Add-Member -MemberType NoteProperty -Name MessageSize -Value $MessageSize -PassThru
+        $res = $out | ConvertFrom-Csv |
+            Add-Member -MemberType NoteProperty -Name Impl -Value $Impl -PassThru |
+            Add-Member -MemberType NoteProperty -Name Streams -Value $Streams -PassThru |
+            Add-Member -MemberType NoteProperty -Name Connections -Value $Connections -PassThru |
+            Add-Member -MemberType NoteProperty -Name MessageSize -Value $MessageSize -PassThru
 
         $res.PSObject.Properties.Remove('Drift (%)')
         $res.PSObject.Properties.Remove('Current RPS')
 
-        $res
+        if (!$res.'Average RPS')
+        {
+            Write-Warning "Run seems to be corrupted, retrying"
+
+            Write-Debug $out[0]
+            Write-Debug $out[1]
+            Write-Debug $p.StandardOutput.ReadToEnd()
+            continue
+        }
+
         break;
     }
 
     if ($NetworkOpts)
     {
         $clumsy | Stop-Job
+
+        foreach($key in $NetworkOpts.Keys)
+        {
+            $res = $res |
+              Add-Member -MemberType NoteProperty -Name $Key -Value ($NetworkOpts.$key) -PassThru
+        }
+    }
+
+    $res
+}
+
+function AugmentParameterSet
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline)]
+        [Hashtable[]] $ParameterSet,
+
+        [Parameter()]
+        [Hashtable] $Augment
+    )
+
+    foreach ($set in $ParameterSet)
+    {
+        $newSet = $set.Clone();
+
+        foreach ($key in $Augment.Keys)
+        {
+            $newSet.$key = $Augment.$key
+        }
+
+        $newSet
     }
 }
 
@@ -151,20 +178,9 @@ function ProduceParameterSets([Parameter(ValueFromPipeline)]$Parameters)
 
     foreach ($key in $Parameters.Keys)
     {
-        $newParameterSets = @()
-
-        foreach($value in $Parameters.$key)
-        {
-            foreach($set in $paramSets)
-            {
-                $newSet = $set.Clone();
-                $newSet.$key = $value
-
-                $newParameterSets += $newSet
-            }
+        $paramSets = $Parameters.$key | ForEach-Object {
+            AugmentParameterSet -ParameterSet $paramSets -Augment @{$key = $_}
         }
-
-        $paramSets = $newParameterSets
     }
 
     $paramSets
@@ -183,98 +199,124 @@ function RunMeasurementSet
         $ExtraArgs,
 
         [Parameter(Mandatory)]
-        $ExtraColumns,
+        $Columns,
 
         [Parameter(Mandatory)]
         [string] $OutFile
     )
 
-    $columns = $Parameters.keys + $ExtraColumns
-
-    $Parameters | ProduceParameterSets | ForEach-Object { Run @_ @ExtraArgs } |
+    $Parameters | ForEach-Object { Run @_ @ExtraArgs } |
       Select-Object -Property $columns |
-      ConvertTo-Csv | Tee-Object -File result.csv | ConvertFrom-Csv |
+      ConvertTo-Csv | Tee-Object -File $OutFile | ConvertFrom-Csv |
       Format-Table
 }
 
 function RunAll
 {
-    # single stream perf - latency
+    $multiStreamSetsBase = @{
+        Impl = "managed", 'msquic'
+        Connections = 1, 4, 16, 64, 256
+    } | ProduceParameterSets
+
+    $multiStreamSets = @{Streams=1;MessageSize=256},@{Streams=32;MessageSize=4096} | ForEach-Object {
+        AugmentParameterSet -ParameterSet $multiStreamSetsBase -Augment $_
+    }
+
+    # $singleStreamSets = @{
+    #     Impl = "tcp", "managed", 'msquic'
+    #     Connections = 1, 8, 32, 128, 512
+    #     MessageSize = 256, 4096
+    # } | ProduceParameterSets
+    $singleStreamSets = @{
+        Impl = "tcp", "managed", 'msquic'
+        Connections = 512
+        MessageSize = 4096
+    } | ProduceParameterSets
+
+    $lossSets = @{
+        Impl = "tcp", "managed", 'msquic'
+        Connections = 1
+        MessageSize = 1024
+        NetworkOpts = @(@{Lag=1; Ood=5}, @{Lag=1; Drop=1; Ood=5})
+    } | ProduceParameterSets
+
+
+    $cols = "Impl","Connections","MessageSize"
     $Runs = @{
-        "Single stream perf - latency" = @{
-            Parameters = @{
-                Impl = "tcp", "managed", 'msquic'
-                Connections = 1, 4, 16, 64, 256
-                MessageSize = 256, 1024, 4096
-            }
+        # "Single stream perf - latency" = @{
+        #     Parameters = $singleStreamSets
 
-            ExtraArgs = @{
-                Duration = 5
-                WarmupTime = 5
-            }
+        #     ExtraArgs = @{
+        #         Duration = 5
+        #         WarmupTime = 5
+        #     }
 
-            ExtraColumns = $extraColumnsLatency
+        #     Columns = $cols + $extraColumnsLatency
 
-            OutFile = "single-stream-latency.csv"
-        }
-        "Single stream perf - throughput" = @{
-            Parameters = @{
-                Impl = "managed", 'msquic'
-                Connections = 1, 4, 16, 64, 256
-                MessageSize = 256, 1024, 4096
-                Streams = 1, 4, 16
-            }
+        #     OutFile = "single-stream-latency.csv"
+        # }
+        # "Single stream perf - throughput" = @{
+        #     Parameters = $singleStreamSets
 
-            ExtraArgs = @{
-                Duration = 5
-                WarmupTime = 5
-                Throughput = $true
-            }
+        #     ExtraArgs = @{
+        #         Duration = 5
+        #         WarmupTime = 5
+        #         Throughput = $true
+        #     }
 
-            ExtraColumns = $extraColumns
+        #     Columns = $cols + $extraColumns
 
-            OutFile = "single-stream-throughput.csv"
-        }
+        #     OutFile = "single-stream-throughput_append.csv"
+        # }
+        # "Multi stream perf - throughput" = @{
+        #     Parameters = $multiStreamSets
+
+        #     ExtraArgs = @{
+        #         Duration = 5
+        #         WarmupTime = 5
+        #         Throughput = $true
+        #     }
+
+        #     Columns = $cols + "Streams" + $extraColumns
+
+        #     OutFile = "multi-stream-throughput.csv"
+        # }
+        # "Multi stream perf - latency" = @{
+        #     Parameters = $multiStreamSets
+
+        #     ExtraArgs = @{
+        #         Duration = 5
+        #         WarmupTime = 5
+        #     }
+
+        #     Columns = $cols + "Streams" + $extraColumnsLatency
+
+        #     OutFile = "multi-stream-latency.csv"
+        # }
         "Loss - latency" = @{
-            Parameters = @{
-                Impl = "tcp", "managed", 'msquic'
-                Connections = 1
-                MessageSize = 256, 1024, 4096
-            }
+            Parameters = $lossSets
 
             ExtraArgs = @{
                 Duration = 5
                 WarmupTime = 5
-                NetworkOpts = @{
-                    Lag = 5
-                    Drop = 2
-                }
             }
 
-            ExtraColumns = $extraColumnsLatency
+            Columns = $cols  + ,"Drop" + $extraColumnsLatency
 
-            OutFile = "loss-latency.csv"
+            OutFile = "loss-latency_append.csv"
         }
         "Loss - Throughput" = @{
-            Parameters = @{
-                Impl = "tcp", "managed", 'msquic'
-                Connections = 1
-                MessageSize = 256, 1024, 4096
-            }
+            Parameters = $lossSets
 
             ExtraArgs = @{
                 Duration = 5
                 WarmupTime = 5
                 Throughput = $true
-                NetworkOpts = @{
-                    Lag = 5
-                    Drop = 2
-                }
             }
 
-            ExtraColumns = $extraColumns
+            Columns = $cols + ,"Drop" + $extraColumns
 
-            OutFile = "loss-throughput.csv"
+            OutFile = "loss-throughput_append.csv"
         }
     }
 

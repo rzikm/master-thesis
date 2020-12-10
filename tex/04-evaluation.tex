@@ -2,17 +2,14 @@
 
 In this chapter we evaluate the performance of the managed QUIC implementation developed as part of
 this thesis and compare it to the existing \libmsquic{}-based implementation. We will also compare
-both QUIC implementations to \class{SslStream} which uses a combination of TCP and TLS. Due to lack
-of resources for proper end-to-end testing, we will run the performance tests locally on a single
-machine. In order to evaluate the implementations in a non-ideal network environment, we will use
-the Clumsy~\cite{clumsy} utility to simulate network issues such as lag and packet loss.
+both QUIC implementations to \class{SslStream} which uses a combination of TCP and TLS.
 
 There are two performance characteristics which are relevant for networking protocol implementations:
 
 \begin{itemize}
 
   \litem{Throughput} The rate at which the application data is sent. This metric is important mainly
-for servers. High throughput indicates a capacity of a server to process large amounts of requests.
+for servers. High total throughput indicates a capacity of a server to process large amounts of requests.
 
   \litem{Round Trip Time Latency} The delay between sending a request and receiving a response. This
 metric is important mainly for clients. Rather than measuring average latency, a certain percentile
@@ -21,20 +18,244 @@ the latency is at most 10ms.
 
 \end{itemize}
 
-\subsubsection{Evaluation Environment}
+\section{Evaluation Environment}
 
-In order to obtain realistic measurements, our measurements will
+Due to lack of resources for proper end-to-end testing on a real network, all performance tests were
+run locally on a single Windows machine over the loopback network interface. The CPU on the machine
+is Intel core i7-8700 \SI{3.20}{\giga\hertz} (12 logical, 6 physical cores) and runs Windows
+10.0.18363.1139. The program was run in a 64-bit process on preview \dotnet{} Core~6.0.0 host
+(CoreCLR 6.0.20.55508, CoreFX 6.0.20.255508).
 
+The of \libmsquic{} library for use in these tests has been compiled from source from commit
+\texttt{dc2a6cf0dd12e27} from the official repository~\cite{msquicGithub} and configured to run
+using the same \libopenssl{} library as the managed QUIC implementation.
 
-\subsection{}
+\subsection{Simulating Non-Ideal Network}
 
-\todo{interoperability?}
-\todo{performance?}
+In order to measure how implementations behave in presence of lag and packet loss, we used the
+Clumsy~\cite{clumsy} utility to simulate network problems. Clumsy is based on the
+WinDivert~\cite{WinDivert} utility for capturing packets from the Windows network stack. Figure
+\autoref{fig:04-clumsy-architecture} illustrates the process of intercepting and re-injecting network
+traffic by Clumsy.
 
-\todo{what we want to measure}
+\begin{myFigure}{fig:04-clumsy-architecture}{Use of Clumsy to simulate network issues}
 
-\todo{how we will measure it (high-level structure of the application)}
+  \resizebox{0.7\linewidth}{!}{\input{img/04-clumsy-architecture.pdf_tex}}
 
-\todo{measurements}
+\end{myFigure}
 
-\todo{conclusion}
+However, when conducting large number of connections, the single-threaded implementation of Clumsy
+becomes the bottleneck of the whole setup. For this reasons, we will use Clumsy only to compare
+performance in scenarios with a single connection.
+
+\subsection{Application for Measurements}
+
+The actual measurements is done using a dedicated \dotnet{} application whose source code can be
+found in \todo{path to attachments}. The application spawns a large number of clients which send
+messages of specified size to the server. The server echoes the messages back without any further
+processing. The first parameter to the application selects one of the following modes:
+
+\begin{description}
+
+  \ditem{\texttt{server}} Starts the server-side part of the application.
+
+  \ditem{\texttt{client}} Starts the client-side part of the application. This part spawns multiple clients and reports the measurement results on standard output.
+
+  \ditem{\texttt{inproc}} Starts both the server and client in the same process. The communication is done over loopback interface.
+
+\end{description}
+
+The application accepts multiple parameters. List of the most important follows
+
+\begin{description}
+
+    \ditem{\texttt{-e, --endpoint}} The endpoint on which to listen (server) or to which to connect (client).
+
+    \ditem{\texttt{--certificate-file}} Path to the X.509 certificate file.
+
+    \ditem{\texttt{--key-file}} Path to the X.509 certificate private key file.
+
+    \ditem{\texttt{-t, --tcp}} Use TCP instead of QUIC.
+
+    \ditem{\texttt{-c, --connections}} The number of connetions to create.
+
+    \ditem{\texttt{-s, --streams}} The number of streams to create in each connection. Applicable only when QUIC is used.
+
+    \ditem{\texttt{-m, --message-size}} The size of sent messages.
+
+    \ditem{\texttt{-n --no-wait}} Whether clients wait for reply before sending another message.
+
+\end{description}
+
+The full list of parameters can be found in the \filename{program.cs} file, or by running the
+program with the \texttt{--help} parameter. By default, the implementation uses managed QUIC
+implementation. Switching between the QUIC implementation providers can be done by defining the
+\texttt{DOTNETQUIC_PROVIDER} environment variable to \texttt{msquic}.
+
+The application switches between two modes for clients using the \texttt{-n} switch. By default,
+clients do not wait for reply from the server before sending another message. This lets us measure
+the throughput of the implementations. Alternatively, clients can wait until a response from the
+server is received and measure the latency.
+
+In the following subsections, we present the results of the individual performance experiments. The
+throughput and latencies were measured as follows:
+
+\begin{itemize}
+
+  \litem{Throughput} Total throughput of the server. This is the amount of user data echoed back to clients across all connections.
+
+  \litem{Latency} The delay between client writing the message to the \Stream{} and reading back the full reply. In our tests, we will measure the 99th percentile of latency.
+
+\end{itemize}
+
+All the following measurements will be done using the \texttt{inproc} mode of the application. Each
+test will have \SI{5}{\second} of warm-up time and will collect data for another \SI{5}{\second}.
+
+\section{Comparison with MsQuic-based Implementation}
+
+The first test will compare the managed and \libmsquic{}-based QUIC implementations. This tests
+is highly CPU-bound and, therefore, will be done without Clumsy. In these tests we increase the size
+of messages, number of streams and number of connections to see how the two implementations scale.
+
+\autoref{fig:04-multi-stream-throughput} shows the throughput measurement results. The performance
+of the managed implementation seems to be only slightly affected by the number of streams and
+message size. However, it declines rapidly with the increasing number of connections as the CPU load
+increases. On the other hand, \libmsquic{} based implementation scales appropriately even under
+increased load.
+
+\todo{Should I add tables with exact values?}
+
+\begin{myFigure}{fig:04-multi-stream-throughput}{Multiple stream QUIC throughput measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-a}{1 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-b}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\autoref{fig:04-multi-stream-latency} shows the latency measurement results. While system is under
+small load (\autoref{fig:04-multi-stream-latency-a}), the latencies of both implementations are
+comparable. However, once the load increases (\autoref{fig:04-multi-stream-latency-b}), our
+implementation shows much higher latencies.
+
+\begin{myFigure}{fig:04-multi-stream-latency}{Multiple stream QUIC latency measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-latency-a}{1 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-latency-b}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-latency-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\section{Comparison with TCP}
+
+In the second test we will compare the single-stream performance of QUIC implementations to using
+\TcpClient{} and \SslStream{}. \autoref{fig:04-single-stream-throughput} shows the results of the
+throughput measurements for \SI{256}{\byte} (\autoref{fig:04-single-stream-throughput-a}) and
+\SI{4096}{\byte} (\autoref{fig:04-single-stream-throughput-b}) message sizes. TCP seems to perform
+significantly better than either QUIC implementation in both variations of the experiment.
+
+\begin{myFigure}{fig:04-single-stream-throughput}{Single stream throughput measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-a}{\SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-single-stream-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-b}{\SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-single-stream-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\autoref{fig:04-single-stream-latency} shows the latency measurement results. These results show
+again that TCP outperforms both QUIC implementations.
+
+\begin{myFigure}{fig:04-single-stream-latency}{Single stream latency measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-latency-a}{\SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-single-stream-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-latency-b}{\SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-single-stream-latency-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+The results above suggest that neither QUIC implementation can compete with the \SslStream{}
+performance over the loopback interface and simple swapping the use of \SslStream{} for
+\QuicStream{}s is likely to degrade performance of the resulting application.
+
+\section{Comparison in Lossy Network}
+
+In the last test we compare resilience of QUIC and TCP+TLS implementations in simulated lossy
+network using Clumsy. Although Clumsy allows setting very small lag delay, in practice, the delay we
+observed when using the \texttt{ping} utility was at ranging between \SI{20}{\milli\second} to
+\SI{40}{\milli\second}. We will, therefore consider the lowest possible setting as
+\SI{30}{\milli\second} lag and use it in our measurements. Additionally to the lag, we added
+constant 5\% chance of packet reordering and varied packet loss chance in our tests.
+
+\autoref{fig:04-loss-throughput} shows the throughput measurements results for 0\% packet loss
+(\autoref{fig:04-loss-throughput-a}) and 1\% packet loss (\autoref{fig:04-loss-throughput-b}). The
+measured result suggest that both QUIC providers are far behind the throughput of the TCP protocol.
+
+\begin{myFigure}{fig:04-loss-throughput}{Single stream throughput measurements in simulated network}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-loss-throughput-a}{\SI{30}{\milli\second} Lag, 0\% Loss, 5\% Reorder}
+\footnotesize
+\input{plots/04-loss-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-loss-throughput-b}{\SI{30}{\milli\second} Lag, 1\% Loss, 5\% Reorder}
+\footnotesize
+\input{plots/04-loss-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\autoref{fig:04-loss-throughput} shows the latency measurements results. In absence of packet loss
+(\autoref{fig:04-loss-latency-a}), \libmsquic{}-based implementation produces lower latencies than
+the other implementations. In lossy network (\autoref{fig:04-loss-latency-b}), both QUIC
+implementations produce lower latencies than TCP.
+
+\begin{myFigure}{fig:04-loss-latency}{Single stream latency measurements in simulated network}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-loss-latency-a}{\SI{30}{\milli\second} Lag, 0\% Loss, 5\% Reorder}
+\footnotesize
+\input{plots/04-loss-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-loss-latency-b}{\SI{30}{\milli\second} Lag, 1\% Loss, 5\% Reorder}
+\footnotesize
+\input{plots/04-loss-latency-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\section{Interop between Implementations}
+
+The measurement application can also be used to test interoperability of the managed QUIC
+implementation and the \libmsquic{}-based implementation. This can be done by starting one
+application in \texttt{server} mode using one implementation provider, and another instance of the
+application in \texttt{client} mode using the other provider.
+
+More exhaustive interop tests could be achieved using the open source QUIC Interop Test
+Runner~\cite{QuicInteropRunner}. However, that sort of testing is left for future work.
+
+\section{Conclusion}
+
+When compared to \libmsquic{}-based QUIC implementation provider, the managed QUIC implementation
+developed in this thesis can provide higher throughput when using small number of parallel
+connection while maintaining comparable latencies. However, in the current state, the managed QUIC
+implementation does not scale very well and the throughput and observed latencies degrade when large
+number of connections is created.
+
+Both QUIC implementation providers have measured lower single-stream performance when compared with
+the TCP+TLS stack over the loopback interface. However, it should be noted that the implementations
+may behave differently when used over real network.
+
+In case of simulated lossy environment, we measured significantly higher single-stream throughput
+using TCP+TLS stack than either QUIC implementation. For smaller messages, the measured latencies
+were similar in all implementations, but for larger messages, both QUIC implementations showed
+significantly lower latencies than the combination of TCP+TLS.
+
+We conclude from these measurements that while QUIC both implementations show some interesting
+results, there is still a lot of optimizations required before their performance is comparable to
+that of the TCP protocol.
