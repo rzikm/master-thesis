@@ -44,5 +44,13 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
+        <Content Include="$(OpenSslArtifactRoot)lib\libcrypto.so.1.1" Condition="Exists('$(OpenSslArtifactRoot)lib\libcrypto.so.1.1')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <Content Include="$(OpenSslArtifactRoot)lib\libssl.so.1.1" Condition="Exists('$(OpenSslArtifactRoot)lib\libssl.so.1.1')">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
     </ItemGroup>
 </Project>
