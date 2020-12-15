@@ -382,3 +382,5 @@ src/coreclr/src/System.Private.CoreLib/common
 /tex/plots/*.pdf
 /tex/plots/*.tex
 /tex/utils/*.svg
+/tex/*.bcf
+/tex/*.xml
