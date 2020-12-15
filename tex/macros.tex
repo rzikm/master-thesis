@@ -161,8 +161,8 @@
 \newcommand\litem[2][\itshape]{\item{#1 #2}:}
 
 % special item for description lists to make the description go on the next line
-\newcommand\ditem[1]{\pagebreak[3] \item[{\parbox[t]{0.98\textwidth}{#1}}] \leavevmode \\ }
-\newcommand\ditemWithComment[2]{\pagebreak[3] \item[#1] \hfill \textit{(#2)} \leavevmode \\}
+\newcommand\ditem[1]{ \item[#1] }
+\newcommand\ditemWithComment[2]{ \item[#1 \hfill \textnormal{\textit{(#2)}}] }
 
 % macro for typesetting library names
 \newcommand\libname[1]{\texttt{\itshape#1}}
