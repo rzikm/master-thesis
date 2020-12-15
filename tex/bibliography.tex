@@ -9,14 +9,20 @@
 %%% the name of the corresponding style file (*.bst). Both styles
 %%% mentioned in this template are included in LaTeX distributions.
 
-\bibliographystyle{unsrtnat}     %% [number]
+%\bibliographystyle{unsrtnat}     %% [number]
 
 \renewcommand{\bibname}{Bibliography}
 
 %%% Generate the bibliography. Beware that if you cited no works,
 %%% the empty list will be omitted completely.
 
-\bibliography{bibliography}
+
+%% fix overfull hboxes in biblatex bibliography list
+%% https://tex.stackexchange.com/questions/171999/overfull-hbox-in-biblatex
+\emergencystretch=2em
+
+%\bibliography{bibliography}
+\printbibliography
 
 %%% If case you prefer to write the bibliography manually (without bibTeX),
 %%% you can use the following. Please follow the ISO 690 standard and

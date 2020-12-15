@@ -15,10 +15,10 @@ all: thesis.pdf abstract.pdf
 # LaTeX must be run multiple times to get references right
 thesis.pdf: $(TEX_DIR)/thesis.tex $(TEX_SRC) bibliography.bib $(IMG_OUT) $(PLOT_OUT)
 	pdflatex $<
-	bibtex thesis
+	biber thesis
 	makeglossaries thesis
-	echo pdflatex $<
-	echo pdflatex $<
+	pdflatex $<
+	pdflatex $<
 
 abstract.txt: thesis.pdf
 
