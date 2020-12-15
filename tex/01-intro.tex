@@ -250,36 +250,36 @@ the selection of the protocol features we will implement in this thesis to the b
 analysis in \autoref{chap:03-analysis}. However, the implementation design should be such that the
 rest of the specification can be implemented in the future.
 
+\todo{these two paragraphs have changed}
+
 It would make sense to evaluate our QUIC implementation's functionality by providing a partial
 implementation of HTTP/3. However, even supporting the most straightforward GET requests would be
-too complicated. Instead, we will implement a primitive client-server console application. The
-client part of the application will send all files in a given directory to the server, which will
-store them in a directory. The files will be sent in parallel, utilizing the stream multiplexing
-feature of QUIC\@.
+too complicated. Instead, we will implement a simple application in which server will echo all data
+back to the client.
 
-In the previous section, we mentioned that the indirect nature of the existing QUIC API could be
-used to alternate between \libmsquic{}-based QUIC and our QUIC implementation at runtime. As an
-optional goal, this thesis will implement benchmarks to compare the two QUIC implementations and
-compare their performance to that of TCP+TLS based \class{SslStream}.
+Because the indirect nature of the existing QUIC API could be used to alternate between
+\libmsquic{}-based QUIC and our QUIC implementation at runtime. This would allow us to create a
+benchmarking application to compare the performance of the two QUIC implementations. A small step
+from there would allow us to compare the performance of the two QUIC implementations with that of
+TCP+TLS-based \class{SslStream}. This benchmarking will be an optional goal of this thesis.
 
 \subsection*{Summary of the Goals}
+
+\todo{small changes in goals were done}
 
 The following list summarizes the goals of this thesis presented in the previous subsection.
 
 \begin{enumerate}
 
   \item Select a sufficient subset of QUIC specification needed to support the most basic data
-transfer and implement it inside \dotnet{} runtime codebase. \todo{The API is already public, so
-this part is out}
+  transfer and implement it inside \dotnet{} runtime codebase.
 
-  \item Make the existing QUIC API public and allow switching between the new managed implementation
-and the existing \libmsquic{} based one. \todo{Good point from ziki: this is not a goal, but a step.
-maybe call this section Steps?}
+  \item Allow switching between the new managed implementation and the existing \libmsquic{}-based one.
 
   \item Evaluate the managed QUIC implementation by using it to implement a simple client-server
-console application for sending files.
+echo application.
 
-  \item \todo{Emphasise that this is optional?} Try to compare the performance of the new
-implementation with the previous \libmsquic{}-based one.
+  \item \textit{(optional)} Try to compare the performance of the new implementation with the
+previous \libmsquic{}-based one and with TCP+TLS-based \class{SslStream}.
 
 \end{enumerate}

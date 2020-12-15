@@ -99,7 +99,8 @@ these commands using the \textit{Developer command prompt for Visual Studio} in 
 This will produce the \libname{libcrypto} and \libname{libssl} libraries in the \libopenssl{}
 repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
 \texttt{libssl-1_1-x64.dll}. These libraries are loaded by managed QUIC implementation at runtime
-and, therefore, must be present in a location where the OS loader can find them. This can be achieved by putting the libraries in any following location:
+and, therefore, must be present in a location where the OS loader can find them. This can be
+achieved by putting the libraries in any following location:
 
 \begin{itemize}
 
@@ -107,7 +108,8 @@ and, therefore, must be present in a location where the OS loader can find them.
 
   \item A directory listed in the \texttt{PATH} environment variable
 
-  \item \textit{(preferred)} next to the \SystemNetQuicDll{} library in the \dotnet{} installation directory, i.e., \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+  \item \textit{(preferred)} next to the \SystemNetQuicDll{} library in the \dotnet{} installation
+        directory, i.e., \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
 
 \end{itemize}
 
@@ -130,7 +132,9 @@ each system:
 
 \subsection{Configuring the Development Environment}\label{sec:06-env-vars}
 
-Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation created in previous step is used when building the user code. For this, following environment variables need to be defined correctly.
+Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation
+created in previous step is used when building the user code. For this, following environment
+variables need to be defined correctly.
 
 \begin{description}
 
@@ -244,15 +248,18 @@ namespace hello_net6._0
 
 Running the program should produce similar output to the following:
 
+\noindent\begin{minipage}{\textwidth}
 \begin{myVerbatim}
 > dotnet run
 Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
 Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 \end{myVerbatim}
+\end{minipage}
 
 \subsection{Deploying \dotnet{} Applications}
 
-\todo{DONE: mention that the app will only run if the SDK is available in the environment; also mention self-contained publish}
+\todo{DONE: mention that the app will only run if the SDK is available in the environment; also
+  mention self-contained publish}
 
 The applications built against the preview \dotnet{}~6 SDK will run only if the environment is
 configured according to \autoref{sec:06-env-vars}. In order to run the applications outside the
@@ -270,9 +277,7 @@ documentation~\cite{dotnetRIDs}.
 
 Unfortunately, the packaged application contains the unmodified \SystemNetQuicDll{} without managed
 QUIC support. The last step is, therefore, manually overwriting the \SystemNetQuicDll{} with the
-locally built one.
-
-\todo{Quic.dll must be redeployed}
+one locally built from the \dotnet{} runtime sources.
 
 \section{Simple Echo Server using QUIC}\label{sec:06-tutorial}
 
@@ -335,7 +340,7 @@ We can then use the \method{AcceptConnectionAsync} method to asynchronously wait
 connections. \autoref{lst:06-echo-server-accept} shows how to accept new connections and process
 them asynchronously in a separate \class{Task}.
 
-\begin{myListingCsharpNoPageBreak}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
+\begin{myListingCsharp}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
     // QuicListener must be started before accepting connections.
     listener.|Start|();
 
@@ -360,7 +365,7 @@ them asynchronously in a separate \class{Task}.
         // wait until all connections are closed
         await Task.|WhenAll|(tasks);
     }
-\end{myListingCsharpNoPageBreak}
+\end{myListingCsharp}
 
 \autoref{lst:06-echo-server-loop} Shows the implementation of \method{HandleServerConnection} which
 does the actual echoing of incoming data. The \QuicStream{} is accepted using the

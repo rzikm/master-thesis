@@ -314,61 +314,56 @@ peer.
 
 Ideally, the stream implementation would be structured so that the stream data were copied straight
 from the decrypted packet to the memory provided by the application. This would be possible if the
-API used an event-based model with callbacks for incoming data. The API, as currently designed,
-utilizes a method-based model. If the application does not call the \method{ReadAsync} method, there
-is no buffer to deliver into.
+API used an event-based model with callbacks for incoming data. However, the current API design
+utilizes a method-based model of the \Stream{} abstraction. If the application does not call the
+\method{ReadAsync} method, there is no application buffer to deliver into.
 
-In order to avoid additional copies, the buffer holding the stream data cannot be reused to receive
-another QUIC packet because the part of the buffer with the \STREAM{} frame must be kept unmodified
-until delivered to the application. Instead, a different buffer must be obtained for receiving the
-next packet. For such a solution to be memory efficient, it would require an elaborate memory
-pooling scheme to avoid needlessly, essentially implementing a custom memory allocator over a block
-of memory. The development and maintenance cost may greatly outweigh the performance improvement of
-such a solution. Therefore, until the cost of such a solution is justified by performance
-measurements, our implementation will use a two-copy approach: the first copy from the packet to an
-intermediate buffer, the second copy from the intermediate buffer to the destination memory provided
-by the application.
+This implies that in order to avoid intermediate copies of the stream data, the buffer holding the
+QUIC packet in which the stream data arrived cannot be reused to receive other QUIC packets until
+the data are delivered to the application. Tracking of which buffers can be reused again for
+receiving next QUIC packets can be complicated because QUIC packets can carry multiple \STREAM{}
+frames.
 
-\todo{if we speak about doing some performance measurements, then they should be done and their
-results presented in some following chapter}
-
-\todo{forward reference to the measurements, see 2020-10-22: 40m}
+We believe that the implementational complexity of avoiding intermediate copies outweighs the
+possible performance gain. For this reason, our pilot implementation will use a two-copy approach:
+the first copy from the packet into an intermediate buffer, the second copy from the intermediate
+buffer into the destination memory provided by the application.
 
 \subsubsection{Packet Reordering and Data Deduplication}
 
 Unreliability of the UDP protocol can cause QUIC packets to be reordered or lost. Because of that,
-parts of the stream may be received multiple times, and the contents of \STREAM{} frames can
+sections of the stream may be received multiple times, and the contents of \STREAM{} frames can
 arbitrarily overlap.
 
 Even though QUIC Flow control provides an upper limit on the data that needs to be buffered at any
 given moment, allocating one large buffer may be inefficient, as the entire buffer might not be
-needed at any given point in time. Therefore, our implementation uses multiple smaller buffers and
-allocates only the necessary number of buffers that are needed to buffer currently received data. To
-reduce pressure on the garbage collector, buffers that are no longer necessary are returned to a
-shared instance of \ArrayPoolOf{\Byte{}} class to avoid their frequent allocation.
+needed at any given point in time. Therefore, our implementation uses a list multiple smaller
+buffers and allocates only the necessary number of buffers that are needed to buffer currently
+received data. To reduce pressure on the garbage collector, buffers are pooled in a shared instance
+of \ArrayPoolOf{\Byte{}} class to avoid their frequent allocation.
 
-\subsubsection{Reading Data by Application Code}
+\subsubsection{Reading Data by the Application}
 
 Because user code runs on a different thread from the internal \QuicConnection{} logic, there needs
 to be some synchronization. Our implementation uses the \ChannelOf{} class, which provides an
 efficient implementation of the producer-consumer queue with support for asynchronous operations
-using the \ValueTaskOf{} type. Each time an incoming \STREAM{} frame allows a part of the
-stream to be delivered to the application, the relevant region of the buffer is queued into the
+using the \ValueTaskOf{} type.
+
+\todo{Check readability there}
+
+Each time data are received for the stream, the implementation checks if there is a contiguous block
+of memory which could be delivered to the application. For this reason, the implementation needs to
+keep track which parts of the stream have already been received. If there is a new part of the
+stream that can be delivered, a view into the relevant region of the buffer is queued into the
 \ChannelOf{} using the \MemoryOf{\Byte{}} type.
 
-\todo{more of the descriptions of the}
-
-\todo{the image is hard to understand, it needs a more detailed description and a legend in the
-image so that the reader does not have to}
-
-\todo{consider organizing the layers vertically in the image}
-
-\todo{even though I explain the buffering etc earlier, I need to describe the image}
-
-\autoref{fig:03-receive-stream} Illustrates how all parts of the \ReceiveStream{} fit together. On
-the left, data from the incoming \STREAM{} frame are temporarily stored in pooled reordering
-buffers. Regions of memory containing deliverable data are then queued for delivery in the channel.
-The application thread retrieves the memory regions and copies the data into the destination buffer.
+\autoref{fig:03-receive-stream} Illustrates how all parts of the \ReceiveStream{} work together. The
+data from the incoming \STREAM{} frame are copied to the proper offset in intermediate buffers.
+These buffers are rented from an \ArrayPoolOf{\Byte{}} as needed. A \MemoryOf{\Byte} instance
+providing a view into the newly deliverable parts of the stream is then queued into a \ChannelOf{}
+instance for delivery. The application thread retrieves the memory regions as needed and copies the
+data into the buffer provided by the application. Once all data from an intermediate buffer are
+delivered, the intermediate buffer is returned back to the \ArrayPoolOf{\Byte{}}.
 
 \begin{myFigure}{fig:03-receive-stream}{Implementation of the receiving part of the stream}
 
@@ -380,7 +375,7 @@ The application thread retrieves the memory regions and copies the data into the
 
 QUIC Flow control limits for streams specify the maximum offset of data that an endpoint can send.
 An endpoint needs to update these limits by sending a \MAXSTREAMDATA{} frame after the data are
-delivered to the application. However, sending updated limits in every packet could waste space that
+delivered to the application. However, sending ipdated limits in every packet could waste space that
 could be used by the application data. On the other hand, updating the limits too late could lead to
 the other endpoint being blocked and signal the fact by sending a \STREAMDATABLOCKED{} frame. In
 such a state, the endpoint is unable to send more application data until it receives an update via
@@ -399,22 +394,27 @@ the sent data can be acknowledged.
 \subsubsection{Stream Data Buffering}
 
 Similarly to buffering received data, we will analyze how many times the outgoing data need to be
-copied before they are sent. The semantics of the \method{Write} and \method{WriteAsync} methods is
-that when the method completes, the provided memory can be reused. \todo{see question from PJ on
-2020-10-22 1h about multiple parallel ValueTasks and completing when the data are acknowledged} A
-single-copy approach, in this case, would require that the \method{Write} and \method{WriteAsync}
-methods complete only after the peer acknowledges that the contained data were received. In the
-best-case scenario, that would take a full roundtrip, which would be very inefficient. Therefore our
-implementation will, as with the receiving part of the stream, use an intermediate buffer for
-storing the data.
+copied before they are sent. The semantics of the \method{Write} and \method{WriteAsync} methods on
+the \Stream{} class is such that when the method completes, the provided memory can be reused for
+other purposes.
 
-Our implementation will also use a variable number of fixed-size buffers rented from a shared
-\ArrayPoolOf{\Byte{}} instance. These buffers will be used to store data that cannot be discarded
-yet because the other endpoint did not acknowledge their reception.
+\todo{improved clarity why returning from write once the data is buffered}
+
+A single-copy implementation approach in this case would require that the \method{Write} and
+\method{WriteAsync} methods complete only after the peer acknowledges that the contained data were
+received. In case no packet gets lost, that implies a full round-trip delay. If we were to choose
+this approach for the implementation, it would be hard to use the the \QuicStream{} class
+efficiently, and the \QuicStream{} implementation would be inconsistent with the other
+network-enabled \Stream{} implementations.
+
+Therefore, our implementation will create an intermediate copy of the data and the \method{Write}
+and \method{WriteAsync} will complete once the data is internally buffered. In order to be
+memory-efficient, our implementation will, as in \ReceiveStream{} implementation, use an
+\ArrayPoolOf{\Byte{}} to reduce pressure on the garbage collector.
 
 \subsubsection{Acknowledgement, Loss, and Retransmission}
 
-Each byte that was written into the stream can be conceptually in three different states:
+Each byte that was written into the stream can be, conceptually, in three different states:
 
 \begin{itemize}
 
@@ -435,19 +435,23 @@ transition to acknowledged. The state of the individual parts of the stream can 
 maintaining three sets of \textit{ranges} --- starts and ends of the blocks of data in the same
 state.
 
-\subsubsection{Writing Data by Application Code}
+\subsubsection{Writing Data by the Application}
 
-Again, our implementation will use \ChannelOf{} type to provide synchronization with the
-application thread. However, since \ChannelOf{} does not allow random access to the provided
-data, a separate list of buffers with yet unacknowledged data need to be maintained as well.
+\todo{adjusted figure and description}
+
+Similarly to the receiving part of the stream, our implementation will use \ChannelOf{} type to
+provide synchronization with the application thread. However, since \ChannelOf{} does not allow
+random access to the provided data, a separate list of buffers is maintained for data which were
+sent but not yet acknowleged.
 
 \autoref{fig:03-send-stream} illustrates the process of writing data into the \SendStream{}. The
-application data are coming from the left, where they are written into a buffer and queued into the
-synchronization channel. From the channel, the buffer is dequeued and placed in a list of
-retransmission buffers, where it stays until the other endpoint acknowledges the contained data.
-
-\todo{why can't I gather-send from the buffers? because I need to encrypt, potentially more than
-once if the data gets lost}
+application data are copied to an internal buffer. This buffer comes from a shared
+\ArrayPoolOf{\Byte{}}. When the buffer is full or the stream is flushed, the buffer is enququed into
+the synchronization \ChannelOf{}. The background thread then dequeues buffers from the \ChannelOf{}
+and appends them into a list of retransmission buffers. Each time a new \STREAM{} frame for this
+stream is written into a QUIC packet, the earliest not-yet-sent data are selected and copied into
+the outgoing QUIC packet buffer. Once all data in a particular retransmission buffer are
+acknowleged, the buffer can be removed and returned back to the \ArrayPoolOf{\Byte}.
 
 \begin{myFigure}{fig:03-send-stream}{Implementation of the sending part of the stream}
 

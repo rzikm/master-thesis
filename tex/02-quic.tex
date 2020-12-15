@@ -35,7 +35,7 @@ transport security, and other features known from TCP or TLS protocols.
 
 Throughout this chapter, and later when analyzing the QUIC protocol specification, this text will
 use several terms in a very specific meaning. This meaning is the same as defined in the main
-specification document~\cite[Section~1.2]{draft-ietf-quic-transport}.
+specification document~\autocite[Section~1.2]{draft-ietf-quic-transport}.
 
 \begin{description}
 
@@ -342,7 +342,7 @@ comparisons).
 
     \ditem{Retry Integrity Tag} Tag used to check the integrity of the packet. For the details on
 how the integrity tag is calculated, refer to the TLS integration
-specification~\cite[Section~5.8]{draft-ietf-quic-tls}.
+specification~\autocite[Section~5.8]{draft-ietf-quic-tls}.
 
 \end{description}
 
@@ -448,7 +448,7 @@ The semantics of the fields specific to 1-RTT packets are:
 
     \ditem{Spin Bit} A bit used for an optional QUIC feature which allows on-path nodes to measure
 connection latency by observing changes in this bit. For a detailed description of the Spin Bit
-feature, see the complete specification~\cite[Section~17.3.1]{draft-ietf-quic-transport}.
+feature, see the complete specification~\autocite[Section~17.3.1]{draft-ietf-quic-transport}.
 
     \ditem{Key Phase Bit} A bit used to communicate that the keys used for the packet encryption
 need to be updated. Updating the keys is necessary after using them to encrypt a certain number of
@@ -605,7 +605,7 @@ protocol to exchange transport parameters during the connection handshake.
 
 Many parameters have a default value, which is used when the given transport parameter is not sent.
 Other transport parameters are mandatory. The exhaustive list of the transport parameters can be
-found in the core transport specification~\cite[Section~7.3]{draft-ietf-quic-transport}.
+found in the core transport specification~\autocite[Section~7.3]{draft-ietf-quic-transport}.
 
 \subsection{Connection Establishment}\label{sec:02-connection-establishment}
 
@@ -701,7 +701,7 @@ in response to receiving a packet that it cannot associate with an active connec
 In such cases, the endpoint sends a specially crafted packet that ends with a Stateless Reset Token
 associated with his Connection ID\@. The Stateless Reset Token requirements are quite complex, and
 we encourage readers to read the full specification if they are interested in
-details~\cite[Section~10.4]{draft-ietf-quic-transport}.
+details~\autocite[Section~10.4]{draft-ietf-quic-transport}.
 
 \subsection{Connection Migration}
 
@@ -911,7 +911,7 @@ idle timeout (see \autoref{sec:02-idle-timeout})
 Similarly to TCP, QUIC also uses congestion control to manage the \textit{congestion window} --- the
 amount of data that can be in-flight. The selection of the congestion control algorithm is left on
 the implementation. As an example, The QUIC specification document for loss detection and
-recovery~\cite[Section~7]{draft-ietf-quic-recovery} describes a congestion control algorithm similar
+recovery~\autocite[Section~7]{draft-ietf-quic-recovery} describes a congestion control algorithm similar
 to TCP NewReno~\cite{rfc6582} algorithm.
 
 \section{Security}

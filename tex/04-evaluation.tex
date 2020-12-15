@@ -295,7 +295,7 @@ measured result suggest that both QUIC providers are far behind the throughput o
 \autoref{fig:04-loss-throughput} shows the latency measurements results. In absence of packet loss
 (\autoref{fig:04-loss-latency-a}), \libmsquic{}-based implementation produces lower latencies than
 the other implementations. In lossy network (\autoref{fig:04-loss-latency-b}), both QUIC
-implementations produce lower latencies than TCP.
+implementations produce lower latencies than TCP\@.
 
 \begin{myFigure}{fig:04-loss-latency}{Single stream latency measurements in simulated network}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-loss-latency-a}{\SI{25}{\milli\second} Lag, 0\% Loss, 5\% Reorder}
@@ -319,6 +319,14 @@ throughput degradation observed in both QUIC implementations.
 
 \todo{Possibly, I could remote into the university lab (Windows needed I can copy the binaries,
   linux could require compiling from source which would prove difficult) or ask at work}
+
+\todo{I can test perf over WLAN between my desktop and laptop, but it is very unbalanced}
+
+\todo{Possibly, I could remote into the university lab (Windows needed I can copy the binaries,
+  linux could require compiling from source which would prove difficult) or ask at work}
+
+\todo{Testing on Linux on MFF lab is possible, but I cannot modify loss (requires root access).
+  Also, there are some problems when running on linux (app hanging in ThreadHelper.ThreadStart()), but I think I can work around it, but running 256 connections seems unreal}
 
 \section{Interop between QUIC Implementations}
 
