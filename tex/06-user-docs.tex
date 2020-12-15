@@ -111,6 +111,23 @@ and, therefore, must be present in a location where the OS loader can find them.
 
 \end{itemize}
 
+Note that if there is already a different version of \libopenssl{} installed on the system, it is
+necessary to ensure that the system loads the correct \libopenssl{} version. This is different for
+each system:
+
+\begin{itemize}
+
+  \item On Windows, this can be ensured by placing the dlls in the same directory as the program
+        executable. The entire library search process, including the order of directories searched
+        can be found in documentation~\cite{windowsDllSearch}.
+
+  \item On Linux, this can be achieved by defining the \texttt{LD_LIBRARY_PATH} environment variable
+        to the directory containing the \libopenssl{} libraries. Additional info about loading of
+        dynamic libraries on Linux can be found in the manual page for \texttt{ld.so}. The man page
+        is also available online~\cite{linuxDllSearch}.
+
+\end{itemize}
+
 \subsection{Configuring the Development Environment}\label{sec:06-env-vars}
 
 Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation created in previous step is used when building the user code. For this, following environment variables need to be defined correctly.
@@ -233,32 +250,57 @@ Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
 Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 \end{myVerbatim}
 
-\section{Using QUIC in \dotnet{}}
+\subsection{Deploying \dotnet{} Applications}
+
+\todo{DONE: mention that the app will only run if the SDK is available in the environment; also mention self-contained publish}
+
+The applications built against the preview \dotnet{}~6 SDK will run only if the environment is
+configured according to \autoref{sec:06-env-vars}. In order to run the applications outside the
+development environment, it is necessary to build them as \textit{self-contained}. Self-contained
+builds of \dotnet{} applications contain a copy of the \dotnet{} runtime and other necessary
+binaries. Self-contained applications can be built using following command:
+
+\begin{myVerbatim}
+> dotnet publish --self-contained --runtime <RID>
+\end{myVerbatim}
+
+Where \texttt{<RID>} is the runtime identifier for which to publish. Commonly used values are
+\texttt{win-x64} and \texttt{linux-x64}. Full list of supported runtime identifiers can be found in
+documentation~\cite{dotnetRIDs}.
+
+Unfortunately, the packaged application contains the unmodified \SystemNetQuicDll{} without managed
+QUIC support. The last step is, therefore, manually overwriting the \SystemNetQuicDll{} with the
+locally built one.
+
+\todo{Quic.dll must be redeployed}
+
+\section{Simple Echo Server using QUIC}\label{sec:06-tutorial}
 
 This section is a walkthrough on how to use QUIC in \dotnet{}. In this section, we will create a
 trivial echo server. When a new connection is established, clients will open a single bidirectional
 stream and send arbitrary data over it. The server will then echo the data back to the client. For
 simplicity, we will use a single \dotnet{} program to represent both client and server and conduct
-the connection over the loopback network interface.
+the connection over the loopback network interface. We will also omit error from this example for
+brevity.
+
+\todo{DONE: mention that we won't handle errors. see above, also added footnote to ALPN}
 
 \subsection{Echo Server Implementation}
 
 Use of TLS 1.3 for encryption is mandatory for QUIC. This requires providing an X.509 certificate on
 the server side. The current QUIC API requires that the certificate and the private key be saved in
 separate files. A certificate that can be used in this example is provided in the attachments
-\todo{path in the attachments}. \todo{creating a new ssl certificate using openssl cli? - could be, but is not necessary}
-
-\todo{mention that we do not handle any errors in this simple example}
+\todo{path in the attachments}. \todo{creating a new ssl certificate using openssl cli? - could be,
+  but is not necessary}
 
 In order to accept incoming QUIC connections, we need to create an instance of \QuicListener{}.
 \autoref{lst:06-echo-quic-listener} shows how the \QuicListener{} can be created and provided with:
 
 \begin{itemize}
 
-  \item listening endpoint,
+  \item listening endpoint;
 
-  \item \texttt{"echo"} identifier of the application-layer protocol to use in \gls{alpn}, and
-  \todo{mention that the echo identifier is arbitrary, and briefly explain what ALPN is}
+  \item identifier of the application-layer protocol to be used\footnote{QUIC is designed not to be used standalone, but as a transport protocol for other application-layer protocols. Since servers can support multiple versions of the application protocol, QUIC uses \gls{alpn} extension to TLS to negotiate the application-layer protocol as part of the QUIC connection handshake.}, in our example, we will use \texttt{"echo"}; and
 
   \item paths to the X.509 certificate and private key file.
 
@@ -289,9 +331,11 @@ public static async Task<int> |RunServer|(IPEndPoint listenEp,
 }
 \end{myListingCsharp}
 
-We can then use the \method{AcceptConnectionAsync} method to asynchronously wait for new incoming connections. \autoref{lst:06-echo-server-accept} shows how
+We can then use the \method{AcceptConnectionAsync} method to asynchronously wait for new incoming
+connections. \autoref{lst:06-echo-server-accept} shows how to accept new connections and process
+them asynchronously in a separate \class{Task}.
 
-\begin{myListingCsharp}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
+\begin{myListingCsharpNoPageBreak}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
     // QuicListener must be started before accepting connections.
     listener.|Start|();
 
@@ -316,7 +360,7 @@ We can then use the \method{AcceptConnectionAsync} method to asynchronously wait
         // wait until all connections are closed
         await Task.|WhenAll|(tasks);
     }
-\end{myListingCsharp}
+\end{myListingCsharpNoPageBreak}
 
 \autoref{lst:06-echo-server-loop} Shows the implementation of \method{HandleServerConnection} which
 does the actual echoing of incoming data. The \QuicStream{} is accepted using the
@@ -422,9 +466,11 @@ instance. \autoref{lst:06-echo-client-loop} shows the rest of the echo client im
     }
 \end{myListingCsharp}
 
-\section{A More Complex Example Application}
+\subsection{A More Complex Example Application}
 
-\todo{deeper explanation of the example throughput testing application that was used in Evaluation}
+This thesis developed a more complex version of the echo server example from previous section for
+benchmarking purposes. \autoref{sec:04-benchmark-app} provides more information about the
+application.
 
 \todo {see recording: 47:00, 2020-12-08}
 

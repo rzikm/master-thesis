@@ -195,49 +195,67 @@ been received. Internally, it contains two 64-bit \keyword{ulong} fields: a bitm
 received packet numbers and the offset of the window. All packet numbers above the window are
 considered not received, all packet numbers below the window are considered received. Packet number
 inside the window are considered received if the corresponding bit is set to 1. When a new packet
-number is received, the window is shifted, if necessary, and the corresponding bit is set.
+number is received, the window is shifted, if necessary, and the corresponding bit is set. This
+allows tracking 64 consecutive packet numbers at any given moment with very low overhead.
 
-\todo{make it more explicit that the implementation uses 64bit window}
+\todo{added spacing, and paragraph after the figure}
 
-\autoref{fig:05-packet-number-window} illustrates how concept on an 8-bit window. \autoref{fig:05a}
-shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When packet 10 is
-received, the window is shifted by 3 so that the highest bit corresponds to the packet number 10 and
-is set to 1, as shown in \autoref{fig:05b}. \autoref{fig:05c} shows the state of the
-\PacketNumberWindow{} when 15 is received next. The window needs to be shifted by another 5, moving
-some unreceived packet numbers outside the window (marked by red color).
+\autoref{fig:05-packet-number-window} illustrates how concept on an smaller 8-bit window.
+\autoref{fig:05a} shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When
+packet 11 is received, the window is shifted by 4 and the highest bit which now corresponds to the
+packet number 11 and is set to 1, as shown in \autoref{fig:05b}. \autoref{fig:05c} shows the state
+of the window when packet 15 is received next. The window needs to be shifted by another 4 bits,
+moving unreceived packet numbers 6 and 7 outside the window (marked by red color in the figure).
+
+\newlength{\origframesep}
+\setlength{\fboxsep}{0.12em}
 
 \begin{myFigure}{fig:05-packet-number-window}{Maintaining window of received packet numbers}
 
   \begin{mySubfigure}{\textwidth}{fig:05a}{State after receiving packets 0--5}
-    offset = 0\hspace{1cm}...\texttt{\textcolor{colorunimportant}{00000000000000}\fbox{00111111}}
+    offset = 0\hspace{1cm}...\textls[250]{\texttt{\textcolor{colorunimportant}{00000000000000}\fbox{00111111}}}
   \end{mySubfigure}
 
   \medskip
 
-  \begin{mySubfigure}{\textwidth}{fig:05b}{State after receiving packet 10}
-    offset = 3\hspace{1cm}...\texttt{\textcolor{colorunimportant}{00000000000}\fbox{10000111}\textcolor{colorunimportant}{111}}
+  \begin{mySubfigure}{\textwidth}{fig:05b}{State after receiving packet 11}
+    offset = 4\hspace{1cm}...\textls[250]{\texttt{\textcolor{colorunimportant}{0000000000}\fbox{10000011}\textcolor{colorunimportant}{1111}}}
   \end{mySubfigure}
 
   \medskip
 
   \begin{mySubfigure}{\textwidth}{fig:05c}{State after receiving packet 15}
-    offset = 8\hspace{1cm}...\texttt{\textcolor{colorunimportant}{000000}\fbox{10000100}\textcolor{red}{11}\textcolor{colorunimportant}{111111}}
+    offset = 8\hspace{1cm}...\textls[250]{\texttt{\textcolor{colorunimportant}{000000}\fbox{10001000}\textcolor{red}{11}\textcolor{colorunimportant}{111111}}}
   \end{mySubfigure}
 
 \end{myFigure}
 
-\todo{another figure explaining the following paragraph, use concrete packet numbers in the explanation}
+\setlength{\fboxsep}{\origframesep}
 
-The last part of the figure above demonstrates that the data structure may falsely label some old
-packet numbers as already received. In such a case the packets are simply discarded by the
-\ManagedQuicConnection{}. For this to happen, at least 64 other packets must be correctly received.
-However, the tollerance of the loss detection algorithm outlined in \autoref{sec:02-loss-detection}
-allows only significantly smaller packet reordering. The specification suggests maximum reordering
-tollerance of 3, meaning that receiving a packet number should mark all packets as lost except the
-previous two. Therefore, it is very likely that any newly received packet with packet number under
-the window maintained by the \PacketNumberWindow{} instance is already considered lost by the sender
-and its data have been retransmitted in a different packet. Thus the width of 64 of the packet
-number window is sufficient.
+The red packet numbers in \autoref{fig:05c} demonstrate that the data structure may falsely label
+some old packet numbers as already received. In such a case, the packets are simply discarded by the
+\ManagedQuicConnection{} implementation. This may be acceptable for the following reasons:
+
+\begin{itemize}
+
+  \item The discarded packet will not be acknowleged, and the data will, therefore, be eventually retransmitted in some other packet. The only possible harm to the connection will come in a form of degraded performance.
+
+  \item For a packet $N$ to be falsely discared in this way with 64-bit packet window, it must have been delayed long enough for packets $N+64$ or newer to be received first.
+
+  \item Even if the packet $N$ was not discarded in such case and processed properly instead, it is
+almost certain that it will be marked as lost on the receiver's side anyway. This is because by that
+point, an acknowlegement was already sent for packet $N+3$ or latter, which will cause the packet to
+be considered lost due to the packet reordering threshold\footnote{Receiving acknowlegement for
+packet $N$ will mark all packets $N - kReorderingThreshold$ or lower as lost. The QUIC specification
+recommends value 3 for the $kReorderingThreshold$ constant. The QUIC loss detection algorithm has
+been described in greater detail in \autoref{sec:02-loss-detection}}.
+
+\end{itemize}
+
+Returning to the situation in \autoref{fig:05-packet-number-window}. When packet 11 is received
+(\autoref{fig:05b}), an acknowlegement is immediately sent. Once the sender receives the ack --- which
+may be before or after situation from \autoref{fig:05c} --- it will mark packets 6 and 7 as lost and
+resend the data in other packets.
 
 \section{ManagedQuicConnection Implementation}
 
@@ -491,8 +509,6 @@ into separate functions, one for each frame type for better maintainability.
 
 \subsection{Generating Outgoing QUIC Packets}
 
-\todo{this section onwards is new}
-
 The logic which generates outgoing UDP datagrams starts in the
 \texttt{\ManagedQuicConnection{}.\method{SendData}} method. When generating outgoing packets, the
 implementation must first determine whether it has any data to send and if so, in which QUIC packet
@@ -508,7 +524,7 @@ known, the generation of the actual QUIC packet consists of following steps:
 
   \item write QUIC frames into the packet payload up to the available packet size,
 
-  \item add padding to the packet if necessary\footnote{QUIC requires valid QUIC packets to be at least 21 bytes.\todo{link to specification}},
+  \item add padding to the packet if necessary\footnote{Header protection (described in \autoref{sec:02-packet-protection}) uses bytes 5 to 20 from the packet payload as a sample for generating the header protection mask. The packet payload includes packet number, QUIC frames and \SI{16}{\byte} \gls{aead} integrity tag. This implies that packet number and QUIC frames combined must be at least \SI{4}{\byte}.},
 
   \item apply packet protection, and
 
@@ -548,8 +564,6 @@ implementation of \ITls{} interface. The \ITls{} interface defines methods neede
 
 Implementations of \ITls{} are expected to maintain a reference to the \ManagedQuicConnection{} and
 call following functions when appropriate:
-
-\todo{check vertical spacing for multiline function signatures}
 
 \begin{description}
 
@@ -608,11 +622,9 @@ object for each \OpenSslTls{} instance.
 The main part of the QUIC-enabling API exposed by the \libopenssl{} library consists of
 \method{SSL_set_quic_method} function which registers callbacks from the TLS handshake state
 machine. \autoref{lst:05-c-quic-method} lists the definition of the \libopenssl{} QUIC callback
-functions.
+functions (written in C).
 
-\todo{mention that following listing is in C}
-
-\begin{myListingC}{lst:05-c-quic-method}{Callback definitions in OpenSSL library}{ssl_quic_method_st,SSL_QUIC_METHOD,SSL,SSL_CTX,uint8_t,size_t}{OSSL_ENCRYPTION_LEVEL}
+\begin{myListingC}{lst:05-c-quic-method}{Callback definitions in OpenSSL library source code}{ssl_quic_method_st,SSL_QUIC_METHOD,SSL,SSL_CTX,uint8_t,size_t}{OSSL_ENCRYPTION_LEVEL}
 struct ssl_quic_method_st {
     int (*set_encryption_secrets)(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
                                   const uint8_t *read_secret,
@@ -805,6 +817,31 @@ destination buffer. The copied data is transitoned into \textit{in-flight} state
 
 \end{description}
 
+\subsection{Tracing and Diagnostics}
+
+\todo{this section is new}
+
+The managed QUIC implementation can produce verbose logs (called traces) to provide an insight on
+the implementations behavior. By default, no trace is generated. Generating a trace can be enabled
+by defining the \texttt{DOTNETQUIC_TRACE} to one of the following values:
+
+\begin{description}
+
+    \ditem{\texttt{console}} Produces logs on the console output. This type of tracing has produces
+large amount of console logs which are hard to reason about. However, the conosle logs are the
+fastest way of checking if any packets are sent/received, or for diagnosing refused connections.
+
+\ditem{\texttt{qlog}} Produces traces which can be visualized by the
+\textit{qvis}~\cite{web:qvis} tool. The \textit{qvis} tool provides deep insight into the connection
+such as the timeline of sent/received packets, bytes in flight, size of the congestion window and
+latency throughout the lifetime of the connection. The traces are written in a separate file in current
+working directory for each connection.
+
+\end{description}
+
+Both types of tracing incur noticeable overhead and should not be used in production environment.
+When using tracing, it is recommended to run only very small number of parallel connections.
+
 \section{Tests Implementation}
 
 The QUIC implementation is covered by an extensive suite of unit tests and functional tests. The
@@ -848,11 +885,9 @@ The classes representing QUIC frames and QUIC packets are mutable, which allows 
 testing code in order to elicit a particular error response. \autoref{fig:05-test-harness-intercept}
 illustrates the process. First, the \ManagedQuicConnection{} produces the UDP datagram containing
 the QUIC packets to be sent. The testing harness then parses the datagram into mutable
-representation. The parsed packets are then passed into the callback provided by the test method
-which can perform any assertions and modifications. The QUIC packet is then serialized back into
-binary representation and provided to the receiver \ManagedQuicConnection{} instance.
-
-\todo{mention the ``inspection'' word in the preceding paragraph}
+representation. The parsed packets are then passed into the inspection callback provided by the test
+method which can perform any assertions and modifications. The QUIC packet is then serialized back
+into binary representation and provided to the receiver \ManagedQuicConnection{} instance.
 
 \begin{myFigure}{fig:05-test-harness-intercept}{Intercepting a QUIC packet by the testing harness}
 

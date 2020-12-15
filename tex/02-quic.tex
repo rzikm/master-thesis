@@ -1,8 +1,8 @@
 \chapter{QUIC Protocol}\label{chap:02-quic}
 
 This chapter is intended as a summary of the QUIC protocol specification and aims to provide
-sufficient background for our implementation design. This text is based on version 29 of the draft
-specification documents from June 2020, more specifically on the documents describing the core
+sufficient background for our implementation design. This text is based on version 26 of the draft
+specification documents from February 2020, more specifically on the documents describing the core
 transport protocol~\cite{draft-ietf-quic-transport}, TLS integration~\cite{draft-ietf-quic-tls}, and
 congestion control mechanism~\cite{draft-ietf-quic-recovery}. Readers familiar with these documents
 may skip this chapter.
@@ -47,7 +47,7 @@ sent before it. A packet can arrive out of order if it was delayed, if earlier p
 delayed, or if the sender intentionally skipped a packet number.
 
   \ditem{Endpoint} An entity that can participate in a QUIC connection by generating, receiving, and
-processing QUIC packets. There are only two types of endpoints in QUIC: client and server.
+  processing QUIC packets. There are only two types of endpoints in QUIC\@: client and server.
 
   \ditem{Client} The endpoint initiating a QUIC connection.
 
@@ -605,7 +605,7 @@ protocol to exchange transport parameters during the connection handshake.
 
 Many parameters have a default value, which is used when the given transport parameter is not sent.
 Other transport parameters are mandatory. The exhaustive list of the transport parameters can be
-found in the core transport specification~\cite[Section~7.4]{draft-ietf-quic-transport}.
+found in the core transport specification~\cite[Section~7.3]{draft-ietf-quic-transport}.
 
 \subsection{Connection Establishment}\label{sec:02-connection-establishment}
 

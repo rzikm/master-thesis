@@ -1,55 +1,87 @@
-\chapter{Conclusion}
+\chapter*{Conclusion}
 \addcontentsline{toc}{chapter}{Conclusion}
+
+To conclude our thesis, we will revisit the goals we set in the introduction chapter in
+\autoref{sec:01-goals}.
+
+\begin{enumerate}
+
+  \item \textit{Select a sufficient subset of QUIC specification needed to support the most basic data
+        transfer and implement it inside \dotnet{} runtime codebase.}
+
+        In \autoref{sec:03-feature-selection}, we analyzed parts of the QUIC protocol and selected
+        the necessary parts for our prototype implementation. All features selected in this section
+        were implemented to the extent that the implementation can successfully and reliably
+        transfer data over network.
+
+  \item \textit{Allow switching between the new managed implementation and the existing \libmsquic{}-based one.}
+
+        Our implementation integrates into the pre-existing implementation indirection layer, which
+        allows explicitly selecting the QUIC implementation provider for newly created
+        \QuicListener{} and \QuicConnection{} instances. Additionally, the default provider can be
+        influenced by the \texttt{DOTNETQUIC_PROVIDER} environment variable.
+
+  \item \textit{Evaluate the managed QUIC implementation by using it to implement a simple client-server
+echo application.}
+
+        In \autoref{sec:06-tutorial}, we provided directions on how to implement a simple echo
+        server and client. Additionally, we implemented a benchmarking application for use in
+        performance measurements in \autoref{chap:04-evaluation}.
+
+  \item \textit{(optional) Try to compare the performance of the new implementation with the
+previous \libmsquic{}-based one and with TCP+TLS-based \class{SslStream}.}
+
+       In \autoref{sec:04-perf-results}, we presented the results of our performance measurements.
+
+       \todo{summarize the results}
+
+\end{enumerate}
+
+At the time of writing this conclusion, our managed QUIC implementation has caught attention of the
+\dotnet{} development team, and this implementation will be added to the list of experiments in the
+runtimelab repository~\cite{runtimelabGithub} in the \texttt{feature/ManagedQuic} branch.
+
+The next big release --- \dotnet{}~6 --- will ship with production-ready QUIC implementation. In early
+2021, a decision will be made whether this QUIC support will be based on \libmsquic{} or our QUIC
+implementation. However, even if the more mature \libmsquic{} implementation is chosen for the
+\dotnet{}~6 release. Our implementatino will be considered as a managed replacement for subsequent
+\dotnet{} releases.
+
+\subsection*{Future Work}
+
+The prototype QUIC implementation developed in this thesis will require large amount of work before
+becoming production-ready. Some parts of the QUIC specification were left unimplemented, other parts
+were simplified in order to fit into the scope of this master thesis. However, the core part of the
+implementation should provide a solid foundation on which a fully conformant QUIC implementation
+could be built. Following list outlines the next development steps for the implementation.
 
 \begin{itemize}
 
-    \item Evaluation
-    \begin{itemize}
+  \item \textit{Update the implementation to match the latest QUIC specification.} QUIC
+        specification drafts evolved both during the course of implementation and during writing of
+        this thesis. At the time of writing this conclusion, the 33rd version of the QUIC
+        specification draft is awaiting on a last-call before it becomes a valid RFC document. The
+        implementation presented in this document is based on draft version 26. Updating the
+        implementation should be, therefore, the first future goal.
 
-        \item Types of benchmarks
-        \item Performance charts
-        \item Robustness tests and simulated network issues
-        \item Conclusion
+  \item \textit{Implement missing parts of the protocol.} This thesis implements only a subset of
+        the QUIC specification. Many features like connection migration, stateless reset and path
+        validation have not been implemented.
 
-    \end{itemize}
+  \item \textit{Performance improvements for scalability.} The performance measurements done in
+        \autoref{sec:04-multi-stream-perf} show that our implementation does not scale very well in
+        face of large amounts of parallel connections. Possible improvements to the backend
+        processing architecture include allowing parallel sending and receiving on a single
+        connection, and using a single thread to process multiple connections, like done in
+        \libmsquic{}.
 
-    \item Integration to .NET and out-of-runtime build??
+  \item \textit{More realistic performance measurements.} This thesis performed all performance
+        measurements over the loopback network interface and, therefore, do not represent the
+        behavior on a real network.
 
-    \item Documentation
-        \begin{itemize}
-
-            \item Obtaining the source code
-
-        \end{itemize}
-
-        \item Building the library
-        \begin{itemize}
-
-            \item Standalone
-            \item Part of dotnet runtime
-
-        \end{itemize}
-
-        \item API documentation
-        \begin{itemize}
-
-            \item Documented dispose and abort model
-
-        \end{itemize}
-
-        \item Samples
-        \begin{itemize}
-
-            \item Actual executable code samples
-
-        \end{itemize}
-
-    \item Conclusion
-    \begin{itemize}
-
-        \item Goal evaluation
-        \item Future work
-
-    \end{itemize}
+  \item \textit{Interoperability tests with other QUIC implementations.} This thesis has done only a
+        very superficial interoperability test with \libmsquic{}. There is an open source QUIC
+        Interop Test Runner~\cite{QuicInteropRunner} which repeatedly tests compatibility between
+        latest versions of popular QUIC implementations.
 
 \end{itemize}
