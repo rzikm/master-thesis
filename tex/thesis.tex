@@ -78,14 +78,11 @@
 \usepackage{enumitem}       % modifying list styles
 \usepackage{letterspace}    % adjusting spacing between letters
 
-%%% src: https://tex.stackexchange.com/questions/57353/how-to-get-caption-above-listing-with-minted
-\captionsetup[listing]{position=top}
-
 \addbibresource{bibliography.bib}
 
-%% fix overfull hboxes in biblatex bibliography list
-%% https://tex.stackexchange.com/questions/171999/overfull-hbox-in-biblatex
-\emergencystretch=1em
+%% suppress warnings for inkscape-generated figures
+%% https://tex.stackexchange.com/questions/76273/multiple-pdfs-with-page-group-included-in-a-single-page-warning
+\pdfsuppresswarningpagegroup=1
 
 %%% Graphics path (for some reason needed on windows)
 \graphicspath{{img/}}
