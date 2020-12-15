@@ -122,6 +122,7 @@ namespace ThroughputTests
             }
             catch (QuicConnectionAbortedException e) when (e.ErrorCode == 0)
             {
+                // ignore successful closing
             }
             catch (OperationCanceledException)
             {

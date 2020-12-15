@@ -13,7 +13,7 @@ namespace ThroughputTests
         [Option('s', "streams", Default = 1, HelpText = "Number of streams each client opens. Valid only for QUIC.")]
         public int Streams { get; set; }
         
-        [Option('t', "tcp", Default = false, HelpText = "Use TCP+TLS instead of QUIC.")]
+        [Option('t', "tcp", Default = false, HelpText = "Use TCP+TLS (SslStream) instead of QUIC.")]
         public bool Tcp { get; set; }
 
         [Option('m', "message-size", Default = 256, HelpText = "Message size.")]
@@ -22,7 +22,7 @@ namespace ThroughputTests
         [Option('i', "reporting-interval", Default = 3, HelpText = "Reporting interval in seconds.")] // Seconds
         public double ReportingInterval { get; set; }
         
-        [Option('d', "test-duration", Default = 0, HelpText = "Duration of the test in seconds")] // Seconds
+        [Option('d', "test-duration", Default = 0, HelpText = "Duration of the test in seconds, value 0 will run the test indefinitely.")] // Seconds
         public double DurationTime { get; set; }
         
         [Option('w', "warmup-time", Default = 5, HelpText = "Time before starting measurements")] // Seconds
