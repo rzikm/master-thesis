@@ -8,5 +8,4 @@ CreateTexPlot `
   -GnuplotExtra @"
 set xlabel "$messageSizeLabel"
 set ylabel "$latencyLabel"
-"@ -Width 2.8 `
-  -Height 2.0
+"@

@@ -13,6 +13,9 @@ $connectionsLabel = "Connections"
 
 $DataRoot = "$PSScriptRoot\..\measurements"
 
+$bigMessageSize = 4096
+$smallMessageSize = 256
+
 function CreateTexPlot
 {
     [CmdletBinding()]
@@ -30,13 +33,16 @@ function CreateTexPlot
         [double] $Width = 2.8,
 
         [Parameter()]
-        [double] $Height = 2.0,
+        [double] $Height = 2.5,
 
         [Parameter(Mandatory)]
         [string] $XAxis,
 
         [Parameter(Mandatory)]
-        [string] $YAxis
+        [string] $YAxis,
+
+        [Parameter()]
+        [double]$VerticalMargin = 0.25
     )
 
     # create the tex output file
@@ -50,7 +56,8 @@ function CreateTexPlot
         ExtraGnuplotScript = $GnuplotExtra
     })
 
-    New-PlotData -Data $plotData -Filename $outFile -OutputTerminal 'epslatex' -Width $Width -Height $Height
+    New-PlotData -Data $plotData -Filename $outFile -OutputTerminal 'epslatex' -Width $Width -Height $Height `
+       -VerticalMargin $VerticalMargin
 }
 
 function ProduceParameterSets([Parameter(ValueFromPipeline)]$Parameters)
@@ -149,11 +156,16 @@ function New-PlotData
         [double]$Width = 500,
 
         [Parameter()]
-        [double]$Height = 300
+        [double]$Height = 300,
+
+        [Parameter()]
+        [double]$VerticalMargin = 0.2
     )
 
-
     $plotCount = $Data.Length
+
+    $gapwidth = 1
+    $boxwidth = 0.8
 
     $gnuplotScript = @"
 set terminal $OutputTerminal size $($Width * $PlotColumns),$($Height * $plotCount / $PlotColumns)
@@ -163,10 +175,11 @@ $(if ($plotCount -ne 1) { "set multiplot layout $($plotCount/$PlotColumns),$Plot
 
 set datafile separator ","
 
-set style data histograms
+set style data histogram
+set style histogram cluster gap $gapwidth
 set style fill solid border -1
 
-set boxwidth 0.8
+set boxwidth $boxwidth
 set bmargin
 
 set key center top horizontal outside
@@ -181,32 +194,41 @@ set xtics nomirror
 
 set rmargin 0.5
 
+set offsets -0.4, -0.3, graph $VerticalMargin, 0
+
 "@
 
     foreach ($dataSet in $Data)
     {
         $columns = @($dataSet.Data[0].Keys)
-        $columnCount = $columns.Length
+        $columnCount = $columns.Length - 1
 
         $gnuplotScript += "set title '$($dataSet.Title)'`n"
         $gnuplotScript += "$($Data.ExtraGnuplotScript)`n"
 
+        # Horizontal offset is given in cluster offsets (1 = offset between two clusters)
+        $barWidth = 1 / ($columnCount + $gapwidth)
 
         $gnuplotScript += "plot " +
-        ((2..$columnCount | ForEach-Object {
-                #"'-' using $($_):xtic(1) with histogram, '' using (`$0):$($_):$($_) with labels notitle offset 0,1"
-                "'-' using $($_):xtic(1) lt rgb '$($colors.($columns[$_ - 1]))'"
+        ((2..($columns.Length) | ForEach-Object {
+              $columnIndex = $_ - 2
+
+              $horizontalOffset = ($columnIndex - ($columnCount - 1) / 2.0) * $barWidth
+              $verticalOffset = $LabelYOffset
+
+              "'-' using $($_):xtic(1) lt rgb '$($colors.($columns[$_ - 1]))'"
+              "'-' using (`$0 + $horizontalOffset):$($_):(sprintf(`"\\\\scriptsize %3.2f`", `$$_)) with labels notitle left rotate offset 0,0.15"
+
           }) -join ",\`n") + "`n"
 
         $plotDataCsv = $dataSet.Data | ForEach-Object { [PSCustomObject]$_ } | ConvertTo-Csv -UseQuotes AsNeeded | Out-String
         $plotDataCsv += "e`n"
 
-        $gnuplotScript += $plotDataCsv * ($columnCount - 1)
+        $gnuplotScript += $plotDataCsv * $columnCount * 2
     }
 
     $gnuplotScript | gnuplot -p
 }
-
 
 function PlotData
 {
@@ -299,7 +321,7 @@ function PlotMultiStreamThroughput
 
     $sets = [ordered]@{
         Streams = 1,32
-        MessageSize = 256, 4096
+        MessageSize = $smallMessageSize, $bigMessageSize
     }
 
     PlotAndDisplayData -Data $data -Filename $filename -ParameterSets $sets -XAxis Connections -YAxis $throughputColumn
@@ -312,7 +334,7 @@ function PlotMultiStreamLatency
 
     $sets = [ordered]@{
         Streams = 1,4,16
-        MessageSize = 256, 1024, 4096
+        MessageSize = $smallMessageSize, 1024, $bigMessageSize
     }
 
     PlotAndDisplayData -Data $data -Filename $filename -ParameterSets $sets -XAxis Connections -YAxis $latencyColumn
@@ -324,7 +346,7 @@ function PlotSingleStreamThroughput
     $filename = 'single-stream-throughput.svg'
 
     $sets = [ordered]@{
-        MessageSize = 256, 1024, 4096
+        MessageSize = $smallMessageSize, 1024, $bigMessageSize
     }
 
     PlotAndDisplayData -Data $data -Filename $filename -ParameterSets $sets -XAxis Connections -YAxis $throughputColumn
@@ -336,7 +358,7 @@ function PlotSingleStreamLatency
     $filename = 'single-stream-latency.svg'
 
     $sets = [ordered]@{
-        MessageSize = 256, 1024, 4096
+        MessageSize = $smallMessageSize, 1024, $bigMessageSize
     }
 
     PlotAndDisplayData -Data $data -Filename $filename -ParameterSets $sets -XAxis Connections -YAxis $latencyColumn

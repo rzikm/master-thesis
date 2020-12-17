@@ -2,11 +2,10 @@
 
 CreateTexPlot `
   -DataFile "$DataRoot\multi-stream-throughput.csv" `
-  -Query @{Streams=1;MessageSize=256} `
+  -Query @{Streams=1;MessageSize=$smallMessageSize} `
   -XAxis Connections `
   -YAxis $throughputColumn `
   -GnuplotExtra @"
 set xlabel "$connectionsLabel"
 set ylabel "$throughputLabel"
-"@ -Width 2.8 `
-  -Height 2.0
+"@

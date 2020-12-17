@@ -2,11 +2,10 @@
 
 CreateTexPlot `
   -DataFile "$DataRoot\single-stream-latency.csv" `
-  -Query @{MessageSize=256} `
+  -Query @{MessageSize=$smallMessageSize} `
   -XAxis Connections `
   -YAxis $latencyColumn `
   -GnuplotExtra @"
 set xlabel "$connectionsLabel"
 set ylabel "$latencyLabel"
-"@ -Width 2.8 `
-  -Height 2.0
+"@

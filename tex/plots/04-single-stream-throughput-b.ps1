@@ -8,5 +8,4 @@ CreateTexPlot `
   -GnuplotExtra @"
 set xlabel "$connectionsLabel"
 set ylabel "$throughputLabel"
-"@ -Width 2.8 `
-  -Height 2.0
+"@
