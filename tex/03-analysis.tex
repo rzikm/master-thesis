@@ -349,15 +349,13 @@ to be some synchronization. Our implementation uses the \ChannelOf{} class, whic
 efficient implementation of the producer-consumer queue with support for asynchronous operations
 using the \ValueTaskOf{} type.
 
-\todo{Check readability there}
-
 Each time data are received for the stream, the implementation checks if there is a contiguous block
 of memory which could be delivered to the application. For this reason, the implementation needs to
 keep track which parts of the stream have already been received. If there is a new part of the
 stream that can be delivered, a view into the relevant region of the buffer is queued into the
 \ChannelOf{} using the \MemoryOf{\Byte{}} type.
 
-\autoref{fig:03-receive-stream} Illustrates how all parts of the \ReceiveStream{} work together. The
+\autoref{fig:03-receive-stream} illustrates how all parts of the \ReceiveStream{} work together. The
 data from the incoming \STREAM{} frame are copied to the proper offset in intermediate buffers.
 These buffers are rented from an \ArrayPoolOf{\Byte{}} as needed. A \MemoryOf{\Byte} instance
 providing a view into the newly deliverable parts of the stream is then queued into a \ChannelOf{}
@@ -398,19 +396,24 @@ copied before they are sent. The semantics of the \method{Write} and \method{Wri
 the \Stream{} class is such that when the method completes, the provided memory can be reused for
 other purposes.
 
-\todo{improved clarity why returning from write once the data is buffered}
+\todo{check the explanation why waiting for acks is bad}
 
 A single-copy implementation approach in this case would require that the \method{Write} and
-\method{WriteAsync} methods complete only after the peer acknowledges that the contained data were
-received. In case no packet gets lost, that implies a full round-trip delay. If we were to choose
-this approach for the implementation, it would be hard to use the the \QuicStream{} class
-efficiently, and the \QuicStream{} implementation would be inconsistent with the other
-network-enabled \Stream{} implementations.
+\method{WriteAsync} methods complete after the peer acknowledges that the data were received. In
+best case scenario where no packet loss occurs, this approach implies a full round-trip delay for
+calling either of the methods. This approach would make the \QuicStream{} implementation
+inconsistent with the other network-enabled \Stream{} implementations. Moreover, substantial time
+would be spent waiting for acknowlegement instead of sending more data. In order to fully saturate
+the available bandwidth, users of the \QuicStream{} would have to either provide very large data
+buffers or use the \method{WriteAsync} method and overlap the its execution by maintaining multiple
+outstanding \ValueTask{}s.
 
-Therefore, our implementation will create an intermediate copy of the data and the \method{Write}
-and \method{WriteAsync} will complete once the data is internally buffered. In order to be
-memory-efficient, our implementation will, as in \ReceiveStream{} implementation, use an
-\ArrayPoolOf{\Byte{}} to reduce pressure on the garbage collector.
+In order to fit with the other \Stream{} implementations, our implementation will create an
+intermediate copy of the data and the \method{Write} and \method{WriteAsync} will complete once the
+data is internally buffered. This allows applications to queue enough data to maximally utilize the
+connection's bandwidth. In order to be memory-efficient, our implementation will, as in
+\ReceiveStream{} implementation, use an \ArrayPoolOf{\Byte{}} to reduce pressure on the garbage
+collector.
 
 \subsubsection{Acknowledgement, Loss, and Retransmission}
 
@@ -436,8 +439,6 @@ maintaining three sets of \textit{ranges} --- starts and ends of the blocks of d
 state.
 
 \subsubsection{Writing Data by the Application}
-
-\todo{adjusted figure and description}
 
 Similarly to the receiving part of the stream, our implementation will use \ChannelOf{} type to
 provide synchronization with the application thread. However, since \ChannelOf{} does not allow

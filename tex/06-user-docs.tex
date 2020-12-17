@@ -74,7 +74,7 @@ the implementation assembly to should be copied to the
 \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/} directory, overwriting the
 existing files.
 
-\subsection{Adding the OpenSSL Library}
+\subsection{Adding the OpenSSL Library}\label{sec:06-openssl}
 
 The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
 maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes are attached
@@ -258,9 +258,6 @@ Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 
 \subsection{Deploying \dotnet{} Applications}
 
-\todo{DONE: mention that the app will only run if the SDK is available in the environment; also
-  mention self-contained publish}
-
 The applications built against the preview \dotnet{}~6 SDK will run only if the environment is
 configured according to \autoref{sec:06-env-vars}. In order to run the applications outside the
 development environment, it is necessary to build them as \textit{self-contained}. Self-contained
@@ -273,7 +270,7 @@ binaries. Self-contained applications can be built using following command:
 
 Where \texttt{<RID>} is the runtime identifier for which to publish. Commonly used values are
 \texttt{win-x64} and \texttt{linux-x64}. Full list of supported runtime identifiers can be found in
-documentation~\cite{dotnetRIDs}.
+the official \dotnet{} documentation~\cite{dotnetRIDs}.
 
 Unfortunately, the packaged application contains the unmodified \SystemNetQuicDll{} without managed
 QUIC support. The last step is, therefore, manually overwriting the \SystemNetQuicDll{} with the
@@ -285,18 +282,23 @@ This section is a walkthrough on how to use QUIC in \dotnet{}. In this section, 
 trivial echo server. When a new connection is established, clients will open a single bidirectional
 stream and send arbitrary data over it. The server will then echo the data back to the client. For
 simplicity, we will use a single \dotnet{} program to represent both client and server and conduct
-the connection over the loopback network interface. We will also omit error from this example for
-brevity.
-
-\todo{DONE: mention that we won't handle errors. see above, also added footnote to ALPN}
+the connection over the loopback network interface. We will also omit error checking from this
+example for brevity.
 
 \subsection{Echo Server Implementation}
 
-Use of TLS 1.3 for encryption is mandatory for QUIC. This requires providing an X.509 certificate on
-the server side. The current QUIC API requires that the certificate and the private key be saved in
-separate files. A certificate that can be used in this example is provided in the attachments
-\todo{path in the attachments}. \todo{creating a new ssl certificate using openssl cli? - could be,
-  but is not necessary}
+Use of TLS 1.3 for encryption is mandatory for QUIC\@. This requires providing an X.509 certificate
+on the server side. The current QUIC API requires that the certificate and the private key be saved
+in separate files. A certificate that can be used in this example is provided in the attachments
+\todo{path in the attachments}. Alternatively, a new certificate can be created using the
+\texttt{openssl} command line utility. In case \libopenssl{} was not previously installed on the
+machine, you can use the binary which was built locally together with the libraries in
+\autoref{sec:06-openssl}. The locally built \texttt{openssl} binary can be located under the
+\filename{apps} subdirectory of the \libopenssl{} repository.
+
+\begin{myVerbatim}
+> openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+\end{myVerbatim}
 
 In order to accept incoming QUIC connections, we need to create an instance of \QuicListener{}.
 \autoref{lst:06-echo-quic-listener} shows how the \QuicListener{} can be created and provided with:
@@ -305,7 +307,13 @@ In order to accept incoming QUIC connections, we need to create an instance of \
 
   \item listening endpoint;
 
-  \item identifier of the application-layer protocol to be used\footnote{QUIC is designed not to be used standalone, but as a transport protocol for other application-layer protocols. Since servers can support multiple versions of the application protocol, QUIC uses \gls{alpn} extension to TLS to negotiate the application-layer protocol as part of the QUIC connection handshake.}, in our example, we will use \texttt{"echo"}; and
+  \item identifier of the application-layer protocol to be used\footnote{QUIC is designed not to be
+        used standalone, but as a transport protocol for other application-layer protocols. Since
+        servers can support multiple versions of the application protocol, QUIC uses \gls{alpn}
+        extension to TLS to negotiate the application-layer protocol as part of the QUIC connection
+        handshake.}, even though we are not implementing any standard protocol, we still need to
+        provide one; for our example, we chose to use \texttt{"echo"} as the \gls{alpn} identifier;
+        and \todo{emphasized that the ``echo'' choice was arbitrary by us}
 
   \item paths to the X.509 certificate and private key file.
 
@@ -473,11 +481,9 @@ instance. \autoref{lst:06-echo-client-loop} shows the rest of the echo client im
 
 \subsection{A More Complex Example Application}
 
-This thesis developed a more complex version of the echo server example from previous section for
-benchmarking purposes. \autoref{sec:04-benchmark-app} provides more information about the
-application.
-
-\todo {see recording: 47:00, 2020-12-08}
+In this thesis, we developed a more complex version of the echo server example from previous section
+for benchmarking purposes. We will provide more information about the application in
+\autoref{sec:04-benchmark-app}.
 
 \section{QUIC API Reference}\label{sec:06-api}
 

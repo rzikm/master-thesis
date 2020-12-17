@@ -198,8 +198,6 @@ inside the window are considered received if the corresponding bit is set to 1. 
 number is received, the window is shifted, if necessary, and the corresponding bit is set. This
 allows tracking 64 consecutive packet numbers at any given moment with very low overhead.
 
-\todo{added spacing, and paragraph after the figure}
-
 \autoref{fig:05-packet-number-window} illustrates how concept on an smaller 8-bit window.
 \autoref{fig:05a} shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When
 packet 11 is received, the window is shifted by 4 and the highest bit which now corresponds to the
@@ -818,8 +816,6 @@ destination buffer. The copied data is transitoned into \textit{in-flight} state
 \end{description}
 
 \subsection{Tracing and Diagnostics}
-
-\todo{this section is new}
 
 The managed QUIC implementation can produce verbose logs (called traces) to provide an insight on
 the implementations behavior. By default, no trace is generated. Generating a trace can be enabled

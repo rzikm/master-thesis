@@ -90,7 +90,18 @@
 
 \makeatother
 
-
+%% \citeauthor command variant with full name
+\DeclareCiteCommand{\citeauthorfull}
+  {\boolfalse{citetracker}%
+   \boolfalse{pagetracker}%
+   \DeclareNameAlias{labelname}{first-last}%
+   \usebibmacro{prenote}}
+  {\ifciteindex
+     {\indexnames{labelname}}
+     {}%
+   \printnames{labelname}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
 
 %%% Macros for definitions, theorems, claims, examples, ... (requires amsthm package)
 
@@ -503,6 +514,7 @@
 \newcommand{\ArrayOf}[1]{\texttt{{#1}[]}}
 \newcommand{\FuncOf}[1]{\genericClass{Func}{#1}}
 \newcommand{\ArrayPoolOf}[1]{\genericClass{ArrayPool}{#1}}
+\newcommand{\ValueTask}{\class{ValueTask}}
 
 \newcommand{\Byte}{\keyword{byte}}
 \newcommand{\Long}{\keyword{long}}
