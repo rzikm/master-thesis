@@ -14,10 +14,11 @@ network communication:
         \litem{Round Trip Time Latency} The delay between sending a request and receiving a
         response. This metric is important mainly for clients, where lower latencies mean faster
         responses from the server. Rather than measuring the average latency, it is more common to
-        measure, e.g., 99th percentile of latency which indicates maximum expected latencies in the
-        fastest 99\% replies. \citeauthorfull{Tong2014} provides a great explanation on why
-        measuring percentiles is more informative than average latency in one of his blog posts on
-        elastic.co~\cite{Tong2014}. \todo{cite or deeply explain that this is a standard way of
+        measure, e.g., 99th percentile of latency which indicates minimum expected latencies in the
+        slowest 1\% replies. This metric is important in the context of webpages and communication
+        with browsers. Many websites generate hundreds of HTTP requests for single page access which
+        makes the probability of at least one such request being slower than the 99th percentile
+        very high~\cite{Treat2015}. \todo{cite or deeply explain that this is a standard way of
         measuring it}
 
 \end{itemize}
@@ -228,32 +229,49 @@ by the fact that we are spawning a long-running background task for each connect
 connections lead to a number of parallel \class{Task}s that were enough to completely utilize the
 entire CPU\@.
 
-As for the rapid decline of throughput when 16 or more connections were used, profiling showed that
-substantial amount of time was spent in the garbage collection. At 256 connections, almost 50\% of
-the total CPU time was spent in GC, divided into relatively large pauses of \SI{20}{\milli\second}
-or more. This is a consequence of using the \ArrayPoolOf{\Byte}\texttt{.Shared} pool, which retains
-only a small number of \ArrayOf{\Byte} instances\footnote{In \dotnet{}~5, the implementation of
+As for the rapid decline of the throughput of managed QUIC implementation when 16 or more
+connections were used, profiling showed that substantial amount of time was spent in the garbage
+collection. At 256 connections, up to 50\% of the total CPU time was spent in GC, divided into
+relatively large pauses of \SI{20}{\milli\second} or more. The pauses introduced by GC led to QUIC
+packets being considered lost which in turn led to collapse of the congestion window in the QUIC
+connection, further reducing the rate at which data were sent. This points to the fact that
+eventhough we carefully avoided needless allocations in our implementation, there are still enough
+sources of allocation left to degrade the performance for large numbers of connections.
+
+An example of a large source of allocations is pooling the buffers for sending or receiving QUIC
+packets. Even though the implementation uses \ArrayPoolOf{\Byte}\texttt{.Shared} to reuse allocated
+buffers, this does not work well with large number of connections. This is because
+\ArrayPoolOf{\Byte}\texttt{.Shared} retains only a small number of \ArrayOf{\Byte} instances for
+pooling and lets GC collect the rest\footnote{In \dotnet{}~5, the implementation of
   \ArrayPoolOf{\Byte}\texttt{.Shared} maintains a separate pool for each CPU core. Each per-CPU core
   pool organizes pooled arrays into 17 buckets with array sizes ranging from \SI{16}{\byte} to
-  \SI{1}{\mebi\byte}. Each bucket retains up to 8 array instances of similar size.} and lets GC
-collect the rest. With so many connections, the number of used buffers largely fluctuates, leading
-to a lot of large arrays being discarded and subsequently allocated anew. The pauses introduced by
-GC led to QUIC packets being considered lost which in turn led to collapse of the congestion window
-in the QUIC connection, further reducing the rate at which data were sent.
+  \SI{1}{\mebi\byte}. Each bucket retains up to 8 array instances of similar size.}. With large
+number of connections, the buffers are often rented and returned in large bursts, leading to a lot
+of large arrays being discarded upon return to the \ArrayPoolOf{\Byte}\texttt{.Shared} and
+subsequently allocated anew.
 
-\libmsquic{}, on the other hand, provides almost the same throughput regardless the number of
-connections. Instead, it greatly increases with message size and only slightly with the number of
-streams in the connections. When we tried sending even larger messages, the total throughput did not
-increase significantly anymore. Upon closer inspection of the \libmsquic{} network traffic when
-\SI{256}{\byte} messages are used, it turns out that many of the sent packets are very small,
-possibly containing only \ACK{} frames. When \SI{4096}{\byte} messages are used, more space in QUIC
-packets is utilized, increasing the throughput. Our investigation, however, did not uncover why the
-\libmsquic{} throughput does not scale with the number of connections.
+Another source of allocations are \Socket{}\texttt{.\method{SendTo}} and
+\Socket{}\texttt{.\method{ReceiveFrom}} methods which allocate of a new \class{EndPoint} instance
+for each call. In order to remove this particular source of allocations, an allocation-free API for
+sending or receiving UDP datagrams needs to be designed and implemented on the \Socket{} class.
 
-\autoref{fig:04-multi-stream-latency} shows the measured latencies. While the system is under small
-load (\autoref{fig:04-multi-stream-latency-a}), the latencies of both implementations are
-comparable. However, as the load increases (\autoref{fig:04-multi-stream-latency-b}), our
-implementation shows noticeably higher latencies.
+\libmsquic{}-based implementation, on the other hand, provides almost the same throughput regardless
+the number of connections. Instead, it greatly increases with message size and only slightly with
+the number of streams in the connections. When we tried sending messages larger than
+\SI{4096}{\byte}, the total throughput did not increase significantly anymore. Upon closer
+inspection of the \libmsquic{} network traffic when \SI{256}{\byte} messages are used, it turns out
+that many of the sent packets are very small, possibly containing only \ACK{} frames. Thus, the
+total available network bandwidth is not utilized fully. When \SI{4096}{\byte} messages are used,
+more space in QUIC packets is utilized which increases the throughput. Our investigation, however,
+did not uncover why the \libmsquic{} throughput does not scale with the number of connections.
+
+\autoref{fig:04-multi-stream-latency} shows the measured latencies for the same four test cases as
+above. In the baseline case (\autoref{fig:04-multi-stream-latency-a}), our QUIC implementation
+outperforms the \libmsquic{}-based implementation, with less than half 99th latency percentile in
+most cases. However, \libmsquic{}-based implementation outperforms our implementation in in tests
+with increased message size (\autoref{fig:04-multi-stream-latency-b}), or greater number of streams
+(\autoref{fig:04-multi-stream-latency-c}) or both (\autoref{fig:04-multi-stream-latency-d}),
+especially when conducting large amounts of connections.
 
 \begin{myFigure}{fig:04-multi-stream-latency}{Multiple stream QUIC latency measurements}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-latency-a}{1 Stream, \SI{256}{\byte} Messages}
@@ -275,23 +293,65 @@ implementation shows noticeably higher latencies.
 \end{mySubfigure}
 \end{myFigure}
 
-We speculate that the observed performance differences can be explained by the different
-architectures of the two implementations. The managed QUIC implementation uses the \dotnet{}
-\keyword{async}/\keyword{await} concurrency model and implements the background work of each
-connection as a separate looping \class{Task}. For a large amount of connections, there are a lot of
-recurring \keyword{Task}s that need to be scheduled on the \dotnet{} thread-pool The way tasks are
-scheduled allows a delay to be introduced between receiving a UDP datagram from a \Socket{} and
-Processing the packet by the connection.
+Similarly to the degraded throughput discussed previously, the increased latency can be attributed
+to the pauses introduced by GC\@. In the baseline test where our implementation outperforms
+\libmsquic{}, the GC activity was under 5\%. It should be noted that when measuring latency, the
+clients in the benchmarking application wait for the server to respond before sending another
+message. This limits the amount of QUIC packets being sent which explains why our implementation
+performs well in the baseline test even with 256 connections. Increasing either message size or the
+number of streams significantly increases the network traffic which increases the pressure on GC in
+our implementation.
 
-On the other hand, \libmsquic{} uses a fixed number of background threads based on the number of CPU
-cores and load-balances the connections among these threads. Each of these threads processes events
-from a queue which is shared for all connections on that thread. This may offer better data locality
-and cache utilization than the architecture used by the managed QUIC implementation.
+Furthermore, by increasing the message size, we increased the total probability that the application
+message will be delayed affected by the packet loss introduced by the GC pauses. This is because the
+message is spread over multiple QUIC packets and loss of any of those packets will delay the entire
+message.
+
+Increasing the number of streams also increased the total network traffic, making our implementation
+susceptible to the increased GC pauses. However, after certain threshold, increasing the number of
+streams does not increase the throughput of the implementation anymore. Instead, it leads to
+increase in latency, because it still increases the amount of outstanding parallel requests.
+
+Lastly, we would like to remind that we were measuring the 99th percentile of the latency which
+contains information only about the slowest 1\% of requests. To give more perspective on the latency
+distribution on the two implementations, \autoref{fig:04-multi-stream-latency-median} shows the
+median measurements of the latency. For brevity, we include only the measurements for
+\SI{4096}{\byte} messages. The median measurements of latencies of our implementation are similar or
+substantially lower than that of \libmsquic{}-based one.
+
+\begin{myFigure}{fig:04-multi-stream-latency-median}{Multiple stream QUIC latency measurements (median)}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-latency-median-a}{1 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-latency-median-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-latency-median-b}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-multi-stream-latency-median-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+We believe that this difference in the latency distribution between the two implementation is due to
+the differences between their architecture. \libmsquic{} spawn several worker threads (the number
+depends on the number of CPU cores) which process events for individual connections from an event
+queue. The event queue ensures that the connections are serviced evenly and in stable intervals.
+When the load on the server increases, the extra latency is spread evenly across all active
+connections. This is further supported by the fact that the median values for the latency of
+\libmsquic{} are only slightly lower than its 99th percentile from
+\autoref{fig:04-multi-stream-latency}.
+
+Our implementation, on the other hand, relies solely on the \dotnet{} \class{Task} scheduler which
+schedules all background tasks independently and without any priority information. This allows for
+greater variance in the latency of our QUIC implementation. In the future, the architecture of our
+implementation should be improved to reduce the variance and, therefore, the 99th percentile of the
+latency.
+
+In summary, our QUIC implementation outperforms the \libmsquic{}-based one in scenarios where small
+messages are exchanged between client and server using a small number of streams. However, our
+implementation does not scale when when large messages are sent or when using larger number of
+parallel streams. This is due to increased pressure on the GC which introduces frequent and large
+pauses in the application, and the way background work is scheduled on the \dotnet{} thread-pool.
 
 \subsection{Single Stream Performance}
-
-\todo{Explain the choice of parameters (everywhere!), why 5\% loss, what is a normal expected
-  latency time...}
 
 In the second test, we compared the single-stream performance of QUIC implementations and also the
 performance of \TcpClient{} and \SslStream{}. \autoref{fig:04-single-stream-throughput} shows the
@@ -331,6 +391,9 @@ performance over the loopback interface and simple swapping the use of \SslStrea
 \QuicStream{}s is likely to degrade performance of the resulting application.
 
 \subsection{Single Stream Performance in Lossy Network}
+
+\todo{Explain the choice of parameters (everywhere!), why 5\% loss, what is a normal expected
+  latency time...}
 
 In the last test, we compared the resilience of QUIC and TCP+TLS implementations in a simulated
 lossy network using Clumsy. Although Clumsy allows setting very small lag delays, in practice, the

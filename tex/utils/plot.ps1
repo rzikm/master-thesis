@@ -1,4 +1,5 @@
 $latencyColumn = "Latency-p99 (ms)"
+$latencyColumnMedian = "Latency-p50 (ms)"
 $throughputColumn = "Throughput (MiB/s)"
 $colors = @{
     'managed' = 'royalblue' #4169e1
@@ -8,6 +9,7 @@ $colors = @{
 
 $messageSizeLabel = "Message Size (B)"
 $latencyLabel = "99th percentile latency (ms)"
+$latencyLabelMedian = "median latency (ms)"
 $throughputLabel = "Throughput (MiB/s)"
 $connectionsLabel = "Connections"
 
