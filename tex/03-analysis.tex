@@ -1,8 +1,9 @@
 \chapter{Analysis}\label{chap:03-analysis}
 
-In this chapter, we analyze the protocol and select the necessary subset needed to evaluate a pure
-\dotnet{} implementation. Afterward, we design the architecture and outline the implementation of
-its major parts. Lastly, we investigate the means for testing and debugging the implementation.
+This chapter analyzes the protocol and selects the necessary subset needed to evaluate a \dotnet{}
+implementation of the QUIC protocol. Afterward, we design the architecture and outline the
+implementation of its major parts. Lastly, we investigate the means for unit testing and debugging
+of the implementation.
 
 \section{Implemented Feature Subset Selection}\label{sec:03-feature-selection}
 
@@ -74,9 +75,9 @@ actual design of the implementation and their rationale.
 \subsection{Performance}
 
 One of the critical factors in the decision between managed \dotnet{} implementation of QUIC or
-using an external library like \libmsquic{} is performance. Therefore, the decisions made during the
-implementation design should focus towards greater performance, possibly sacrificing maintainability
-if the trade-off is justified.
+using an external library like \libmsquic{} is performance. Therefore, the implementation design
+decisions should focus on performance, possibly sacrificing maintainability if the trade-off is
+justified.
 
 As a general rule, the implementation will:
 
@@ -112,16 +113,16 @@ the \class{TcpClient} class. The individual QUIC streams are exposed using the \
 which implements the \class{Stream} abstraction.
 
 The API is expected to be used asynchronously using the \keyword{async}/\keyword{await} model. Most
-methods return the \class{ValueTask} which should be \keyword{await}ed to efficiently wait until the
-completion. The full list of methods with detailed description can be found later in
+methods return the \class{ValueTask} which should be \keyword{await}ed to wait until the completion
+efficiently. The full list of methods with detailed description can be found later in
 \autoref{sec:06-api}.
 
 \section{High-Level Architecture}\label{sec:03-high-level-architecture}
 
 The \QuicConnection{} implementation will require some sort of background processing
-thread\footnote{To reduce verbosity, this text will be using the term \textit{thread} to mean both a
-dedicated \class{Thread} instance or a \class{Task} running on a thread-pool thread.} to send
-acknowledgments for incoming packets and to resend data after being determined lost due to a
+thread\footnote{In order to reduce verbosity, this text will be using the term \textit{thread} to
+mean both a dedicated \class{Thread} instance or a \class{Task} running on a thread-pool thread.} to
+send acknowledgments for incoming packets and to resend data after being determined lost due to a
 timeout. Because the correctness of a multithreaded code is hard to test, our implementation of
 \QuicConnection{} will not interface with the underlying \Socket{} instance directly. Instead, the
 implementation will provide an internal interface for exchanging the datagrams to be sent/received.
@@ -167,7 +168,7 @@ with separate threads for sending and receiving.
 
 For client connections, the background processing provided by the \QuicSocketContext{} class needs
 to service only a single connection. However, on the server's side, there can be multiple
-connections receiving datagrams from the same socket, and therefore being served by a single
+connections receiving datagrams from the same socket and, therefore, being served by a single
 \QuicSocketContext{} instance. Servicing multiple \QuicConnection{} instances by only one thread
 could limit the server's throughput.
 
@@ -195,22 +196,22 @@ processing.}
 Introduction of \QuicConnectionContext{} solved possible performance bottlenecks for servers, but it
 introduces a complication in the \Socket{} access. Ideally, Each thread would call the
 \method{ReceiveFromAsync} method on the \Socket{} with the known remote endpoint address. This naive
-approach would work, considering that we plan to omit support for connection migration. However, as
-mentioned in \autoref{sec:02-path-validation}, the endpoint can also change its address due to NAT
-rebinding. In that case, the connection would be eventually terminated due to the idle timeout (see
-\autoref{sec:02-idle-timeout}).
+approach would work, considering that we plan to omit support for the connection migration. However,
+as mentioned in \autoref{sec:02-path-validation}, the endpoint can also change its address due to
+NAT rebinding. In that case, the connection would be eventually terminated due to the idle timeout
+(see \autoref{sec:02-idle-timeout}).
 
 Therefore, our implementation will use a separate thread to receive all UDP datagrams and queue them
-into a \ChannelOf{} instance of the appropriate \QuicConnectionContext{} based on the value of
-the DCID field of the packet header.
+into a \ChannelOf{} instance of the appropriate \QuicConnectionContext{} based on the value of the
+\gls{dcid} field of the packet header.
 
 \subsubsection{Future Support for Connection Migration}
 
-Lastly, we need to review the architecture for possible support for connection migration. Thanks to
-the \QuicConnectionContext{} not depending directly on a particular \Socket{} instance, it is
-conceivable that a single \QuicConnectionContext{} instance could be part of two
-\QuicSocketContext{}s --- one for the old endpoint address, and the other for the new one. Use of the
-\ChannelOf{} class already ensures that the incoming datagrams could be queued concurrently by
+Lastly, we need to review the architecture for possible support for the connection migration
+feature. Thanks to the \QuicConnectionContext{} not depending directly on a particular \Socket{}
+instance, it is conceivable that a single \QuicConnectionContext{} instance could be part of two
+\QuicSocketContext{}s --- one for the old endpoint address, and the other for the new one. Use of
+the \ChannelOf{} class already ensures that the incoming datagrams could be queued concurrently by
 both \QuicSocketContext{} instances. The only modification needed on the architecture level would be
 allowing the \QuicConnectionContext{} to select the right \Socket{} from which the outgoing
 datagrams should be sent.
@@ -227,7 +228,7 @@ should allow concurrent usage of \QuicConnection{} and \QuicStream{} classes whe
 For example, it makes sense for an application code to process each \QuicStream{} in a different
 thread. However, it does not make sense to concurrently write into one \QuicStream{} from two
 threads without any synchronization. Our implementation will, therefore, provide the following
-thread-safety guarantees for the API:
+thread-safety guarantees for the API\@:
 
 \begin{itemize}
 
@@ -256,8 +257,8 @@ range of allowed values and incomplete or damaged packets.
 
 \subsection{QUIC Packet and Frame Representation}\label{sec:03-data-representation}
 
-Some packets contain many fields and, therefore, passing them around as individual variables would
-make the implementation harder to maintain. The QUIC frames form coherent messages that should be
+Some packets contain many fields. Therefore, passing them around as individual variables would make
+the implementation harder to maintain. The QUIC frames form coherent messages that should be
 represented by individual \dotnet{} types. This gives us also an opportunity to keep the
 serialization and deserialization code next to each other, making it easier to ensure that, e.g.,
 the order of the serialized fields match in both methods.
@@ -266,14 +267,14 @@ Representing QUIC frames as individual classes would introduce many heap allocat
 received QUIC packet. This thesis, therefore, will model QUIC frames and the QUIC packet headers as
 value types. Also, the payload of some frames may consist of large blocks of memory. Examples
 include \STREAM{} and \CRYPTO{} frames, which can fill the entire payload of the QUIC packet.
-Duplicating this block of memory into a separate \ArrayOf{\Byte{}} would be another unnecessary memory
-allocation. \dotnet{}~2.1 introduced the \SpanOf{\class{T}} type, which can be used to efficiently
-reference arbitrary memory block, including memory allocated on the stack using the
+Duplicating this block of memory into a separate \ArrayOf{\Byte{}} would be another unnecessary
+memory allocation. \dotnet{}~2.1 introduced the \SpanOf{\class{T}} type, which can be used to
+efficiently reference arbitrary memory block, including memory allocated on the stack using the
 \keyword{stackalloc} keyword.
 
-However, the \SpanOf{\class{T}} type is a \keyword{ref struct} --- a special kind of value type which
-can be stored only in local variables or inside another \keyword {ref struct}s. Limitations on the
-usage of \keyword{ref struct}s also forbid their use as generic type arguments, e.g., for
+However, the \SpanOf{\class{T}} type is a \keyword{ref struct} --- a special kind of value type
+which can be stored only in local variables or inside another \keyword {ref struct}s. Limitations on
+the usage of \keyword{ref struct}s also forbid their use as generic type arguments, e.g., for
 \FuncOf{} and other generic delegates. This limitation is acceptable for \QuicConnection{}
 implementation because the QUIC frames can be processed one after another right after being
 deserialized from the QUIC packet.
@@ -292,9 +293,9 @@ is done by forwarding the calls to respective methods on the \class{BinaryPrimit
 
 \section{Stream Implementation}\label{sec:03-stream-implementation}
 
-QUIC is a transport protocol, and, therefore, its entire purpose is transferring streams of data.
-Since it is likely to be the hot path of the implementation, the internal handling of streams must
-be efficient and avoid unnecessary copying of stream data blocks.
+QUIC is a transport protocol. Therefore, its entire purpose is transferring streams of data. Since
+it is likely to be the hot path of the implementation, the internal handling of stream data must be
+efficient and avoid unnecessary copying of stream data blocks.
 
 QUIC recognizes four types of streams. These streams can have a sending part, receiving part, or
 both. The fact which endpoint initiated the stream controls only which flow control limits apply to
@@ -320,8 +321,8 @@ utilizes a method-based model of the \Stream{} abstraction. If the application d
 
 This implies that in order to avoid intermediate copies of the stream data, the buffer holding the
 QUIC packet in which the stream data arrived cannot be reused to receive other QUIC packets until
-the data are delivered to the application. Tracking of which buffers can be reused again for
-receiving next QUIC packets can be complicated because QUIC packets can carry multiple \STREAM{}
+the data are delivered to the application. Tracking which buffers can be reused again for receiving
+the following QUIC packets can be complicated because QUIC packets can carry multiple \STREAM{}
 frames.
 
 We believe that the implementational complexity of avoiding intermediate copies outweighs the
@@ -337,21 +338,21 @@ arbitrarily overlap.
 
 Even though QUIC Flow control provides an upper limit on the data that needs to be buffered at any
 given moment, allocating one large buffer may be inefficient, as the entire buffer might not be
-needed at any given point in time. Therefore, our implementation uses a list multiple smaller
-buffers and allocates only the necessary number of buffers that are needed to buffer currently
-received data. To reduce pressure on the garbage collector, buffers are pooled in a shared instance
-of \ArrayPoolOf{\Byte{}} class to avoid their frequent allocation.
+needed at any given point in time. Therefore, our implementation uses a list of multiple smaller
+buffers and allocates only the necessary number of buffers needed to buffer currently received data.
+In order to reduce the pressure on the \gls{gc}, buffers are reused using the \ArrayPoolOf{\Byte{}}
+class to avoid their frequent allocation.
 
 \subsubsection{Reading Data by the Application}
 
-Because user code runs on a different thread from the internal \QuicConnection{} logic, there needs
-to be some synchronization. Our implementation uses the \ChannelOf{} class, which provides an
-efficient implementation of the producer-consumer queue with support for asynchronous operations
-using the \ValueTaskOf{} type.
+Because user code runs on a different thread from the internal \QuicConnection{} logic, access to
+the buffered data must be synchronized. Our implementation uses the \ChannelOf{} class, which
+provides an efficient implementation of the producer-consumer queue with support for asynchronous
+operations using the \ValueTaskOf{} type.
 
 Each time data are received for the stream, the implementation checks if there is a contiguous block
-of memory which could be delivered to the application. For this reason, the implementation needs to
-keep track which parts of the stream have already been received. If there is a new part of the
+of memory that could be delivered to the application. For this reason, the implementation needs to
+keep track of which parts of the stream have already been received. If there is a new part of the
 stream that can be delivered, a view into the relevant region of the buffer is queued into the
 \ChannelOf{} using the \MemoryOf{\Byte{}} type.
 
@@ -361,7 +362,8 @@ These buffers are rented from an \ArrayPoolOf{\Byte{}} as needed. A \MemoryOf{\B
 providing a view into the newly deliverable parts of the stream is then queued into a \ChannelOf{}
 instance for delivery. The application thread retrieves the memory regions as needed and copies the
 data into the buffer provided by the application. Once all data from an intermediate buffer are
-delivered, the intermediate buffer is returned back to the \ArrayPoolOf{\Byte{}}.
+delivered, the intermediate buffer is returned to the \ArrayPoolOf{\Byte{}} to be reused for
+buffering future data.
 
 \begin{myFigure}{fig:03-receive-stream}{Implementation of the receiving part of the stream}
 
@@ -373,10 +375,10 @@ delivered, the intermediate buffer is returned back to the \ArrayPoolOf{\Byte{}}
 
 QUIC Flow control limits for streams specify the maximum offset of data that an endpoint can send.
 An endpoint needs to update these limits by sending a \MAXSTREAMDATA{} frame after the data are
-delivered to the application. However, sending ipdated limits in every packet could waste space that
+delivered to the application. However, sending updated limits in every packet could waste space that
 could be used by the application data. On the other hand, updating the limits too late could lead to
 the other endpoint being blocked and signal the fact by sending a \STREAMDATABLOCKED{} frame. In
-such a state, the endpoint is unable to send more application data until it receives an update via
+such a state, the endpoint cannot send more application data until it receives an update via
 \MAXSTREAMDATA{} frame.
 
 Our implementation will send a \MAXSTREAMDATA{} frame after the client uses more than half of the
@@ -385,9 +387,9 @@ time early enough that the sender does not run out of flow control credit.
 
 \subsection{Sending Part of the Stream}\label{sec:03-send-stream}
 
-The sending part of a QUIC stream must keep track of state of all outbound data on the stream. Any
-part of the stream can be lost during transmission and the has to be retransmitted, and any part of
-the sent data can be acknowledged.
+The sending part of a QUIC stream must keep track of the state of all outbound data on the stream.
+Any part of the stream can be lost during transmission, requiring its retransmission, and any part
+of the sent data can be acknowledged.
 
 \subsubsection{Stream Data Buffering}
 
@@ -396,20 +398,20 @@ copied before they are sent. The semantics of the \method{Write} and \method{Wri
 the \Stream{} class is such that when the method completes, the provided memory can be reused for
 other purposes.
 
-\todo{check the explanation why waiting for acks is bad}
+\todo{check the explanation of why waiting for acks is inadequate}
 
-A single-copy implementation approach in this case would require that the \method{Write} and
-\method{WriteAsync} methods complete after the peer acknowledges that the data were received. In
-best case scenario where no packet loss occurs, this approach implies a full round-trip delay for
+In this case, a single-copy implementation approach would require that the \method{Write} and
+\method{WriteAsync} methods complete after the peer acknowledges that the data were received. In the
+best-case scenario where no packet loss occurs, this approach implies a full round trip delay for
 calling either of the methods. This approach would make the \QuicStream{} implementation
 inconsistent with the other network-enabled \Stream{} implementations. Moreover, substantial time
-would be spent waiting for acknowlegement instead of sending more data. In order to fully saturate
+would be spent waiting for acknowledgment instead of sending more data. In order to fully saturate
 the available bandwidth, users of the \QuicStream{} would have to either provide very large data
-buffers or use the \method{WriteAsync} method and overlap the its execution by maintaining multiple
+buffers or use the \method{WriteAsync} method and overlap its execution by maintaining multiple
 outstanding \ValueTask{}s.
 
 In order to fit with the other \Stream{} implementations, our implementation will create an
-intermediate copy of the data and the \method{Write} and \method{WriteAsync} will complete once the
+intermediate copy of the data, and the \method{Write} and \method{WriteAsync} will complete once the
 data is internally buffered. This allows applications to queue enough data to maximally utilize the
 connection's bandwidth. In order to be memory-efficient, our implementation will, as in
 \ReceiveStream{} implementation, use an \ArrayPoolOf{\Byte{}} to reduce pressure on the garbage
@@ -417,7 +419,7 @@ collector.
 
 \subsubsection{Acknowledgement, Loss, and Retransmission}
 
-Each byte that was written into the stream can be, conceptually, in three different states:
+Each byte that in the stream can be, conceptually, in three different states:
 
 \begin{itemize}
 
@@ -433,26 +435,26 @@ It is no longer necessary to buffer this byte.
 
 The transitions between these states are straightforward. The data transition from pending to
 in-flight by sending them via \STREAM{} frame. When the packet is deemed lost by the loss detection
-algorithm, the data transition back to pending, and if the packet has been acknowledged, the data
-transition to acknowledged. The state of the individual parts of the stream can be tracked by
-maintaining three sets of \textit{ranges} --- starts and ends of the blocks of data in the same
-state.
+algorithm, the data transition back to the pending state, and if the packet has been acknowledged,
+the data transition to the acknowledged state. The state of the individual parts of the stream can
+be tracked by maintaining three sets of \textit{ranges} --- starts and ends of the blocks of data in
+the same state.
 
 \subsubsection{Writing Data by the Application}
 
 Similarly to the receiving part of the stream, our implementation will use \ChannelOf{} type to
 provide synchronization with the application thread. However, since \ChannelOf{} does not allow
 random access to the provided data, a separate list of buffers is maintained for data which were
-sent but not yet acknowleged.
+sent but not yet acknowledged.
 
 \autoref{fig:03-send-stream} illustrates the process of writing data into the \SendStream{}. The
 application data are copied to an internal buffer. This buffer comes from a shared
-\ArrayPoolOf{\Byte{}}. When the buffer is full or the stream is flushed, the buffer is enququed into
+\ArrayPoolOf{\Byte{}}. When the buffer is full or the stream is flushed, the buffer is enqueued into
 the synchronization \ChannelOf{}. The background thread then dequeues buffers from the \ChannelOf{}
 and appends them into a list of retransmission buffers. Each time a new \STREAM{} frame for this
 stream is written into a QUIC packet, the earliest not-yet-sent data are selected and copied into
 the outgoing QUIC packet buffer. Once all data in a particular retransmission buffer are
-acknowleged, the buffer can be removed and returned back to the \ArrayPoolOf{\Byte}.
+acknowledged, the buffer can be removed and returned to the \ArrayPoolOf{\Byte}.
 
 \begin{myFigure}{fig:03-send-stream}{Implementation of the sending part of the stream}
 
@@ -531,8 +533,8 @@ API for integration with QUIC, and there are no plans to include such API in the
 
     However, developers at Akamai maintain a fork of \libopenssl{} which adds the QUIC-enabling
 API~\cite{AkamaiOpensslGithub}. This modified version of \libopenssl{} is used by \libmsquic{} (on
-Linux) and some other QUIC libraries like \libname{quiche} from Cloudflare~\cite{quicheGithub}. The
-changes made by Akamai may be merged into \libopenssl{} into the following 3.1.0 or later releases.
+Linux) and some other QUIC libraries like \libname{quiche} from Cloudflare~\cite{quicheGithub}.
+Akamai's changes may be merged into \libopenssl{} into the following 3.1.0 or later releases.
 
 \end{description}
 
@@ -550,7 +552,7 @@ has some drawbacks:
 
   \item Only limited integration with X.509 certificates is possible because the
 \class{X509Certificate} class implementation will be using different binary --- \libname{CryptoAPI}
-on Windows, unmodified \libopenssl{} on Linux and macOS.
+on Windows, unmodified \libopenssl{} on Linux and macOS\@.
 
 \end{itemize}
 
@@ -578,11 +580,11 @@ payload protection and header protection. The combined process requires the foll
 \end{itemize}
 
 The cipher is negotiated once and cannot be changed during the lifetime of the connection. Keys for
-the protection can be changed only for the 1-RTT packets using the process of \textit{key update}
-(see \autoref{sec:02-key-update}), which can be expected to be relatively infrequent. The rest of
-the inputs change with every packet. Therefore, our implementation encapsulates the packet
-protection implementation in a \class{CryptoSeal} class, which does not depend on the rest of the
-QUIC implementation.
+the protection can be changed only for the 1-RTT packets using the process of
+\textit{\gls{key-update}} (see \autoref{sec:02-key-update}), which can be expected to be relatively
+infrequent. The rest of the inputs change with every packet. Therefore, our implementation
+encapsulates the packet protection implementation in a \class{CryptoSeal} class, which does not
+depend on the rest of the QUIC implementation.
 
 The process of receiving packets requires intermediate validation of the header fields. The
 individual steps --- header protection and payload protection --- must be therefore exposed
@@ -590,15 +592,15 @@ separately. Also, the protection should happen in-place to avoid unnecessary all
 of the packets.
 
 Important consideration needs to be made for performing the actual encryption/decryption once all
-inputs to the AEAD have been gathered. \dotnet{} does not contain an implementation of the CHACHA
-family of ciphers. Because the implementation can work without it by instructing the TLS library not
-to allow its negotiation, the prototype implementation of QUIC will not support this kind of cipher.
-The other ciphers are based on the AES family of ciphers, which are supported by \dotnet{}, but
-individual classes implementing these ciphers do not share a common interface. Therefore, our
-implementation wraps the concrete AES implementations in classes derived from an abstract
-\class{CryptoSealAlgorithm} class which defines a common interface required by \CryptoSeal{}.
-\autoref{fig:03-crypto-seal} illustrates how the \CryptoSeal{} and \class{CryptoSealAlgorithm}
-classes are connected.
+inputs to the \gls{aead} have been gathered. \dotnet{} does not contain an implementation of the
+CHACHA family of ciphers. Because the implementation can work without it by instructing the TLS
+library not to allow its negotiation, the prototype implementation of QUIC will not support this
+kind of cipher. The other ciphers are based on the AES family of ciphers, which are supported by
+\dotnet{}, but individual classes implementing these ciphers do not share a common interface.
+Therefore, our implementation wraps the concrete AES implementations in classes derived from an
+abstract \class{CryptoSealAlgorithm} class which defines a common interface required by
+\CryptoSeal{}. \autoref{fig:03-crypto-seal} illustrates how the \CryptoSeal{} and
+\class{CryptoSealAlgorithm} classes are connected.
 
 \begin{myFigure}{fig:03-crypto-seal}{Relationship between CryptoSeal and CryptoSealAlgorithm
 classes}
@@ -607,15 +609,15 @@ classes}
 
 \end{myFigure}
 
-The key update operation can be implemented by replacing the existing instance of the \CryptoSeal{}
-class with the new one with the updated protection secret.
+The \gls{key-update} operation can be implemented by replacing the existing instance of the
+\CryptoSeal{} class with the new one with the updated protection secret.
 
 \section{Loss Detection and Loss Recovery}
 
 In order to detect lost packets and retransmit any lost data, the \QuicConnection{} implementation
 must keep track of which data have been sent in which packets and the timestamp when the packet was
-sent for timeout detection. Our implementation will encapsulate this information together with the
-loss detection algorithm in a dedicated \RecoveryController{} class, which does not depend on the
+sent for timeout detection. Our implementation will encapsulate this information and the loss
+detection algorithm in a dedicated \RecoveryController{} class, which does not depend on the
 \QuicConnection{} class. This way, its implementation can be unit tested separately from the rest of
 the connection logic.
 
@@ -672,11 +674,11 @@ the Length field in the packet header must be adjusted.
 
 \end{itemize}
 
-Doing this manually would make unit testing function very verbose and hard to understand. In order
-to keep the tests concise and easy to understand, we will implement a \textit{testing harness} which
-will provide the functionality mentioned above via a set of helper methods. These methods will
-provide a declarative way to specify what the QUIC packet or datagram must contain and register
-callbacks for packet modification to elicit error responses.
+Doing this manually would make unit testing function very verbose and hard to understand. To keep
+the tests concise and easy to understand, we will implement a \textit{testing harness} which will
+provide the functionality mentioned above via a set of helper methods. These methods will provide a
+declarative way to specify what the QUIC packet or datagram must contain and register callbacks for
+packet modification to elicit error responses.
 
 \autoref{lst:03-desired-unit-test} shows how the desired testing harness would be used in
 conjunction with \xUnit{} testing framework to test if the first UDP datagram sent by the client has
@@ -685,7 +687,7 @@ present it in a structured manner. Later, the \method{ShouldHaveFrame<\class{TFr
 internally check if a frame represented by \class{TFrame} type is present in the packet and will
 invoke the provided callback for further assertions.
 
-\begin{myListingCsharp}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
+\begin{myListingCsharpNoPageBreak}{lst:03-desired-unit-test}{Example unit test inspecting QUIC packets contents.}{Fact, Assert, Datagram, InitialPacket, CryptoFrame, QuicConstants}{}
     [Fact]
     public void |ClientInitialDatagramHasInitialPacketWithCryptoFrame|()
     {
@@ -704,13 +706,13 @@ invoke the provided callback for further assertions.
             Assert.|NotEmpty|(crypto.CryptoData);
         });
     }
-\end{myListingCsharp}
+\end{myListingCsharpNoPageBreak}
 
 However, in \autoref{sec:03-data-representation}, we mentioned that the types representing QUIC
 frames must be \keyword{ref struct}s in order to contain \SpanOf{\class{T}} instances, and that
 \keyword{ref struct}s cannot be used as type arguments for generic classes or methods. This could be
-overcome by using \MemoryOf{\class{T}} instead of \SpanOf{\class{T}}, but the use of structs for frame
-types still poses a problem for modification of the QUIC frames by a callback.
+overcome by using \MemoryOf{\class{T}} instead of \SpanOf{\class{T}}, but the use of structs for
+frame types still poses a problem for modification of the QUIC frames by a callback.
 
 Structs are normally passed by value; therefore, the callback would either have to accept the frame
 by reference using the \keyword{ref} keyword or return the modified frame as the return value.
@@ -723,11 +725,12 @@ frame would require creating a new instance of the frame, overwriting the old va
 For the above reasons, we decided to duplicate the types for frame representation using mutable
 \keyword{class}es. This duplication will allow expressing the unit tests in a succinct, natural
 declarative manner. This is illustrated in the test in \autoref{lst:03-unit-test-intercept} which
-uses a \method{Intercept1RttFrame<\class{TFrame}>} to intercept a frame of type \class{TFrame} and
-modify it. In this case, we shift the range of acknowledged packets by one and by doing so, simulate
-acknowledging a packet that the server has not sent yet, which is a protocol violation.
+uses an \method{Intercept1RttFrame<\class{TFrame}>} method to intercept a frame of type
+\class{TFrame} and modify it. In this case, we shift the range of acknowledged packets by one and,
+by doing so, simulate acknowledging a packet that the server has not sent yet, which is a protocol
+violation.
 
-\begin{myListingCsharp}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame, AckFrame}{TransportErrorCode, FrameType}
+\begin{myListingCsharpNoPageBreak}{lst:03-unit-test-intercept}{Example unit test simulating error conditions.}{Fact, Assert, InitialPacket, QuicError, ConnectionCloseFrame, AckFrame}{TransportErrorCode, FrameType}
     [Fact]
     public void |ConnectionCloseWhenAckingFuturePacket|()
     {
@@ -746,14 +749,14 @@ acknowledging a packet that the server has not sent yet, which is a protocol vio
             Assert.|Equal|(QuicError.InvalidAckRange, f.ReasonPhrase);
         });
     }
-\end{myListingCsharp}
+\end{myListingCsharpNoPageBreak}
 
 \subsection{Testing the Public API}
 
-The \dotnet{} runtime repository already contains a suite of tests which are used to test the
+The \dotnet{} runtime repository already contains a suite of tests used to test the
 \libmsquic{}-based QUIC implementation. Another large separate set of tests exists for ensuring that
 all \class{Stream} implementation behave consistently. All these tests can be used to ensure that
-our implementation of \QuicListener{}, \QuicConnection{} and \QuicStream{} conforms to the public
+our implementation of \QuicListener{}, \QuicConnection{}, and \QuicStream{} conforms to the public
 API specification.
 
 \section{Diagnostics}
@@ -767,8 +770,8 @@ packets sent over the network and producing verbose logs (called traces) by the 
 \subsection{Inspecting the Sent Packets}
 
 Inspecting the connection behavior by observing the packets sent over the network is a non-invasive
-way of diagnosing issues in any networking protocol. An example of a tool which can be used for this
-task is Wireshark~\cite{web:wireshark}, which also supports QUIC.
+way of diagnosing issues in any networking protocol. An example of a tool that can be used for this
+task is Wireshark~\cite{web:wireshark}, which also supports QUIC\@.
 
 However, since QUIC is always encrypted, inspecting QUIC packets via Wireshark is not
 straightforward as for other network protocols. Implementations must leak the encryption secrets
@@ -783,8 +786,8 @@ visualize individual events in the connection in a graphic format that is easy t
 these tool is \textit{qvis}~\cite{web:qvis} which is part of \textit{quiclog}
 suite~\cite{githubquiclog}. The \textit{qvis} tool consumes logs in a JSON format, which can be
 either produced directly or generated from implementation-specific log format or even from network
-packet captures created by Wireshark, provided that encryption secrets are logged elsewhere for the
-given connection.
+packet captures created by Wireshark, provided that the used encryption secrets used in the
+connection are known.
 
 Although JSON format produces larger log files, it can be directly consumed by the \textit{qvis}
 tool without any further conversions. For this reason, we chose to use it in our implementation and
@@ -801,9 +804,9 @@ There is, however, the issue with the \libopenssl{} dependency. The \libopenssl{
 in C and must be compiled for the target machine. Integrating the \libopenssl{} compilation into the
 \dotnet{} runtime build process would impose additional requirements for the \dotnet{} runtime
 compilation. The additional dependencies would complicate building the \dotnet{} runtime as part of
-continous integration process. For this reason, it is necessary to provide also a mock TLS
+the continuous integration process. For this reason, it is necessary to provide also a mock TLS
 implementation that would be used in automated tests as part of continuous integration.
 
-The mock TLS implementation can be also used locally to avoid building the \libopenssl{} dependency.
+The mock TLS implementation can also be used locally to avoid building the \libopenssl{} dependency.
 The only limitation of the mock TLS implementation is that it does not allow interop with other QUIC
 implementations.

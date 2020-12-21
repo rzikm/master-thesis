@@ -62,6 +62,12 @@ Multiple QUIC packets can be encapsulated in a single UDP datagram.}
   peer to include in packets sent towards the endpoint.}
 }
 
+\newglossaryentry{key-update}
+{
+  name=key update,
+  description={A process in which QUIC endpoints derive new encryption keys to use for encrypting 1-RTT packets. This process limits the number of packets encrypted by the same encryption key, increasing the level of protection. The process of key update is described in \autoref{sec:02-key-update}.}
+}
+
 \newglossaryentry{ack-eliciting-packet}
 {
   name=ack-eliciting packet,
@@ -103,6 +109,8 @@ Multiple QUIC packets can be encapsulated in a single UDP datagram.}
   name=abstract factory pattern,
   description={A design pattern encapsulating creation of families of related classes. A typical example are factories for creating GUI widgets, where different factories can create various types of widgets backed by a particular GUI rendering library.}
 }
+
+\newdefinedabbreviation{gc}{GC}{garbage collector}{A part of the \dotnet{} runtime which provides automatic memory management.}
 
 \newdefinedabbreviation{alpn}{ALPN}{Application-Layer Protocol Negotiation}{A TLS extension that allows the application layer to negotiate which application protocol will be in the connection. The negotiation is done as part of the TLS handshake and avoids additional round trips. ALPN is used, e.g., for HTTP version negotiation in HTTPS connections.}
 

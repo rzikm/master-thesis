@@ -1,4 +1,4 @@
-\chapter{User Documentation}
+\chapter{User Documentation}\label{chap:06-user-docs}
 
 This section provides guidance on how to obtain the build of the \dotnet{} runtime with managed QUIC
 implementation, how to install it, and how to use the code to develop other applications.
@@ -9,12 +9,14 @@ This thesis provides a branch of the \dotnet{} runtime codebase with managed QUI
 Since our branch contains changes only in the \SystemNetQuicDll{}, the easiest way of composing a
 fully working \dotnet{} distribution is obtaining a full SDK installation of the latest master
 development version of \dotnet{}~6 and replacing the \SystemNetQuicDll{}. This section explains how
-this can be done without affecting other \dotnet{} SDK installations present on the machine.
+to do this without affecting other \dotnet{} SDK installations present on the machine.
 
-The managed implementation depends on a particular \libopenssl{} version in order to interoperate
-with other QUIC implementations. This section also explains how to deploy a locally built
-\libopenssl{} so that it is automatically used by user code. The process consists of following
-steps which will be explained in following subsections:
+The managed implementation depends on a particular \libopenssl{} version to interoperate with other
+QUIC implementations. This section also explains how to deploy a locally built \libopenssl{} to be
+automatically used by user code.
+
+The complete setup process consists of the following steps, which we explained in greater detail in
+the subsequent subsections:
 
 \begin{enumerate}
 
@@ -28,15 +30,15 @@ steps which will be explained in following subsections:
 
 \end{enumerate}
 
-\subsection{Building the System.Net.Quic Library from Source}
+\subsection{Building the System.Net.Quic Library from Source}\label{sec:06-build-runtime}
 
 The source code for the \dotnet{} runtime with managed QUIC implementation is part of this thesis'
-attachments. \todo{path to the src once the attachments are finalized}. Alternatively, the code can
-also be found on github \todo{link}. For the remainder of this section, all paths will be relative
-to the \dotnet{} runtime repository directory.
+attachments in the \filename{src/dotnet-runtime} directory. Alternatively, the latest version of the
+code can also be found on the thesis author's GitHub~\cite{githubRzikmRuntimelab}. For the remainder
+of this section, all paths will be relative to the \dotnet{} runtime repository directory.
 
 The \dotnet{} runtime repository contains a descriptive guide on how to build the sources. The
-necessary prerequisities are listed in files inside the \filename{docs/workflow/requirements/}
+necessary prerequisites are listed in files inside the \filename{docs/workflow/requirements/}
 directory, separately for each operating system.
 
 Once you have installed all prerequisities, you can build the entire \dotnet{} runtime using the
@@ -52,15 +54,17 @@ directory. The important artifacts from this directory are:
 
 \begin{itemize}
 
-  \item \filename{ref/net6.0-Release/System.Net.Quic.dll}: The so-called reference assembly that specifies the public API of the library.
+  \item \filename{ref/net6.0-Release/System.Net.Quic.dll}: The so-called reference
+assembly~\cite{ReferenceAssemblyDocs} that specifies the public API of the library.
 
-  \item \filename{net6.0-{OS}-Release/System.Net.Quic.dll}: Where \verb|{OS}| is the operating system platform you are running. This is the library with the actual implementation.
+  \item \filename{net6.0-{OS}-Release/System.Net.Quic.dll}: Where \verb|{OS}| is the operating
+system platform you are running. This is the \dotnet{} assembly with the actual QUIC implementation.
 
 \end{itemize}
 
 \subsection{Creating a Local Installation of \dotnet{}}\label{sec:06-local-dotnet}
 
-Now we need to download the latest \dotnet{}~6 SDK. This zip archive containing this SDK can be
+Now we need to download the latest \dotnet{}~6 SDK\@. This zip archive containing this SDK can be
 downloaded from a link listed in the official SDK installer GitHub
 repository~\cite{dotnetSdkGithub}. Download the ``Master (6.0.x Runtime)'' build for your platform
 and extract it to a convenient location. In the remainder of this guide, the directory containing
@@ -77,14 +81,17 @@ existing files.
 \subsection{Adding the OpenSSL Library}\label{sec:06-openssl}
 
 The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
-maintained by Akamai~\cite{AkamaiOpensslGithub}. The appropriate source codes are attached
-\todo{path}, or can be obtained from the github repository in branch \todo{branch name}.
+maintained by Akamai. The appropriate source codes can be found in the \filename{extern/openssl}
+directory in the thesis attachments. The source code is also available online on Akamai's
+GitHub~\cite{AkamaiOpensslGithub}. The implementation has been developed and tested with the
+\texttt{OpenSSL_1_1_1g-quic} branch of the code, but other QUIC-enabled branches of \libopenssl{}
+version 1.1.1 should work as well.
 
-Before building the source, check \filename{NOTES.{OS}} file in the repository and make sure you
-have all prerequisities installed on your machine. After that, you can build the \libopenssl{}
-library by running following command inside the repository. Note that for Windows OS, you must run
-these commands using the \textit{Developer command prompt for Visual Studio} in order to have the necessary tools in
-\texttt{PATH}.
+Before building the \libopenssl{} library form source, check the \filename{NOTES.{OS}} file in the
+repository and make sure all prerequisites are installed on the machine. After that, the
+\libopenssl{} library can be built by running the following command inside the repository. Note that
+for Windows OS, you must run these commands using the \textit{Developer command prompt for Visual
+  Studio} in order to have the necessary tools in \texttt{PATH}.
 
 \begin{myVerbatim}
 # Windows
@@ -100,58 +107,63 @@ This will produce the \libname{libcrypto} and \libname{libssl} libraries in the 
 repository root. On windows, these libraries are named \texttt{libcrypto-1_1-x64.dll} and
 \texttt{libssl-1_1-x64.dll}. These libraries are loaded by managed QUIC implementation at runtime
 and, therefore, must be present in a location where the OS loader can find them. This can be
-achieved by putting the libraries in any following location:
+achieved by putting the libraries in any of the following locations:
 
 \begin{itemize}
 
-  \item Next to the compiled executable
+  \item Next to the compiled program executable.
 
   \item A directory listed in the \texttt{PATH} environment variable
 
   \item \textit{(preferred)} next to the \SystemNetQuicDll{} library in the \dotnet{} installation
-        directory, i.e., \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
+directory, i.e., \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/}.
 
 \end{itemize}
 
 Note that if there is already a different version of \libopenssl{} installed on the system, it is
 necessary to ensure that the system loads the correct \libopenssl{} version. This is different for
-each system:
+each operating system:
 
 \begin{itemize}
 
-  \item On Windows, this can be ensured by placing the dlls in the same directory as the program
-        executable. The entire library search process, including the order of directories searched
-        can be found in documentation~\cite{windowsDllSearch}.
+  \item On Windows, this can be ensured by placing the DLL files in the same directory as the
+program executable. The entire library search process, including the order of directories searched,
+can be found in Windows documentation~\cite{windowsDllSearch}.
 
   \item On Linux, this can be achieved by defining the \texttt{LD_LIBRARY_PATH} environment variable
-        to the directory containing the \libopenssl{} libraries. Additional info about loading of
-        dynamic libraries on Linux can be found in the manual page for \texttt{ld.so}. The man page
-        is also available online~\cite{linuxDllSearch}.
+to the directory containing the \libopenssl{} libraries. Additional info about loading of dynamic
+libraries on Linux can be found in the manual pages for \texttt{ld.so}. These manual pages are also
+available online~\cite{linuxDllSearch}.
 
 \end{itemize}
 
 \subsection{Configuring the Development Environment}\label{sec:06-env-vars}
 
 Lastly, we need to configure the environment variables so that the \dotnet{} SDK installation
-created in previous step is used when building the user code. For this, following environment
-variables need to be defined correctly.
+created in the previous step is used when building the user code. For this, the following
+environment variables need to be defined correctly.
 
 \begin{description}
 
-        \ditem{\texttt{DOTNET_ROOT}} Path to the dotnet installation directory. This instructs the build process to use the SDK installed in this directory.
+        \ditem{\texttt{DOTNET_ROOT}} Path to the \dotnet{} installation directory. This instructs
+the build process to use the SDK installed in this directory. Use the path to the local \dotnet{}~6
+SDK installation created in \autoref{sec:06-local-dotnet}.
 
-        \ditem{\texttt{DOTNET_MULTILEVEL_LOOKUP}} Set this to ``0''. This instructs the build process not to look for SDK installation in other places than \filename{DOTNET_ROOT}.
+        \ditem{\texttt{DOTNET_MULTILEVEL_LOOKUP}} Set this to ``0''. This instructs the build
+process not to look for SDK installation in other places than \filename{DOTNET_ROOT}.
 
-        \ditem{\texttt{PATH}} Prepend the \filename{DOTNET_ROOT} directory to the beginning of the \texttt{PATH} variable to make sure the \filename{dotnet} executable from the \filename{DOTNET_ROOT} is used over the system-wide installed one.
+        \ditem{\texttt{PATH}} Prepend the \filename{DOTNET_ROOT} directory to the beginning of the
+\texttt{PATH} variable to make sure the \filename{dotnet} executable from the \filename{DOTNET_ROOT}
+is used over the system-wide installed one.
 \end{description}
 
-After configuring the variables check the output of the \verb|dotnet --info| command. Assuming
+After configuring the variables, check the output of the \verb|dotnet --info| command. Assuming
 \texttt{DOTNET_ROOT} is \filename{C:\dotnet}, then the output should be similar to the
 \autoref{lst:06-dotnet-info-output}. The list of installed \dotnet{} runtimes should contain
 \texttt{Microsoft.NETCore.App} from the local \dotnet{}~6 SDK installation prepared in
 \autoref{sec:06-local-dotnet} (check the path inside the brackets). Note that the listing contains
-version numbers valid at the time of writing this text and the SDK installer would be updated since
-then to a newer version.
+version numbers of the latest \dotnet{}~6 SDK at the time of writing this text, and the SDK
+installer would be updated since then to a newer version.
 
 \begin{myListingVerbatim}[Output of the \texttt{dotnet --info} command in configured environment]{lst:06-dotnet-info-output}{Output of the \texttt{dotnet --info} command in correctly configured environment. The unimportant portions of the output in grey has been left out brevity}
 > dotnet --info
@@ -176,14 +188,14 @@ then to a newer version.
 &color{colorunimportant}  https://aka.ms/dotnet-download
 \end{myListingVerbatim}
 
-With environment configured as described, you can now use the
-\verb|dotnet build| command, or start Visual Studio or other IDE to develop programs using the
-provided SDK installation.
+With the environment configured as described, \dotnet{} applications can be compiled against the
+\dotnet{}~6 SDK either using the \verb|dotnet build| command-line command, or using Visual Studio or
+any other IDE\@.
 
 \subsection{Creating a Sample \dotnet{}~6 Project}
 
 The last step is creating a new project and configuring it to use \dotnet{}~6. This section
-demonstrates how this can be done using the \verb|dotnet| command line tool. Assuming the
+demonstrates how this can be done using the \verb|dotnet| command-line tool. Assuming the
 environment variables have been configured as specified in \autoref{sec:06-env-vars}, you can create
 a new project using the following commands:
 
@@ -195,7 +207,8 @@ a new project using the following commands:
 
 These commands will create a \filename{hello-net6/hello-net6.csproj} file. Use of \dotnet{}~6
 preview requires minor changes to the project file. Namely changing the \xmltag{TargetFramework}
-property to \verb|net6.0|. The modified project file contents are listed in \autoref{lst:06-csproj-net6.0}.
+property to \verb|net6.0|. The modified project file contents are listed in
+\autoref{lst:06-csproj-net6.0}.
 
 \begin{myListingXml}{lst:06-csproj-net6.0}{Project file for \dotnet{}~6 console application project.}{Sdk}
 <Project Sdk="Microsoft.NET.Sdk">
@@ -211,8 +224,8 @@ property to \verb|net6.0|. The modified project file contents are listed in \aut
 
 Lastly, the NuGet package feed must be configured to use the correct source for the preview packages
 for \dotnet{}~6. This can be done by creating a \filename{NuGet.Config} file in the project
-directory with contents as listed in \autoref{lst:06-nuget-config}. The contents can be also copied
-from the webpage from which the \dotnet{}~6 SDK was downloaded.
+directory with contents as listed in \autoref{lst:06-nuget-config}. The contents can also be copied
+from the webpage from which the \dotnet{}~6 SDK was downloaded~\cite{dotnetSdkGithub}.
 
 \begin{myListingXml}[basicstyle=\ttfamily\scriptsize]{lst:06-nuget-config}{NuGet configuration file for \dotnet{}~6 projects.}{key,value}
 <configuration>
@@ -223,8 +236,8 @@ from the webpage from which the \dotnet{}~6 SDK was downloaded.
 </configuration>
 \end{myListingXml}
 
-To demonstrate that we are using the correct SDK, you can try compiling and running program from
-\autoref{lst:06-hello-net6}.
+To check that the development environment is configured correctly, the program in
+\autoref{lst:06-hello-net6} can be used.
 
 \begin{myListingCsharp}{lst:06-hello-net6}{\csharp{} program for testing the SDK installation.}{Program,FileVersionInfo,Console,Path}{}
 using System;
@@ -246,7 +259,7 @@ namespace hello_net6._0
 }
 \end{myListingCsharp}
 
-Running the program should produce similar output to the following:
+Running the program should produce output similar to the following:
 
 \noindent\begin{minipage}{\textwidth}
 \begin{myVerbatim}
@@ -260,9 +273,10 @@ Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 
 The applications built against the preview \dotnet{}~6 SDK will run only if the environment is
 configured according to \autoref{sec:06-env-vars}. In order to run the applications outside the
-development environment, it is necessary to build them as \textit{self-contained}. Self-contained
-builds of \dotnet{} applications contain a copy of the \dotnet{} runtime and other necessary
-binaries. Self-contained applications can be built using following command:
+development environment, it is necessary to build them as
+\textit{self-contained}~\cite{SelfContainedPublishDocs}. Self-contained builds of \dotnet{}
+applications contain a copy of the \dotnet{} runtime and other necessary binaries. Self-contained
+applications can be built using following command:
 
 \begin{myVerbatim}
 > dotnet publish --self-contained --runtime <RID>
@@ -273,8 +287,8 @@ Where \texttt{<RID>} is the runtime identifier for which to publish. Commonly us
 the official \dotnet{} documentation~\cite{dotnetRIDs}.
 
 Unfortunately, the packaged application contains the unmodified \SystemNetQuicDll{} without managed
-QUIC support. The last step is, therefore, manually overwriting the \SystemNetQuicDll{} with the
-one locally built from the \dotnet{} runtime sources.
+QUIC support. Therefore, the last step is manually overwriting the \SystemNetQuicDll{} with the one
+locally built from the \dotnet{} runtime sources in \autoref{sec:06-build-runtime}.
 
 \section{Simple Echo Server using QUIC}\label{sec:06-tutorial}
 
@@ -283,15 +297,17 @@ trivial echo server. When a new connection is established, clients will open a s
 stream and send arbitrary data over it. The server will then echo the data back to the client. For
 simplicity, we will use a single \dotnet{} program to represent both client and server and conduct
 the connection over the loopback network interface. We will also omit error checking from this
-example for brevity.
+example for brevity. The complete source code for this example can be found in the
+\filename{src/supplementary/samples/Echo} directory in the thesis attachments.
 
 \subsection{Echo Server Implementation}
 
 Use of TLS 1.3 for encryption is mandatory for QUIC\@. This requires providing an X.509 certificate
-on the server side. The current QUIC API requires that the certificate and the private key be saved
-in separate files. A certificate that can be used in this example is provided in the attachments
-\todo{path in the attachments}. Alternatively, a new certificate can be created using the
-\texttt{openssl} command line utility. In case \libopenssl{} was not previously installed on the
+on the server's side. The current QUIC API requires that the certificate and the private key be
+saved in separate files. Certificate files that can be used in this example are provided in the
+attachments. The public certificate file is at \filename{certs/cert.crt} and the private key is at
+\filename{certs.cert.key}. Alternatively, a new certificate can be created using the
+\texttt{openssl} command-line utility. In case \libopenssl{} was not previously installed on the
 machine, you can use the binary which was built locally together with the libraries in
 \autoref{sec:06-openssl}. The locally built \texttt{openssl} binary can be located under the
 \filename{apps} subdirectory of the \libopenssl{} repository.
@@ -308,12 +324,12 @@ In order to accept incoming QUIC connections, we need to create an instance of \
   \item listening endpoint;
 
   \item identifier of the application-layer protocol to be used\footnote{QUIC is designed not to be
-        used standalone, but as a transport protocol for other application-layer protocols. Since
-        servers can support multiple versions of the application protocol, QUIC uses \gls{alpn}
-        extension to TLS to negotiate the application-layer protocol as part of the QUIC connection
-        handshake.}, even though we are not implementing any standard protocol, we still need to
-        provide one; for our example, we chose to use \texttt{"echo"} as the \gls{alpn} identifier;
-        and \todo{emphasized that the ``echo'' choice was arbitrary by us}
+used standalone, but as a transport protocol for other application-layer protocols. Since servers
+can support multiple versions of the application protocol, QUIC uses \gls{alpn} extension to TLS to
+negotiate the application-layer protocol as part of the QUIC connection handshake.}, even though we
+are not implementing any standard protocol, we still need to provide one; for our example, we chose
+to use \texttt{"echo"} as the \gls{alpn} identifier; and \todo{emphasized that the ``echo'' choice
+was arbitrary by us}
 
   \item paths to the X.509 certificate and private key file.
 
@@ -344,8 +360,8 @@ public static async Task<int> |RunServer|(IPEndPoint listenEp,
 }
 \end{myListingCsharp}
 
-We can then use the \method{AcceptConnectionAsync} method to asynchronously wait for new incoming
-connections. \autoref{lst:06-echo-server-accept} shows how to accept new connections and process
+We can then use the \method{AcceptConnectionAsync} method to wait for new incoming connections
+asynchronously. \autoref{lst:06-echo-server-accept} shows how to accept new connections and process
 them asynchronously in a separate \class{Task}.
 
 \begin{myListingCsharp}{lst:06-echo-server-accept}{Accepting new connections on \QuicListener{}}{List,Task,QuicConnection}{}
@@ -378,7 +394,7 @@ them asynchronously in a separate \class{Task}.
 \autoref{lst:06-echo-server-loop} Shows the implementation of \method{HandleServerConnection} which
 does the actual echoing of incoming data. The \QuicStream{} is accepted using the
 \method{AcceptStreamAsync} method on the \QuicConnection{} class and, because it is a bidirectional
-stream, we can use it to send the data back to the clien. Lastly, once all data is sent, we
+stream, we can use it to send the data back to the client. Lastly, once all data is sent, we
 gracefully close the connection using the \method{CloseAsync} method.
 
 \begin{myListingCsharp}{lst:06-echo-server-loop}{Echo server reading and writing data to \QuicStream{}}{Task,QuicConnection,CancellationToken,QuicStream}{}
@@ -481,76 +497,90 @@ instance. \autoref{lst:06-echo-client-loop} shows the rest of the echo client im
 
 \subsection{A More Complex Example Application}
 
-In this thesis, we developed a more complex version of the echo server example from previous section
-for benchmarking purposes. We will provide more information about the application in
-\autoref{sec:04-benchmark-app}.
+In this thesis, we developed a more complex version of the echo server example from the previous
+section for benchmarking purposes. The source code for this benchmarking application can be found in
+the \filename{src/supplementary/benchmark/ThroughputTests} directory of the thesis attachments. We
+will provide more information about the application in \autoref{sec:04-benchmark-app}.
 
 \section{QUIC API Reference}\label{sec:06-api}
 
-This section describes the API that was designed by the \dotnet{} development team to expose QUIC to
-other developers. This thesis will use this API to allow swapping underlying implementation between
-this thesis implementation and the \libmsquic{}-based implementation. As mentioned in the
-introduction chapter, the current design is a work-in-progress and is subject to change in the
-future. All of the mentioned classes are located in the \namespace{System.Net.Quic} namespace.
+This section describes the API designed by the \dotnet{} development team to expose QUIC to other
+developers. This thesis will use this API to allow swapping underlying implementation between this
+thesis implementation and the \libmsquic{}-based implementation. As mentioned in the introduction
+chapter, the current design is a work-in-progress and is subject to change in the future. All of the
+mentioned classes are located in the \namespace{System.Net.Quic} namespace.
 
 \subsection{QuicListener Class}
 
-The \class{QuicListener} class is the equivalent of the \class{TcpListener}. Servers use this
-class to accept incoming QUIC connections.
+The \class{QuicListener} class is the equivalent of the \class{TcpListener}. Servers use this class
+to accept incoming QUIC connections.
 
 \begin{description}
 
     \ditemctor{QuicListener}{\QuicListenerOptions{}} Constructor.
 
-    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new connection. Read-only.
+    \ditemproperty{IPEndPoint}{ListenEndPoint}{\propget} The IP endpoint being listened to for new
+connection. Read-only.
 
     \ditemmethod[]{\ValueTaskOf{\QuicConnection{}}}{AcceptConnectionAsync}{\CancellationToken{}}
-    Accepts a new incoming QUIC Connection.
+Accepts a new incoming QUIC Connection.
 
     \ditemmethod[\keyword]{void}{Start}{} Starts listening.
 
-    \ditemmethod[\keyword]{void}{Close}{} Stops listening and closes the listener. Does not close already accepted connections.
+    \ditemmethod[\keyword]{void}{Close}{} Stops listening and closes the listener. Does not close
+already accepted connections.
 
 \end{description}
 
 \subsection{QuicListenerOptions Class}
 
-The \class{QuicListenerOptions} class holds all configuration used to construct new \class{QuicListener} instances.
+The \class{QuicListenerOptions} class holds all configuration used to construct new
+\class{QuicListener} instances.
 
 \begin{description}
 
-    \ditemproperty{SslServerAuthenticationOptions}{\ServerAuthenticationOptions{}}{\propgetset}
-        SSL related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
+    \ditemproperty{SslServerAuthenticationOptions}{\ServerAuthenticationOptions{}}{\propgetset} SSL
+related options like certificate selection/validation callbacks, and supported protocols for ALPN\@.
 
-    \ditemproperty[\keyword]{string}{CertificateFilePath}{\propgetset} Path to the X.509 certificate used by the server.
+    \ditemproperty[\keyword]{string}{CertificateFilePath}{\propgetset} Path to the X.509 certificate
+used by the server.
 
-    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X.509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for
+the used X.509 certificate.
 
-    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for the used X.509 certificate.
+    \ditemproperty[\keyword]{string}{CertificateKeyPath}{\propgetset} Path to the private key for
+the used X.509 certificate.
 
     \ditemproperty{IPEndPoint}{ListenEndPoint}{\propgetset} The IP endpoint to listen on.
 
-    \ditemproperty[\keyword]{int}{ListenBacklog}{\propgetset} Number of connection to be held waiting for acceptance by the application. Upon reaching this limit, further connections will be refused.
+    \ditemproperty[\keyword]{int}{ListenBacklog}{\propgetset} Number of connection to be held
+waiting for acceptance by the application. Upon reaching this limit, further connections will be
+refused.
 
-    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the client can open in an accepted connection.
+    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of
+bidirectional streams the client can open in an accepted connection.
 
-    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the client can open in an accepted connection.
+    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of
+unidirectional streams the client can open in an accepted connection.
 
-    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the
+connection will be closed via idle timeout.
 
 \end{description}
 
 \subsection{QuicConnection Class}
 
-The \QuicConnection{} class provides operation on the QUIC connection. Clients open new
-connections by creating a new instance of this class and calling the \method{ConnectAsync} method.
-Servers receive new connections using the \class{QuicListener} class.
+The \QuicConnection{} class provides operation on the QUIC connection. Clients open new connections
+by creating a new instance of this class and calling the \method{ConnectAsync} method. Servers
+receive new connections using the \class{QuicListener} class.
 
 \begin{description}
 
-    \ditemctor{QuicConnection}{\QuicClientConnectionOptions{}} Constructor. The newly created instance is not connected until the call to \method{ConnectAsync} method.
+    \ditemctor{QuicConnection}{\QuicClientConnectionOptions{}} Constructor. The newly created
+instance is not connected until the call to \method{ConnectAsync} method.
 
-    \ditemproperty[\keyword]{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is connected (the handshake has completed).
+    \ditemproperty[\keyword]{bool}{Connected}{\propget} Indicates whether the \QuicConnection{} is
+connected (the handshake has completed).
 
     \ditemproperty{IPEndPoint}{LocalEndPoint}{\propget} Local IP endpoint of the connection.
 
@@ -558,17 +588,23 @@ Servers receive new connections using the \class{QuicListener} class.
 
     \ditemmethod{ValueTask}{ConnectAsync}{\CancellationToken{}} Connects to the remote endpoint.
 
-    \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+    \ditemmethod{QuicStream}{OpenUnidirectionalStream}{} Opens a new unidirectional stream. Throws a
+\class{QuicException} if the stream cannot be opened.
 
-    \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a \class{QuicException} if the stream cannot be opened.
+    \ditemmethod{QuicStream}{OpenBidirectionalStream}{} Opens a new bidirectional stream. Throws a
+\class{QuicException} if the stream cannot be opened.
 
-    \ditemmethod[]{\ValueTaskOf{\QuicStream{}}}{AcceptStreamAsync}{\CancellationToken{}} Accepts an incoming stream.
+    \ditemmethod[]{\ValueTaskOf{\QuicStream{}}}{AcceptStreamAsync}{\CancellationToken{}} Accepts an
+incoming stream.
 
-    \ditemmethod{ValueTask}{CloseAsync}{\Long{}, \CancellationToken{}} Closes the connection with the specified given error code and terminates all active streams.
+    \ditemmethod{ValueTask}{CloseAsync}{\Long{}, \CancellationToken{}} Closes the connection with
+the specified given error code and terminates all active streams.
 
-    \ditemmethod[\keyword]{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum number of unidirectional streams that this endpoint can open.
+    \ditemmethod[\keyword]{long}{GetRemoteAvailableUnidirectionalStreamCount}{} Gets the maximum
+number of unidirectional streams that this endpoint can open.
 
-    \ditemmethod[\keyword]{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum number of bidirectional streams that this endpoint can open.
+    \ditemmethod[\keyword]{long}{GetRemoteAvailableBidirectionalStreamCount}{} Gets the maximum
+number of bidirectional streams that this endpoint can open.
 
 \end{description}
 
@@ -578,17 +614,22 @@ The \class{QuicClientConnectionOptions} is used by clients to configure new QUIC
 
 \begin{description}
 
-    \ditemproperty{SslClientAuthenticationOptions}{ClientAuthenticationOptions}{\propgetset} Client authentication options to use when establishing the connection.
+    \ditemproperty{SslClientAuthenticationOptions}{ClientAuthenticationOptions}{\propgetset} Client
+authentication options to use when establishing the connection.
 
-    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propgetset} The local IP endpoint that will be bound to.
+    \ditemproperty{IPEndPoint}{LocalEndPoint}{\propgetset} The local IP endpoint that will be bound
+to.
 
     \ditemproperty{IPEndPoint}{RemoteEndPoint}{\propgetset} The IP endpoint to connect to.
 
-    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of bidirectional streams the server can open.
+    \ditemproperty[\keyword]{long}{MaxBidirectionalStreams}{\propgetset} Limit on the number of
+bidirectional streams the server can open.
 
-    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of unidirectional streams the server can open.
+    \ditemproperty[\keyword]{long}{MaxUnidirectionalStreams}{\propgetset} Limit on the number of
+unidirectional streams the server can open.
 
-    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the connection will be closed via idle timeout.
+    \ditemproperty{TimeSpan}{IdleTimeout}{\propgetset} The period of inactivity after which the
+connection will be closed via idle timeout.
 
 \end{description}
 
@@ -608,45 +649,64 @@ members inherited from the \class{Stream} class.
 
     \ditemproperty[\keyword]{long}{StreamId}{\propget} The Stream ID\@.
 
-    \ditemproperty[\keyword]{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports reading.
+    \ditemproperty[\keyword]{bool}{CanRead}{\propget} Returns \keyword{true} if the stream supports
+reading.
 
-    \ditemproperty[\keyword]{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports reading.
+    \ditemproperty[\keyword]{bool}{CanWrite}{\propget} Returns \keyword{true} if the stream supports
+reading.
 
-    \ditemmethod[\keyword]{void}{AbortRead}{\Long} Aborts the receiving part of the stream with the provided error code.
+    \ditemmethod[\keyword]{void}{AbortRead}{\Long} Aborts the receiving part of the stream with the
+provided error code.
 
-    \ditemmethod[\keyword]{void}{AbortWrite}{\Long} Aborts the sending part of the stream with the provided error code.
+    \ditemmethod[\keyword]{void}{AbortWrite}{\Long} Aborts the sending part of the stream with the
+provided error code.
 
-    \ditemmethod[\keyword]{int}{Read}{\SpanOf{\Byte{}}} Reads the content
-    of the stream into the provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in the stream.
+    \ditemmethod[\keyword]{int}{Read}{\SpanOf{\Byte{}}} Reads the content of the stream into the
+provided buffer, blocks if no data is available. Returns 0 only when there will be no more data in
+the stream.
 
-    \ditemmethod[]{\ValueTaskOf{\keyword{int}}}{ReadAsync}{\MemoryOf{\Byte{}}, \CancellationToken{}} Reads the content
-    of the stream into provided buffer, blocks until some data is available. Returns 0 only when there will be no more data in the stream.
+    \ditemmethod[]{\ValueTaskOf{\keyword{int}}}{ReadAsync}{\MemoryOf{\Byte{}}, \CancellationToken{}}
+Reads the content of the stream into provided buffer, blocks until some data is available. Returns 0
+only when there will be no more data in the stream.
 
-    \ditemmethod[\keyword]{void}{Write}{\SpanOf{\Byte{}}} Writes the content
-    of the provided buffer into the stream, returns when the data have been buffered internally.
+    \ditemmethod[\keyword]{void}{Write}{\SpanOf{\Byte{}}} Writes the content of the provided buffer
+into the stream, returns when the data have been buffered internally.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \CancellationToken{}}{multiple overloads} Multiple overloads of this method offer writing from various types of buffers: \ReadOnlyMemoryOf{\Byte{}}, \ReadOnlySequenceOf{\Byte{}}, and \genericClass{ReadOnlyMemory\allowbreak{}}{\ReadOnlyMemoryOf{\Byte{}}}. The last one can be used to perform scatter/gather IO. The returned task completes when the provided data have been buffered internally and the buffers can be reused for other purposes.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \CancellationToken{}}{multiple overloads}
+Multiple overloads of this method offer writing from various types of buffers:
+\ReadOnlyMemoryOf{\Byte{}}, \ReadOnlySequenceOf{\Byte{}}, and
+\genericClass{ReadOnlyMemory\allowbreak{}}{\ReadOnlyMemoryOf{\Byte{}}}. The last one can be used to
+perform scatter/gather IO. The returned task completes when the provided data have been buffered
+internally and the buffers can be reused for other purposes.
 
-    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \bool{}, \CancellationToken{}}{multiple overloads} Like the methods above, but also allow specifying that the provided data are the last on the stream and that the stream should be gracefully closed.
+    \ditemmethodWithComment{ValueTask}{WriteAsync}{*, \bool{}, \CancellationToken{}}{multiple
+overloads} Like the methods above, but also allow specifying that the provided data are the last on
+the stream and that the stream should be gracefully closed.
 
-    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{\CancellationToken{}} The returned task completes when the stream shutdown completes. Meaning that acknowledgement from the peer is received.
+    \ditemmethod{ValueTask}{ShutdownWriteCompleted}{\CancellationToken{}} The returned task
+completes when the stream shutdown completes. Meaning that acknowledgment from the peer is received.
 
-    \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until shutdown completes.
+    \ditemmethod{ValueTask}{Shutdown}{} Closes the stream with error code 0. And blocks until
+shutdown completes.
 
 \end{description}
 
 \subsection{Exceptions}
 
-The QUIC API can throw following exceptions:
+The QUIC API can throw the following exceptions:
 
 \begin{description}
 
-    \ditem{\ditemsrcsize\class{QuicException}} Base class for all thrown exceptions, used when a more specific exception is not available
+    \ditem{\ditemsrcsize\class{QuicException}} Base class for all thrown exceptions, used when a
+more specific exception is not available
 
-    \ditem{\ditemsrcsize\class{QuicConnectionAbortedException}} Thrown when the connection is forcibly closed either by the transport or by the remote endpoint.
+    \ditem{\ditemsrcsize\class{QuicConnectionAbortedException}} Thrown when the connection is
+forcibly closed either by the transport or by the remote endpoint.
 
-    \ditem{\ditemsrcsize\class{QuicStreamAbortedException}} Thrown when the stream was aborted by the remote endpoint.
+    \ditem{\ditemsrcsize\class{QuicStreamAbortedException}} Thrown when the stream was aborted by
+the remote endpoint.
 
-    \ditem{\ditemsrcsize\class{QuicOperationAbortedException}} Thrown when the pending operation was aborted by the local endpoint.
+    \ditem{\ditemsrcsize\class{QuicOperationAbortedException}} Thrown when the pending operation was
+aborted by the local endpoint.
 
 \end{description}

@@ -1,20 +1,20 @@
 \chapter{Developer Documentation}
 
 The Managed QUIC implementation developed in this thesis is contained in a fork of the official
-\dotnet{} runtime repository. The source code of this fork is attached in \todo{path to the src in
-  attachments.}.
+\dotnet{} runtime repository. The source code of this fork is attached in
+\filename{src/dotnet-runtime} directory in the thesis attachments.
 
 The documentation inside the \dotnet{} runtime repository contains detailed workflow instructions
-necessary for \dotnet{} runtime development. These instructions explain the necessary
-prerequisities, how to build the product and run tests. The top-level file of the workflow
-instructions is located at \filename{docs/workflow/README.md}.
+necessary for \dotnet{} runtime development. These instructions explain the necessary prerequisites,
+how to build the product, and run unit tests. The workflow instructions' top-level file is located
+at \filename{docs/workflow/README.md}.
 
-This chapter will focus on the \filename{System.Net.Quic} library which contains the QUIC protocol
+This chapter will focus on the \filename{System.Net.Quic} library, which contains the QUIC protocol
 implementation. The source code for this library is located inside the
 \filename{src/dotnet-runtime/src/libraries/System.Net.Quic/} directory of the \dotnet{} runtime
 codebase. The directory listing in \autoref{lst:05-system-net-quic-structure} shows the structure of
-the \filename{System.Net.Quic} project directory. The listing also emphasises the \filename{Managed}
-and \filename{UnitTests} directories which contain the code developed as part of this thesis. These
+the \filename{System.Net.Quic} project directory. The listing also emphasizes the \filename{Managed}
+and \filename{UnitTests} directories, which contain the code developed as part of this thesis. These
 directories are the main focus of this chapter.
 
 \newcommand{\mydtcomment}[1]{\DTcomment{#1}}
@@ -88,13 +88,15 @@ further details on these providers:
 
 \end{itemize}
 
-This thesis provides following two new provideres:
+This thesis provides the following two new providers:
 
 \begin{itemize}
 
-  \litem[]{\texttt{Managed}} Managed implementation with TLS backed by \libopenssl{} fork with QUIC enabling API.
+  \litem[]{\texttt{Managed}} Managed implementation with TLS backed by \libopenssl{} fork with QUIC
+enabling API\@.
 
-  \litem[]{\texttt{ManagedMockTls}} Managed implementation with mock TLS implementation, which does not depend on external libraries, but cannot interoperate with other QUIC implementations.
+  \litem[]{\texttt{ManagedMockTls}} Managed implementation with mock TLS implementation, which does
+not depend on external libraries, but cannot interoperate with other QUIC implementations.
 
 \end{itemize}
 
@@ -152,21 +154,29 @@ classes which were also mentioned in \autoref{fig:03-architecture} and
 
 \begin{itemize}
 
-  \litem[]{\ManagedQuicConnection{}} Implementation provider for \QuicConnection{}. Implements stateful connection logic.
+  \litem[]{\ManagedQuicConnection{}} Implementation provider for \QuicConnection{}. Implements
+stateful connection logic.
 
-  \litem[]{\ManagedQuicListener{}} Implementation provider for \QuicListener{}. Maintains a queue of incomming connections to be accepted by the application.
+  \litem[]{\ManagedQuicListener{}} Implementation provider for \QuicListener{}. Maintains a queue of
+incoming connections to be accepted by the application.
 
-  \litem[]{\QuicConnectionContext{}} Class hosting the background thread for servicing a single \ManagedQuicConnection{}, including timeout expiration and sending or receiving UDP datagrams with QUIC packets.
+  \litem[]{\QuicConnectionContext{}} Class hosting the background thread for servicing a single
+\ManagedQuicConnection{}, including timeout expiration and sending or receiving UDP datagrams with
+QUIC packets.
 
-  \litem[]{\QuicSocketContext{}} Abstract class handling basic sending and receiving of UDP datagrams, base class for \QuicClientSocketContext{} and \QuicServerSocketContext{}.
+  \litem[]{\QuicSocketContext{}} Abstract class handling basic sending and receiving of UDP
+datagrams, base class for \QuicClientSocketContext{} and \QuicServerSocketContext{}.
 
-  \litem[]{\QuicServerSocketContext{}} Implements server-side stateless UDP datagram processing and dispatch of incoming UDP datagrams to appropriate \QuicConnectionContext{} instance.
+  \litem[]{\QuicServerSocketContext{}} Implements server-side stateless UDP datagram processing and
+dispatch of incoming UDP datagrams to appropriate \QuicConnectionContext{} instance.
 
-  \litem[]{\QuicClientSocketContext{}} Implements client-side \QuicSocketContext{} behavior, passing all packets to a single single \QuicConnectionContext{}.
+  \litem[]{\QuicClientSocketContext{}} Implements client-side \QuicSocketContext{} behavior, passing
+all packets to a single single \QuicConnectionContext{}.
 
 \end{itemize}
 
-\begin{myFigure}{fig:05-high-level-class-diagram}{Relationship between key classes of managed QUIC implementation}
+\begin{myFigure}{fig:05-high-level-class-diagram}{Relationship between key classes of managed QUIC
+implementation}
 
 \resizebox{\linewidth}{!}{\input{img/05-high-level-class-diagram.pdf_tex}}
 
@@ -183,27 +193,28 @@ which parts of the QUIC stream have been sent or acknowledged require a data str
 efficiently performing set operations on ranges of integers. The \RangeSet{} class represents such a
 set.
 
-It is expected that the number of ranges in one \RangeSet{} instance will be rather small. Therefore
-our implementation uses a sorted \ListOf{\class{T}} instance to store individual ranges. The ranges
-themselves are represented by \class{RangeSet.\allowbreak{}Range} struct which contains the first and last
-element represented by the range.
+It is expected that the number of ranges in one \RangeSet{} instance will be relatively small.
+Therefore our implementation uses a sorted \ListOf{\class{T}} instance to store individual ranges.
+The ranges themselves are represented by \class{RangeSet.\allowbreak{}Range} struct which contains
+the first and last element represented by the range.
 
 \subsection{PacketNumberWindow}
 
 The \PacketNumberWindow{} class is used to test if QUIC packet the given packet number has already
 been received. Internally, it contains two 64-bit \keyword{ulong} fields: a bitmask marking the
 received packet numbers and the offset of the window. All packet numbers above the window are
-considered not received, all packet numbers below the window are considered received. Packet number
-inside the window are considered received if the corresponding bit is set to 1. When a new packet
-number is received, the window is shifted, if necessary, and the corresponding bit is set. This
-allows tracking 64 consecutive packet numbers at any given moment with very low overhead.
+considered not received, and all packet numbers below the window are considered received. Packet
+numbers inside the window are considered received if the corresponding bit is set to 1. When a new
+packet number is received, the window is shifted, if necessary, and the corresponding bit is set.
+This allows tracking 64 consecutive packet numbers at any given moment with very low overhead.
 
 \autoref{fig:05-packet-number-window} illustrates how concept on an smaller 8-bit window.
 \autoref{fig:05a} shows the state of the \PacketNumberWindow{} after receiving packets 0--5. When
-packet 11 is received, the window is shifted by 4 and the highest bit which now corresponds to the
-packet number 11 and is set to 1, as shown in \autoref{fig:05b}. \autoref{fig:05c} shows the state
-of the window when packet 15 is received next. The window needs to be shifted by another 4 bits,
-moving unreceived packet numbers 6 and 7 outside the window (marked by red color in the figure).
+packet 11 is received, the window is shifted by 4 and the highest bit --- which now corresponds to
+the packet number 11 --- is set to 1, as shown in \autoref{fig:05b}. \autoref{fig:05c} shows the
+state of the window when packet 15 is received next. The window needs to be shifted by another 4
+bits, moving unreceived packet numbers 6 and 7 outside the window (marked by red color in the
+figure).
 
 \newlength{\origframesep}
 \setlength{\fboxsep}{0.12em}
@@ -236,14 +247,17 @@ some old packet numbers as already received. In such a case, the packets are sim
 
 \begin{itemize}
 
-  \item The discarded packet will not be acknowleged, and the data will, therefore, be eventually retransmitted in some other packet. The only possible harm to the connection will come in a form of degraded performance.
+  \item The discarded packet will not be acknowledged, and the data will, therefore, be eventually
+retransmitted in some other packet. The only possible harm to the connection will come in the form
+of degraded performance.
 
-  \item For a packet $N$ to be falsely discared in this way with 64-bit packet window, it must have been delayed long enough for packets $N+64$ or newer to be received first.
+  \item For a packet $N$ to be falsely discarded in this way with a 64-bit packet window, it must
+have been delayed long enough for packets $N+64$ or newer to be received first.
 
-  \item Even if the packet $N$ was not discarded in such case and processed properly instead, it is
-almost certain that it will be marked as lost on the receiver's side anyway. This is because by that
-point, an acknowlegement was already sent for packet $N+3$ or latter, which will cause the packet to
-be considered lost due to the packet reordering threshold\footnote{Receiving acknowlegement for
+  \item Even if the packet $N$ was not discarded in such a case and processed correctly instead, it
+is almost sure that it will still be marked as lost on the receiver's side. This is because, by that
+point, an acknowledgment was already sent for packet $N+3$ or latter, which will cause the packet to
+be considered lost due to the packet reordering threshold\footnote{Receiving acknowledgment for
 packet $N$ will mark all packets $N - kReorderingThreshold$ or lower as lost. The QUIC specification
 recommends value 3 for the $kReorderingThreshold$ constant. The QUIC loss detection algorithm has
 been described in greater detail in \autoref{sec:02-loss-detection}}.
@@ -251,54 +265,64 @@ been described in greater detail in \autoref{sec:02-loss-detection}}.
 \end{itemize}
 
 Returning to the situation in \autoref{fig:05-packet-number-window}. When packet 11 is received
-(\autoref{fig:05b}), an acknowlegement is immediately sent. Once the sender receives the ack --- which
-may be before or after situation from \autoref{fig:05c} --- it will mark packets 6 and 7 as lost and
-resend the data in other packets.
+(\autoref{fig:05b}), an acknowledgment is immediately sent. Once the sender receives the ack ---
+which may be before or after situation from \autoref{fig:05c} --- it will mark packets 6 and 7 as
+lost and resend the data in other packets.
 
 \section{ManagedQuicConnection Implementation}
 
-The \ManagedQuicConnection{} class implements the stateful QUIC connection logic which makes up most
-of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
+The \ManagedQuicConnection{} class implements the stateful QUIC connection logic, which makes up
+most of the managed QUIC implementation. The source code of the \ManagedQuicConnection{} class is
 separated by area into multiple files, as outlined previously in
 \autoref{lst:05-managed-quic-structure}:
 
 \begin{itemize}
 
-  \litem{Public API} Implementation of the public API methods inherited from the \QuicConnectionProvider{} class.
+  \litem{Public API} Implementation of the public API methods inherited from the
+\QuicConnectionProvider{} class.
 
-  \litem{Packets} Processing individual QUIC packets, applying and removing the packet protection, generating packets to be sent.
+  \litem{Packets} Processing individual QUIC packets, applying and removing the packet protection,
+generating packets to be sent.
 
-  \litem{Frames} Processing individual QUIC frames, and generating frames for outgoing packets.
+  \litem{Frames} Processing individual QUIC frames and generating frames for outgoing packets.
 
   \litem{Stream} Management of created QUIC streams and flow control limits.
 
-  \litem{Recovery} Tracking of sent QUIC packets, handling of acknowlegements and packet loss. Congestion window management.
+  \litem{Recovery} Tracking of sent QUIC packets, handling of acknowledgments and packet loss.
+Congestion window management.
 
 \end{itemize}
 
-Following subsections describe the major parts of the implementation.
+The following subsections describe the major parts of the implementation.
 
 \subsection{Integration with Socket Management}
 
 The \ManagedQuicConnection{} implementation is separated from socket IO management. Also, to allow
 for deterministic unit testing, the implementation does not maintain an internal timer that would
 automatically invoke some logic on expiration. Instead, all interactions with a \Socket{} are driven
-externally by a \QuicConnectionContext{} class which maintains a background processing thread for
-handling timeouts and sending and receiving of QUIC packets. The interface used by
+externally by a \QuicConnectionContext{} class that maintains a background processing thread for
+handling timeouts and sending and receiving QUIC packets. The interface used by
 \QuicConnectionContext{} consists of following members on \ManagedQuicConnection{}:
 
 \begin{description}
 
-  \ditemproperty[\enum]{QuicConnectionState}{ConnectionState}{\propget} The current state of the connection. Used to detect transitions to, e.g., connected state or closed state.
+  \ditemproperty[\enum]{QuicConnectionState}{ConnectionState}{\propget} The current state of the
+connection. Used to detect transitions to, e.g., connected state or closed state.
 
-  \ditemmethod[\keyword]{void}{SendData}{\QuicWriter{}, \keyword{out} \class{EndPoint}, \class{QuicSocketContext.SendContext}}
-  Allows the connection to write a UDP datagram to be sent into the \QuicWriter{} instance and specify the \class{EndPoint} to which the UDP datagram should be sent. The \class{SendContext} instance contains additional data like the current timestamp.
+  \ditemmethod[\keyword]{void}{SendData}{\QuicWriter{}, \keyword{out} \class{EndPoint},
+\class{QuicSocketContext.SendContext}} Allows the connection to write a UDP datagram to be sent into
+the \QuicWriter{} instance and specify the \class{EndPoint} to which the UDP datagram should be
+sent. The \class{SendContext} instance contains additional data like the current timestamp.
 
-  \ditemmethod[\keyword]{void}{ReceiveData}{\QuicReader{}, \class{EndPoint}, \class{QuicSocketContext.RecvContext}}
-  Processes a datagram from the provided \QuicReader{} instance. The \class{Recv\allowbreak{}Context} instance contains additional data like current timestamp.
+  \ditemmethod[\keyword]{void}{ReceiveData}{\QuicReader{}, \class{EndPoint},
+\class{QuicSocketContext.RecvContext}} Processes a datagram from the provided \QuicReader{}
+instance. The \class{Recv\allowbreak{}Context} instance contains additional data like current
+timestamp.
 
-  \ditemmethod[\keyword]{long}{GetNextTimerTimestamp}{}
-  Retrieves the timestamp when the next internal timer of expires. Examples of such timer are loss detection timer, draining timer before closing the connection, or pacing timer for evening out the outbound packet flow. When the timer expires, the \ManagedQuicConnection{} instance may have more data to send.
+  \ditemmethod[\keyword]{long}{GetNextTimerTimestamp}{} Retrieves the timestamp when the next
+internal timer of expires. Examples of such timers are loss detection timer, draining timer before
+closing the connection, or pacing timer, which evens out the outbound packet flow. When the timer
+expires, the \ManagedQuicConnection{} instance may have more data to send.
 
 \end{description}
 
@@ -329,7 +353,8 @@ maintained in the \PacketNumberSpace{} include:
 
   \item \CryptoSeal{} instances for protecting and unprotecting QUIC packets, and
 
-  \item \SendStream{} and \ReceiveStream{} for cryptographic data from TLS to be sent in \CRYPTO{} frames.
+  \item \SendStream{} and \ReceiveStream{} for cryptographic data from TLS to be sent in \CRYPTO{}
+frames.
 
 \end{itemize}
 
@@ -340,9 +365,9 @@ is sent or received.
 
 The implementation of loss detection and recovery are delegated to \RecoveryController{} class to
 allow easier testing. Each sent packet is represented by an instance of \SentPacket{} which contains
-packet information relevant to loss detection and recovery, such as packet number, timestamp when
-the packet was sent, acked packet number ranges, packet size, and list of data ranges sent in
-\STREAM{} frames.
+packet information relevant to the loss detection and recovery algorithms, such as packet number,
+the timestamp when the packet was sent, packet number ranges acknowledged by the packet, size of the
+packet, and list of data ranges sent in \STREAM{} frames.
 
 Similarly to \PacketNumberSpace{} class used to maintain connection-wide state for each packet
 number space, the \RecoveryController{} maintains an array of
@@ -366,8 +391,8 @@ space that are relevant only for recovery purposes. These include:
 Additionally, the \RecoveryController{} maintains some data that is shared across all packet number
 spaces. These are mostly data relevant for congestion control algorithm and
 \textit{\gls{packet-pacing}}. Packet-pacing is a mechanism that evens out outgoing packets to
-prevent \textit{\gls{micro-bursting}} --- a phenomenon in which packets arrive in short rapid bursts which may
-overflow the receiver and cause packet loss. The data managed by \RecoveryController{}
+prevent \textit{\gls{micro-bursting}} --- a phenomenon in which packets arrive in short rapid bursts
+which may overflow the receiver and cause packet loss. The data managed by \RecoveryController{}
 itself include:
 
 \begin{itemize}
@@ -382,7 +407,8 @@ itself include:
 
   \item current size of the congestion window, and
 
-  \item \ICongestionController{} instance implementing the selected algorithm for congestion control.
+  \item \ICongestionController{} instance implementing the selected algorithm for congestion
+control.
 
 \end{itemize}
 
@@ -390,78 +416,85 @@ The main interface methods exposed to the \ManagedQuicConnection{} implementatio
 
 \begin{description}
 
-      \ditemproperty[\keyword]{long}{LossRecoveryTimer}{\propget}
-        Timestamp when the next packet loss will occur unless an \ACK{} from peer is received.
+      \ditemproperty[\keyword]{long}{LossRecoveryTimer}{\propget} Timestamp when the next packet
+loss will occur unless an \ACK{} from peer is received.
 
-      \ditemmethod[\keyword]{void}{OnLossDetectionTimeout}{}
-        Performs loss detection and populates collections of \SentPacket{} instances on appropriate \PacketNumberSpace{} instance with packets which are now considered lost.
+      \ditemmethod[\keyword]{void}{OnLossDetectionTimeout}{} Performs loss detection and populates
+collections of \SentPacket{} instances on appropriate \PacketNumberSpace{} instance with packets
+which are now considered lost.
 
-      \ditemmethod[\keyword]{void}{OnPacketSent}{\enum{PacketSpace}, \SentPacket{}}
-        Registers the \SentPacket{} instance as sent and tracks it in loss detection algorithm.
+      \ditemmethod[\keyword]{void}{OnPacketSent}{\enum{PacketSpace}, \SentPacket{}} Registers the
+\SentPacket{} instance as sent and tracks it in loss detection algorithm.
 
-      \ditemmethod[\keyword]{void}{OnAckReceived}{\enum{PacketSpace}, \RangeSet{}}
-        Acknowledges packet numbers from provided \RangeSet{} and moves appropriate \SentPacket{} instances the collection of newly acknowledged packets.
+      \ditemmethod[\keyword]{void}{OnAckReceived}{\enum{PacketSpace}, \RangeSet{}} Acknowledges
+packet numbers from provided \RangeSet{} and moves appropriate \SentPacket{} instances the
+collection of newly acknowledged packets.
 
-      \ditemmethod[\keyword]{int}{GetSendingAllowance}{\Long}
-        Gets the maximum size of a UDP datagram that the pacer will allow to be sent at the given timestamp.
+      \ditemmethod[\keyword]{int}{GetSendingAllowance}{\Long} Gets the maximum size of a UDP
+datagram that the pacer will allow to be sent at the given timestamp.
 
-      \ditemmethod[\keyword]{long}{GetPacingTimerForNextFullPacket}{}
-        Gets timestamp when the pacer will allow sending next QUIC packet of maximum size\footnote{The maximum size of an outgoing QUIC packet depends on multiple factors. It must be small enough in order to not cause fragmentation of the UDP datagram by lower network layers. An upper limit on the UDP datagram size can be also set during handshake by the peer using an appropriate transport parameter.}.
+        \ditemmethod[\keyword]{long}{GetPacingTimerForNextFullPacket}{} Gets timestamp when the
+pacer will allow sending next QUIC packet of maximum size\footnote{The maximum size of an outgoing
+QUIC packet depends on multiple factors. Most significantly, it must be small enough to avoid
+fragmentation of the UDP datagram by lower network layers. The other endpoint can also set an upper
+limit on the UDP datagram size it is willing to receive. This limit is provided using the
+\MaxUdpPayloadSize{} transport parameter during the connection handshake.}.
 
 \end{description}
 
 \subsection{QUIC Stream Management}
 
 The management of QUIC streams is delegated to \StreamCollection{} class. The \StreamCollection{}
-tracks already created streams by their type and checks that maximum number of created streams is
-not exceeded by either endpoint. It also implements efficient lookup of \ManagedQuicStream{}
-instances by their Stream ID and tracks queues of streams which have QUIC frames to be sent in the
-following QUIC packets.
+tracks already created streams by their type and checks that neither endpoint exceeds the maximum
+number of created streams. It also implements efficient lookup of \ManagedQuicStream{} instances by
+their Stream ID and tracks queues of streams with QUIC frames to be sent in the following QUIC
+packets.
 
 The \StreamCollection{} class maintains two independent queues of \ManagedQuicStream{} instances:
 
 \begin{itemize}
 
-  \litem{Flushable} Streams that have data to send that is within the flow control limits on that stream.
+  \litem{Flushable} Streams that have data to send within the flow control limits on that stream.
 
-  \litem{Updateable} Streams for which some other than \STREAM{} frame needs to be sent, this includes updating flow control limits or aborting the stream.
+  \litem{Updateable} Streams for which some other than the \STREAM{} frame needs to be sent. This
+includes updating flow control limits or aborting the stream.
 
 \end{itemize}
 
-The reasoning for separate queue for flushable streams is that when composing a packet, \STREAM{}
+The reasoning for a separate queue for flushable streams is that when composing a packet, \STREAM{}
 frames are the last frames written into the QUIC packet and fill all remaining space in the
-datagram. Processing the updateable queue first ensures that updates for all updateable streams are
-sent as soon as possible.
+datagram. By processing the updateable queue first, the implementation ensures that updates for all
+streams --- such as flow control limits --- are sent as soon as possible.
 
 \subsection{Packet Encryption}
 
 Applying and removing packet protection is delegated to \CryptoSeal{} class, as described in
-\autoref{sec:03-packet-protection}. The \CryptoSeal{} class itself implements only the logic which
-is independent of the specific \gls{aead} cipher used. The steps which are specific to each
-\gls{aead} cipher, such as the actual in-place encryption and decryption and calculating the header
-protection mask, are delegeated to an implementation of \CryptoSealAlgorithm{} abstract class. Each
-supported \gls{aead} cipher has its own \CryptoSealAlgorithm{} implementation.
+\autoref{sec:03-packet-protection}. The \CryptoSeal{} class implements only the logic independent of
+the specific \gls{aead} cipher used. The steps which are specific to each \gls{aead} cipher, such as
+the actual in-place encryption and decryption and calculating the header protection mask, are
+delegeated to an implementation of \CryptoSealAlgorithm{} abstract class. Each supported \gls{aead}
+cipher has its own \CryptoSealAlgorithm{} implementation.
 
 The interface exposed by \CryptoSeal{} to the \ManagedQuicConnection{} consists of following
 methods:
 
 \begin{description}
 
-    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{} pn}
-        Applies packet payload protection and writes \gls{aead} integrity tag at the end of the packet.
+    \ditemmethod[\keyword]{void}{ProtectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{}
+pn} Applies packet payload protection and writes \gls{aead} integrity tag at the end of the packet.
 
-    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset}
-        Applies header protection.
+    \ditemmethod[\keyword]{void}{ProtectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset} Applies
+header protection.
 
-    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset}
-        Removes header protection.
+    \ditemmethod[\keyword]{void}{UnprotectHeader}{\SpanOf{\Byte{}} packet, \Int{} pnOffset} Removes
+header protection.
 
-    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{} expectedPn}
-        Attempts to remove the payload protection, returns \keyword{true} on success.
+    \ditemmethod[\keyword]{bool}{UnprotectPacket}{\SpanOf{\Byte{}} packet, \Int{} pnOffset, \Long{}
+expectedPn} Attempts to remove the payload protection, returns \keyword{true} on success.
 
 \end{description}
 
-The meaning of the method arguments has been left out for brevity but their purpose should be
+The meaning of the method arguments has been left out for brevity, but their purpose should be
 evident from their usage in source code.
 
 \subsection{Incoming QUIC Packet Processing}
@@ -476,13 +509,14 @@ which are represented by \ProcessPacketResult{} enum:
 
   \litem[]{\texttt{DropPacket}} Packet should be discarded without informing the peer.
 
-  \litem[]{\texttt{Error}} Received packet violates the protocol. Rest of the UDP Datagram cannot be processed and the connection will be closed with an error code.
+  \litem[]{\texttt{Error}} Received packet violates the protocol. The rest of the UDP Datagram
+cannot be processed, and the connection will be closed with an error code.
 
 \end{itemize}
 
-The process of receiving the UDP datagram with QUIC packets begins in the \texttt{\ManagedQuicConnection{}.\method{ReceiveData}}
-method. The individual QUIC packets are processed independently one after another using following
-steps:
+The process of receiving the UDP datagram with QUIC packets begins in the
+\texttt{\ManagedQuicConnection{}.\method{ReceiveData}} method. The individual QUIC packets are
+processed independently one after another using the following steps:
 
 \begin{enumerate}
 
@@ -494,7 +528,7 @@ steps:
 
   \item check if the packet with same packet number has already been received,
 
-  \item register the packet for future acknowlegement, and
+  \item register the packet for future acknowledgment, and
 
   \item parse and process all contained QUIC frames.
 
@@ -502,17 +536,17 @@ steps:
 
 Because the parsed QUIC frames are represented using \keyword{ref struct}s (as explained in
 \autoref{sec:03-data-representation}), each frame is processed immediately after being parsed,
-independently of the other QUIC frames. The code which processes individual frames is organized
-into separate functions, one for each frame type for better maintainability.
+independently of the other QUIC frames. The code which processes individual frames is organized into
+separate functions, one for each frame type for better maintainability.
 
 \subsection{Generating Outgoing QUIC Packets}
 
 The logic which generates outgoing UDP datagrams starts in the
 \texttt{\ManagedQuicConnection{}.\method{SendData}} method. When generating outgoing packets, the
-implementation must first determine whether it has any data to send and if so, in which QUIC packet
+implementation must first determine whether it has any data to send and, if so, in which QUIC packet
 type it should be sent. This logic is implemented in the
 \texttt{\ManagedQuicConnection{}.\method{GetWriteLevel}} method. Once the packet type to be sent is
-known, the generation of the actual QUIC packet consists of following steps:
+known, the generation of the actual QUIC packet consists of the following steps:
 
 \begin{enumerate}
 
@@ -522,7 +556,11 @@ known, the generation of the actual QUIC packet consists of following steps:
 
   \item write QUIC frames into the packet payload up to the available packet size,
 
-  \item add padding to the packet if necessary\footnote{Header protection (described in \autoref{sec:02-packet-protection}) uses bytes 5 to 20 from the packet payload as a sample for generating the header protection mask. The packet payload includes packet number, QUIC frames and \SI{16}{\byte} \gls{aead} integrity tag. This implies that packet number and QUIC frames combined must be at least \SI{4}{\byte}.},
+  \item add padding to the packet if necessary\footnote{Header protection (described in
+\autoref{sec:02-packet-protection}) uses bytes 5 to 20 from the packet payload as a sample for
+generating the header protection mask. The packet payload includes packet number, QUIC frames and
+\SI{16}{\byte} \gls{aead} integrity tag. This implies that packet number and QUIC frames combined
+must be at least \SI{4}{\byte}.},
 
   \item apply packet protection, and
 
@@ -530,9 +568,9 @@ known, the generation of the actual QUIC packet consists of following steps:
 
 \end{enumerate}
 
-The order in which the QUIC frames are generated is based on the relative importance of the frames
-to make sure that the important packets fit into the packet and are not unnecessarily postponed.
-Most importantly, \ACK{} frames are written first to not delay acknowlegements and \STREAM{} frames
+The order in which the QUIC frames are generated is based on the frames' relative importance to make
+sure that the important packets fit into the packet and are not unnecessarily postponed. Most
+importantly, \ACK{} frames are written first to avoid delaying acknowledgments, and \STREAM{} frames
 are written last to use up the remainder of the available space.
 
 \section{TLS Integration}
@@ -543,20 +581,21 @@ implementation of \ITls{} interface. The \ITls{} interface defines methods neede
 
 \begin{description}
 
-  \ditemmethod[\keyword]{bool}{TryAdvanceHandshake}{}
-        Advances the TLS handshake by calling methods on the \ManagedQuicConnection{} (listed later).
+  \ditemmethod[\keyword]{bool}{TryAdvanceHandshake}{} Advances the TLS handshake by calling methods
+on the \ManagedQuicConnection{} (listed later).
 
-  \ditemmethod[\keyword]{void}{OnHandshakeDataReceived}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} data}
-    Provides the TLS implementation with data received from the peer via \CRYPTO{} frames.
+  \ditemmethod[\keyword]{void}{OnHandshakeDataReceived}{\enum{EncryptionLevel} level,
+\ReadOnlySpanOf{\Byte{}} data} Provides the TLS implementation with data received from the peer via
+\CRYPTO{} frames.
 
-  \ditemmethod[\enum]{TlsCipherSuite}{GetNegotiatedCipher}{}
-        Gets the identifier of the \gls{aead} cipher that was negotiated during the handshake.
+  \ditemmethod[\enum]{TlsCipherSuite}{GetNegotiatedCipher}{} Gets the identifier of the \gls{aead}
+cipher that was negotiated during the handshake.
 
-  \ditemmethod{TransportParameters}{GetPeerTransportParameters}{}
-        Returns \TransportParameters{} containing the transport parameters set by the peer for this connection.
+  \ditemmethod{TransportParameters}{GetPeerTransportParameters}{} Returns \TransportParameters{}
+containing the transport parameters set by the peer for this connection.
 
-  \ditemproperty[\keyword]{bool}{IsHandshakeComplete}{\propget}
-        Returns true if the TLS handshake is considered complete.
+  \ditemproperty[\keyword]{bool}{IsHandshakeComplete}{\propget} Returns true if the TLS handshake is
+considered complete.
 
 \end{description}
 
@@ -565,22 +604,23 @@ call following functions when appropriate:
 
 \begin{description}
 
-  \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} read, \\ \indent{} \ReadOnlySpanOf{\Byte{}} write} Provides the \ManagedQuicConnection{} with read
-and write secrets negotiated for the given encryption level. The encryption level refers to one of
-the four encrypted QUIC packet: \texttt{Initial}, \texttt{Handshake}, \texttt{Application} (1-RTT)
-and \texttt{EarlyData} (0-RTT).
+  \ditemmethod[\keyword]{void}{SetEncryptionSecrets}{\enum{EncryptionLevel} level,
+\ReadOnlySpanOf{\Byte{}} read, \\ \indent{} \ReadOnlySpanOf{\Byte{}} write} Provides the
+\ManagedQuicConnection{} with read and write secrets negotiated for the given encryption level. The
+encryption level refers to one of the four encrypted QUIC packet: \texttt{Initial},
+\texttt{Handshake}, \texttt{Application} (1-RTT) and \texttt{EarlyData} (0-RTT).
 
-  \ditemmethod[\keyword]{void}{AddHandshakeData}{\enum{EncryptionLevel} level, \ReadOnlySpanOf{\Byte{}} data}
-Adds TLS handshake data to be sent to the peer via \CRYPTO{} frames. The encryption level specifies
-which QUIC packet should be used to send the \CRYPTO{} frame. This method can be called multiple
-times.
+  \ditemmethod[\keyword]{void}{AddHandshakeData}{\enum{EncryptionLevel} level,
+\ReadOnlySpanOf{\Byte{}} data} Adds TLS handshake data to be sent to the peer via \CRYPTO{} frames.
+The encryption level specifies which QUIC packet should be used to send the \CRYPTO{} frame. This
+method can be called multiple times.
 
   \ditemmethod[\keyword]{void}{FlushHandshakeData}{} Called after \method{AddHandshakeData} to
 inform \ManagedQuicConnection{} that the handshake data should be sent.
 
-  \ditemmethod[\keyword]{void}{SendTlsAlert}{\enum{EncryptionLevel} level, \Int{} alertCode} When TLS implementation
-encounters an error, this function is used to provide the TLS alert code which is then used to
-construct \CONNECTIONCLOSE{} frame for terminating the connection.
+  \ditemmethod[\keyword]{void}{SendTlsAlert}{\enum{EncryptionLevel} level, \Int{} alertCode} When
+TLS implementation encounters an error, this function is used to provide the TLS alert code which is
+then used to construct \CONNECTIONCLOSE{} frame for terminating the connection.
 
 \end{description}
 
@@ -589,9 +629,14 @@ There are two \ITls{} interface implementations:
 \begin{itemize}
 
   \litem[]{\OpenSslTls{}} Backed by modified \libopenssl{} with QUIC enabling API maintained by
-Akamai~\cite{AkamaiOpensslGithub}. This implementation can be used to interoperate with other QUIC implementations and is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.Managed} provider.
+Akamai~\cite{AkamaiOpensslGithub}. This implementation can be used to interoperate with other QUIC
+implementations and is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.Managed}
+provider.
 
-  \litem[]{\MockTls{}} Intended to be used when runing functional tests in continuous integration environment where the modified \libopenssl{} library is not available. This implementation cannot be used to interoperate with other QUIC implementations. \MockTls{} is used with \texttt{\QuicImplementationProviders{}\allowbreak{}.ManagedMockTls}.
+  \litem[]{\MockTls{}} Intended to be used when runing functional tests in continuous integration
+environment where the modified \libopenssl{} library is not available. This implementation cannot be
+used to interoperate with other QUIC implementations. \MockTls{} is used with
+\texttt{\QuicImplementationProviders{}\allowbreak{}.ManagedMockTls}.
 
 \end{itemize}
 
@@ -607,15 +652,12 @@ Following subsections describe the two \ITls{} implementations in greater detail
 The \OpenSslTls{} class is a managed wrapper around the \SSL{} class from \libopenssl{} library
 written in C. As per the established practice in the \dotnet{} runtime repository the managed QUIC
 implementation separates the definitions of the \keyword{extern} methods from the \libopenssl{}
-library into a separate \class{Interop.OpenSslQuic} class. The interop code also uses \csharp{}
-function pointers\footnote{More information about \csharp{} function pointers and other native code
-  interop improvements done in \dotnet{}~5 can be found on Microsoft dev
-  blog~\cite{dotnet5interopimprovements}.}, a new feature available since \dotnet{}~5.
+library into a separate \class{Interop.OpenSslQuic} class.
 
 The primary objects used from the \libopenssl{} library are the \SSLCTX{} class which is a top level
 object maintaining global SSL/TLS configuration, and \SSL{} class which represents one SSL/TLS
-session. The \OpenSslTls{} implementation uses one global \SSLCTX{} object, and one \SSL{}
-object for each \OpenSslTls{} instance.
+session. The \OpenSslTls{} implementation uses one global \SSLCTX{} object, and one \SSL{} object
+for each \OpenSslTls{} instance.
 
 The main part of the QUIC-enabling API exposed by the \libopenssl{} library consists of
 \method{SSL_set_quic_method} function which registers callbacks from the TLS handshake state
@@ -642,7 +684,10 @@ int |SSL_CTX_set_quic_method|(SSL_CTX *ctx, const SSL_QUIC_METHOD *quic_method);
 \autoref{lst:05-csharp-quic-method} lists the definition of the \class{QuicMethodCallbacks} defined
 by the interop layer of the managed QUIC implementation which mirrors the \class{ssl_quic_method_st}
 on the managed \dotnet{} side. The \class{QuicMethodCallbacks} class uses the \csharp{} function
-pointers to represent unmanaged pointers to \csharp{} functions.
+pointers feature introduced in \dotnet{}~5 to represent unmanaged pointers to \csharp{} functions
+\footnote{More information about \csharp{} function pointers and other native code interop
+  improvements done in \dotnet{}~5 can be found on Microsoft dev
+  blog~\cite{dotnet5interopimprovements}.}.
 
 \begin{myListingCsharpNoPageBreak}{lst:05-csharp-quic-method}{[\csharp{} mirror of the \class{ssl_quic_method_st} C struct]\csharp{} mirror of the \class{ssl_quic_method_st} C struct. The comments above the fields list C-like definition of the function pointer type.}{DllImport,IntPtr, UIntPtr, StructLayout, QuicMethodCallbacks,Libraries}{OpenSslEncryptionLevel,LayoutKind}
 [DllImport(Libraries.Ssl, EntryPoint = "SSL_set_quic_method")]
@@ -677,7 +722,7 @@ class allocates the \class{QuicMethodCallbacks} instance into an unmanaged memor
 \texttt{\class{Marshal}.\method{AllocHGlobal}()} method and stores the resulting pointer in a
 \keyword{private static} field.
 
-In order to be able to create unmanaged function pointers to \csharp{} methods the actual methods
+In order to be able to create unmanaged function pointers to \csharp{} methods, the actual methods
 must be annotated using the \class{UnmanagedCallersOnlyAttribute} specifying that the caller will
 use the \texttt{cdecl} calling convention.
 
@@ -705,9 +750,9 @@ which was registered as the \texttt{add_handshake_data} callback. This function 
 
 \subsection{MockTls Implementation}
 
-The \MockTls{} implementation used for running tests without dependency on the \libopenssl{} library
-and is not intended for production usage. The implementation imitates the \OpenSslTls{} behavior by
-simulting a successful TLS handshake and exchanging randomly generated secrets.
+The \MockTls{} implementation is used for running tests without the dependency on the \libopenssl{}
+library and is not intended for production usage. The implementation imitates the \OpenSslTls{}
+behavior by simulating a successful TLS handshake and exchanging randomly generated secrets.
 
 \section{ManagedQuicListener Implementation}
 
@@ -721,16 +766,14 @@ connections in the \class{Channel}. The application then retrieves these connect
 When the \ManagedQuicListener{} is closed, it is necessary to keep the currently established
 connections alive. Disposing the \ManagedQuicListener{}, therefore, means only that the
 \QuicServerSocketContext{} instance will not accept new connections. The \QuicServerSocketContext{}
-class tracks active connections and is disposed when the last \ManagedQuicConnection{} is
-closed.
+class tracks active connections and is disposed when the last \ManagedQuicConnection{} is closed.
 
 \section{ManagedQuicStream Implementation}
 
 As described in \autoref{sec:03-stream-implementation}, the behavior of sending and receiving parts
 of the stream is implemented by \ReceiveStream{} and \SendStream{} classes. The \ManagedQuicStream{}
-class itself performs only argument checking on the public API and informs the
-\ManagedQuicConnection{} about the amount of data read/written in order to update flow control
-limits.
+class only checks the validity of arguments passed to the public API and informs the
+\ManagedQuicConnection{} about the amount of data read/written to update flow control limits.
 
 \subsection{ReceiveStream Implementation}
 
@@ -740,19 +783,18 @@ be used by the \ManagedQuicStream{} class from the application thread:
 
 \begin{description}
 
-  \ditemproperty[\texttt]{\Long{}?}{Error}{\propget}
-  If the stream was aborted by the sender, contains the application-level error code to be
-  communicated to the application.
+  \ditemproperty[\texttt]{\Long{}?}{Error}{\propget} If the sender aborted the stream, this property
+contains the application-level error code to be reported to the application.
 
-  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode}
-  Requests that the stream is aborted by the sender. Results in sending a \STOPSENDING{} frame with
-  specified application-level error code.
+  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode} Requests that the stream is aborted
+by the sender. Results in sending a \STOPSENDING{} frame with specified application-level error
+code.
 
-  \ditemmethod[\keyword]{int}{Deliver}{\SpanOf{\Byte{}} destination}
-  Copies the stream data into the provided \SpanOf{\Byte{}}. Blocks until data are available.
+  \ditemmethod[\keyword]{int}{Deliver}{\SpanOf{\Byte{}} destination} Copies the stream data into the
+provided \SpanOf{\Byte{}}. Blocks until data are available.
 
-  \ditemmethod[]{\ValueTaskOf{\Int{}}}{DeliverAsync}{\MemoryOf{\Byte{}} destination, \CancellationToken{}}
-  Asynchronous version of the \method{Deliver} method.
+  \ditemmethod[]{\ValueTaskOf{\Int{}}}{DeliverAsync}{\MemoryOf{\Byte{}} destination,
+\CancellationToken{}} Asynchronous version of the \method{Deliver} method.
 
 \end{description}
 
@@ -761,11 +803,11 @@ From the internal background processing thread, the main methods called from the
 
 \begin{description}
 
-  \ditemmethod[\keyword]{void}{OnResetStream}{\Long{} errorCode}
-    Called when \RESETSTREAM{} frame for this stream was received.
+  \ditemmethod[\keyword]{void}{OnResetStream}{\Long{} errorCode} Called when \RESETSTREAM{} frame
+for this stream was received.
 
   \ditemmethod[\keyword]{void}{Receive}{\Long{} offset, \ReadOnlySpanOf{\Byte{}} data, \bool{} fin}
-    Called when \STREAM{} frame has been received.
+Called when \STREAM{} frame has been received.
 
 \end{description}
 
@@ -777,20 +819,20 @@ the \ManagedQuicStream{} class from the application thread:
 
 \begin{description}
 
-  \ditemmethod[\keyword]{int}{Enqueue}{\ReadOnlySpanOf{\Byte{}} data}
-    Adds the provided range of data into the stream. If the
-internal buffering capacity is full, this method blocks until the data can be buffered.
+  \ditemmethod[\keyword]{int}{Enqueue}{\ReadOnlySpanOf{\Byte{}} data} Adds the provided range of
+data into the stream. If the internal buffering capacity is full, this method blocks until the data
+can be buffered.
 
-  \ditemmethod[]{\ValueTaskOf{\Int}}{EnqueueAsync}{\ReadOnlyMemoryOf{\Byte{}} data}
-    Asynchronous version of the \method{Enqueue} method.
+  \ditemmethod[]{\ValueTaskOf{\Int}}{EnqueueAsync}{\ReadOnlyMemoryOf{\Byte{}} data} Asynchronous
+version of the \method{Enqueue} method.
 
-  \ditemmethod[\keyword]{void}{MarkEndOfData}{}
-    Marks the stream as finished, no more data can be written after calling this function. The
-    \texttt{FIN} bit will be set in the appropriate \STREAM{} frame.
+  \ditemmethod[\keyword]{void}{MarkEndOfData}{} Marks the stream as finished. No more data can be
+written into the stream after calling this function. The \texttt{FIN} bit will be set in the
+appropriate \STREAM{} frame.
 
-  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode}
-    Requests that the stream be aborted with specified errorCode. This method is also called when
-    \STOPSENDING{} frame was received for this stream.
+  \ditemmethod[\keyword]{void}{RequestAbort}{\Long{} errorCode} Requests that the stream be aborted
+with specified errorCode. This method is also called when \STOPSENDING{} frame was received for this
+stream.
 
 \end{description}
 
@@ -799,51 +841,52 @@ From the internal background processing thread, the main methods called from the
 
 \begin{description}
 
-    \ditemmethod[\texttt]{(\Long{} offset, \Long{} count)}{GetNextSendableRange}{}
-        Returns the next consecutive range of data that is in \textit{pending} state. The next data
-to be sent in STREAM{} frame will be from this range.
+    \ditemmethod[\texttt]{(\Long{} offset, \Long{} count)}{GetNextSendableRange}{} Returns the next
+consecutive range of data that is in \textit{pending} state. The next data to be sent in STREAM{}
+frame will be from this range.
 
-    \ditemmethod[\keyword]{void}{CheckOut}{\SpanOf{\Byte{}} destination}
-        Copies the data from the range returned from \method{GetNextSendableRange} into the
-destination buffer. The copied data is transitoned into \textit{in-flight} state.
+    \ditemmethod[\keyword]{void}{CheckOut}{\SpanOf{\Byte{}} destination} Copies the data from the
+range returned from \method{GetNextSendableRange} into the destination buffer. The copied data is
+transitoned into \textit{in-flight} state.
 
-    \ditemmethod[\keyword]{void}{OnLost}{\Long{} offset, \Long{} count}
-        Marks the range of data as lost, transitioning them back to \textit{pending} state.
+    \ditemmethod[\keyword]{void}{OnLost}{\Long{} offset, \Long{} count} Marks the range of data as
+lost, transitioning them back to \textit{pending} state.
 
-    \ditemmethod[\keyword]{void}{OnAck}{\Long{} offset, \Long{} count, \bool{} fin}
-        Marks the range of data as \textit{acknowleged}. Allowing the underlying buffers to be reused.
+    \ditemmethod[\keyword]{void}{OnAck}{\Long{} offset, \Long{} count, \bool{} fin} Marks the range
+of data as \textit{acknowleged}. Allowing the underlying buffers to be reused.
 
 \end{description}
 
 \subsection{Tracing and Diagnostics}
 
-The managed QUIC implementation can produce verbose logs (called traces) to provide an insight on
-the implementations behavior. By default, no trace is generated. Generating a trace can be enabled
+The managed QUIC implementation can produce verbose logs (called traces) to provide an insight into
+the implementation's behavior. By default, no trace is generated. Generating a trace can be enabled
 by defining the \texttt{DOTNETQUIC_TRACE} to one of the following values:
 
 \begin{description}
 
-    \ditem{\texttt{console}} Produces logs on the console output. This type of tracing has produces
-large amount of console logs which are hard to reason about. However, the conosle logs are the
-fastest way of checking if any packets are sent/received, or for diagnosing refused connections.
+    \ditem{\texttt{console}} Produces logs on the console output. This type of tracing produces a
+large amount of console logs, which are hard to reason about. However, the console logs are the
+fastest way of checking if any packets are sent/received or for diagnosing refused connections.
 
-\ditem{\texttt{qlog}} Produces traces which can be visualized by the
-\textit{qvis}~\cite{web:qvis} tool. The \textit{qvis} tool provides deep insight into the connection
-such as the timeline of sent/received packets, bytes in flight, size of the congestion window and
-latency throughout the lifetime of the connection. The traces are written in a separate file in current
-working directory for each connection.
+\ditem{\texttt{qlog}} Produces traces which can be visualized by the \textit{qvis}~\cite{web:qvis}
+tool. The \textit{qvis} tool provides deep insight into the connection, such as the timeline of
+sent/received packets, bytes in flight, size of the congestion window, and latency throughout the
+lifetime of the connection. The traces are written into the current working directory into a
+separate file for each connection. Note that for very busy connections, the trace files can grow
+into hundreds of megabytes in a few seconds.
 
 \end{description}
 
-Both types of tracing incur noticeable overhead and should not be used in production environment.
-When using tracing, it is recommended to run only very small number of parallel connections.
+Both types of tracing incur a small but noticeable overhead and should not be used in the production
+environment.
 
 \section{Tests Implementation}
 
 The QUIC implementation is covered by an extensive suite of unit tests and functional tests. The
 unit tests are located in the \filename{System.Net.Quic/tests/UnitTests} directory and focus on the
 correctness of the individual parts of the managed QUIC implementation. The unit tests also check
-that that the QUIC packets sent by the implementation conform to the QUIC protocol specification.
+that the QUIC packets sent by the implementation conform to the QUIC protocol specification.
 
 The functional tests are located in the
 \filename{System.Net.Quic/tests/Functional}\allowbreak{}\filename{Tests} directory and test
@@ -853,11 +896,11 @@ conforms to the public API specification.
 \subsection{Unit Tests}
 
 The most important part of the unit tests are tests that inspect the contents of the individual QUIC
-packets sent between the server and client. To simplify writing these tests, the
-\filename{System.Net.Quic.Unit.Tests} project implements a testing harness which provides helper
+packets sent between the server and client. In order to simplify writing these tests, the
+\filename{System.Net.Quic.Unit.Tests} project implements a testing harness, which provides helper
 methods for inspecting and modifying QUIC packets, as discussed in \autoref{sec:03-testing-harness}.
-The functionality of the test harness is provided as a \ManualTransmissionQuicTestBase{} class
-intended to be used as a base class for all unit tests. This class provides:
+The test harness functionality is provided as a \ManualTransmissionQuicTestBase{} class intended to
+be used as a base class for unit test classes. This class provides:
 
 \begin{itemize}
 
@@ -874,15 +917,15 @@ intended to be used as a base class for all unit tests. This class provides:
 Because the \ManagedQuicConnection{} implementation uses \keyword{ref struct}s to represent
 individual QUIC frames. The testing harness must duplicate the types for QUIC frames and QUIC
 packets as classes. The classes used to represent QUIC packets and QUIC frames in test harness
-derive from \class{FrameBase} and \class{PacketBase} abstract classes which provide a common type
+derive from \class{FrameBase} and \class{PacketBase} abstract classes, which provide a common type
 for aggregating QUIC packets and QUIC frames in collections.
 
 The classes representing QUIC frames and QUIC packets are mutable, which allows modification by the
-testing code in order to elicit a particular error response. \autoref{fig:05-test-harness-intercept}
+testing code to elicit a particular error response. \autoref{fig:05-test-harness-intercept}
 illustrates the process. First, the \ManagedQuicConnection{} produces the UDP datagram containing
 the QUIC packets to be sent. The testing harness then parses the datagram into mutable
 representation. The parsed packets are then passed into the inspection callback provided by the test
-method which can perform any assertions and modifications. The QUIC packet is then serialized back
+method, which can perform any assertions and modifications. The QUIC packet is then serialized back
 into binary representation and provided to the receiver \ManagedQuicConnection{} instance.
 
 \begin{myFigure}{fig:05-test-harness-intercept}{Intercepting a QUIC packet by the testing harness}
@@ -893,10 +936,10 @@ into binary representation and provided to the receiver \ManagedQuicConnection{}
 
 \subsection{Functional Tests}
 
-The \filename{System.Net.Quic} project contains a large suite functional tests against the public
-QUIC API. The tests are structured in a way that allows them to run against all QUIC implementation
+The \filename{System.Net.Quic} project contains a large suite of functional tests against the public
+QUIC API\@. The tests are structured in a way that allows them to run against all QUIC implementation
 providers in the library. Also, the \QuicStream{} class is tested using \textit{stream conformance
-  tests} --- a suite of tests run for each implementation of the \Stream{} class to ensure consistent
+tests} --- a suite of tests run for each implementation of the \Stream{} class to ensure consistent
 behavior of all implementations.
 
 In order to allow running tests against different implementation providers, the test methods are
@@ -914,4 +957,5 @@ example, \class{QuicStreamTests_Managed\allowbreak{}Provider} derives from the
 annotated by \class{ConditionalClassAttribute} which instructs \xUnit{} to run the tests only if the
 given provider is supported in the current environment.
 
-Similar mechanism is used to run stream conformance tests against all QUIC implementation providers.
+A similar mechanism is used to run stream conformance tests against all QUIC implementation
+providers.
