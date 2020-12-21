@@ -12,4 +12,29 @@
 \appendix
 \chapter{Attachments}
 
-\section{First Attachment}
+Attachments of the attachment archive:
+
+\todo{License!?}
+\todo{Do I need to prune the repo from all which is not mentioned in the text?}
+
+\dirtree{%
+  .1 {/}.
+  .2 {certs}\mydtcomment{Certificates for use in tests and attached samples}.
+  .3 {cert.crt}\mydtcomment{Public certificate file}.
+  .3 {cert.key}\mydtcomment{Private key file}.
+  .3 {cert.pfx}\mydtcomment{Certificate and private key combined in PFX format}.
+  .2 {extern}\mydtcomment{Third-party source code}.
+  .3 {openssl}\mydtcomment{Copy of the QUIC-enabled fork of \libopenssl{} by Akamai}.
+  .2 {src}\mydtcomment{Root for all source code}.
+  .3 {dotnet-runtime}\mydtcomment{\dotnet{} runtime fork with managed QUIC implementation}.
+  .3 {supplementary}\mydtcomment{Root of additional \dotnet{} projects}.
+  .4 {benchmark}\mydtcomment{Root of all benchmark projects}.
+  .5 {ThroughputTests}\mydtcomment{Benchmarking application used in \autoref{chap:04-evaluation}}.
+  .4 {samples}\mydtcomment{Root of all sample projects}.
+  .5 {Echo}\mydtcomment{Simple echo server and client implementation from \autoref{chap:06-user-docs}}.
+  .5 {hello-net6.0}\mydtcomment{Hello world application for testing \dotnet{}~6 installation}.
+  .4 {ManagedQuic.sln}\mydtcomment{\dotnet{} Solution file for all projects in subdirectory}.
+  .2 {tex}\mydtcomment{\LaTeX{} source code for this document}.
+  .3 {measurements}\mydtcomment{Raw CSV data with measurements presented in \autoref{chap:04-evaluation}}.
+  .2 {README.md}\mydtcomment{\todo{adjust the readme file}}.
+}

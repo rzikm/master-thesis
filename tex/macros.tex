@@ -336,7 +336,7 @@
 }
 
 \lstnewenvironment{myListingC}[5][]{% [extra], label, caption, types, enums
-  \noindent\minipage{\linewidth}\medskip
+  % \noindent\minipage{\linewidth}\medskip
   \lstset{
     caption={#3},
     label={#2},
@@ -347,7 +347,7 @@
     #1
   }
 }{%
-  \endminipage
+  % \endminipage
 }
 
 % custom XML language to get nicer formatting
@@ -478,6 +478,7 @@
 \newcommand{\MaxAckDelay}{\quicTransportParameter{max\_ack\_delay}}
 \newcommand{\MaxIdleTimeout}{\quicTransportParameter{max\_idle\_timeout}}
 \newcommand{\DisableActiveMigration}{\quicTransportParameter{disable\_active\_migration}}
+\newcommand{\MaxUdpPayloadSize}{\quicTransportParameter{max\_udp\_payload\_size}}
 
 % macro for typesetting QUIC frame types
 \newcommand{\quicFrame}[1]{\texttt{#1}}

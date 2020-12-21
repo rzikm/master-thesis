@@ -84,9 +84,10 @@ where the single-threaded implementation of Clumsy has the least effect on the m
 \subsection{Benchmarking Application}\label{sec:04-benchmark-app}
 
 The actual throughput and latency measurements are done using a dedicated benchmarking \dotnet{}
-application whose source code can be found in \todo{path to attachments}. The application implements
-a trivial echo server and clients which exchange messages of specified size. The first parameter
-to the application selects one of the following modes:
+application whose source code can be found in the
+\filename{src/supplementary/benchmark/ThroughputTests} directory in the attachments of this thesis.
+The application implements a trivial echo server and clients which exchange messages of specified
+size. The first parameter to the application selects one of the following modes:
 
 \begin{description}
 
@@ -122,7 +123,7 @@ The benchmarking application accepts multiple parameters. List of the most impor
 
     \ditem{\texttt{-d, --test-duration}} Time after which the measurement should stop.
 
-    \ditem{\texttt{-i, --reporting-interval}} Delay between reports intermediate measurements.
+    % \ditem{\texttt{-i, --reporting-interval}} Delay between reports intermediate measurements.
 
     \ditem{\texttt{-n --no-wait}} Whether clients wait for reply before sending another message.
 
@@ -351,12 +352,13 @@ implementation does not scale when when large messages are sent or when using la
 parallel streams. This is due to increased pressure on the GC which introduces frequent and large
 pauses in the application, and the way background work is scheduled on the \dotnet{} thread-pool.
 
-\subsection{Single Stream Performance}
+\subsection{Single Stream Performance Measurements}
 
-In the second test, we compared the single-stream performance of QUIC implementations and also the
-performance of \TcpClient{} and \SslStream{}. \autoref{fig:04-single-stream-throughput} shows the
-results of the throughput measurements for \SI{256}{\byte}
-(\autoref{fig:04-single-stream-throughput-a}) and \SI{4096}{\byte}
+In the second test, we compared the single-stream performance of managed QUIC implementations to the
+performance of combination of TCP and TLS represented by the \TcpClient{} and \SslStream{} \dotnet{}
+classes. We will also include measurements for \libmsquic{} for completeness.
+\autoref{fig:04-single-stream-throughput} shows the results of the throughput measurements for
+\SI{256}{\byte} (\autoref{fig:04-single-stream-throughput-a}) and \SI{4096}{\byte}
 (\autoref{fig:04-single-stream-throughput-b}) messages. TCP seems to perform significantly better
 than either QUIC implementation in both variations of the experiment.
 
@@ -487,7 +489,7 @@ may behave differently when used over real network.
 In case of simulated lossy environment, we measured significantly higher single-stream throughput
 using TCP+TLS stack than either QUIC implementation. For smaller messages, the measured latencies
 were similar in all implementations, but for larger messages, both QUIC implementations showed
-significantly lower latencies than the combination of TCP+TLS.
+significantly lower latencies than the combination of TCP+TLS\@.
 
 We conclude from these measurements that while QUIC both implementations show some interesting
 results, there is still a lot of optimizations required before their performance is comparable to
