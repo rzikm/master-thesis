@@ -2,7 +2,7 @@
 
 CreateTexPlot `
   -DataFile "$DataRoot\loss-throughput.csv" `
-  -Query @{Drop=""} `
+  -Query @{Drop=$dropZeroAmount} `
   -XAxis MessageSize `
   -YAxis $throughputColumn `
   -GnuplotExtra @"

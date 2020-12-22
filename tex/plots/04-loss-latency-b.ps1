@@ -2,7 +2,7 @@
 
 CreateTexPlot `
   -DataFile "$DataRoot\loss-latency.csv" `
-  -Query @{Drop=1} `
+  -Query @{Drop=$dropSmallAmount} `
   -XAxis MessageSize `
   -YAxis $latencyColumn `
   -GnuplotExtra @"

@@ -13,6 +13,9 @@ $latencyLabelMedian = "median latency (ms)"
 $throughputLabel = "Throughput (MiB/s)"
 $connectionsLabel = "Connections"
 
+$dropZeroAmount =0.004
+$dropSmallAmount = 0.1
+
 $DataRoot = "$PSScriptRoot\..\measurements"
 
 $bigMessageSize = 4096
