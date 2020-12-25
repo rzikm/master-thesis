@@ -18,8 +18,8 @@ network communication:
         slowest 1\% replies. This metric is important in the context of webpages and communication
         with browsers. Many websites generate hundreds of HTTP requests for single page access which
         makes the probability of at least one such request being slower than the 99th percentile
-        very high~\cite{Treat2015}. \todo{cite or deeply explain that this is a standard way of
-        measuring it}
+        very high~\cite{Treat2015}. \todo{mention that it has very high chance to affect full page
+        load}
 
 \end{itemize}
 
@@ -32,8 +32,6 @@ is Intel Core i7-8700 \SI{3.20}{\giga\hertz} (12 logical, 6 physical cores) and 
 (CoreCLR 6.0.20.55508, CoreFX 6.0.20.255508).
 
 \subsection{Running with MsQuic Support}
-
-\todo{this is hopefully less confusing now}
 
 \libmsquic{}-based QUIC implementation does not work in the default installation of \dotnet{}
 because \dotnet{} does not distribute the \libmsquic{} binary. Programs which want to use the
@@ -77,9 +75,10 @@ network issues and reinjects packets into the Windows network stack as necessary
 \end{myFigure}
 
 However, the implementation of Clumsy uses only a single thread to process packets. This means that
-Clumsy becomes a bottleneck when processing large network load. \todo{mentioned that we could not find anything better than clumsy} Since we were unable to find a
-better tool which would work on Windows, we will use Clumsy only in tests with a single connection
-where the single-threaded implementation of Clumsy has the least effect on the measurements.
+Clumsy becomes a bottleneck when processing large network load. \todo{mentioned that we could not
+  find anything better than clumsy} Since we were unable to find a better tool which would work on
+Windows, we will use Clumsy only in tests with a single connection where the single-threaded
+implementation of Clumsy has the least effect on the measurements.
 
 \subsection{Benchmarking Application}\label{sec:04-benchmark-app}
 
@@ -473,9 +472,10 @@ application in \texttt{server} mode using one implementation provider, and anoth
 application in \texttt{client} mode using the other provider.
 
 More exhaustive interop tests could be achieved using the open source QUIC Interop Test
-Runner~\cite{QuicInteropRunner}. However, that sort of testing is left for future work.
+Runner~\cite{QuicInteropRunner}. However, this level of testing is outside of scope of this thesis
+and is subject for future work.
 
-\section{Conclusion}
+\section{Summary}
 
 \todo{use different section name?}
 
@@ -497,3 +497,106 @@ significantly lower latencies than the combination of TCP+TLS\@.
 We conclude from these measurements that while QUIC both implementations show some interesting
 results, there is still a lot of optimizations required before their performance is comparable to
 that of the TCP protocol.
+
+\section{Extra}
+
+\begin{myFigure}{fig:04-lab-multi-stream-throughput}{Multiple stream QUIC throughput measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-a}{1 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-b}{1 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-throughput-b.tex}
+\end{mySubfigure}
+
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-c}{32 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-throughput-c.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-d}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-throughput-d.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+
+\begin{myFigure}{fig:04-lab-multi-stream-latency}{Multiple stream QUIC latency measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-a}{1 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-b}{1 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-b.tex}
+\end{mySubfigure}
+
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-c}{32 Stream, \SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-c.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-d}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-d.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\begin{myFigure}{fig:04-lab-multi-stream-latency-median}{Multiple stream QUIC latency measurements (median)}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-a}{1 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-median-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-b}{32 Stream, \SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-multi-stream-latency-median-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\begin{myFigure}{fig:04-lab-single-stream-throughput}{Single stream throughput measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-a}{\SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-single-stream-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-b}{\SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-single-stream-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\begin{myFigure}{fig:04-lab-single-stream-latency}{Single stream latency measurements}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-a}{\SI{256}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-single-stream-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-b}{\SI{4096}{\byte} Messages}
+\footnotesize
+\input{plots/04-lab-single-stream-latency-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\begin{myFigure}{fig:04-lab-loss-throughput}{Single stream throughput measurements in simulated network}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-throughput-a}{\SI{25}{\milli\second} Lag, 0.004\% Loss}
+\footnotesize
+\input{plots/04-lab-loss-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-throughput-b}{\SI{25}{\milli\second} Lag, 0.1\% Loss}
+\footnotesize
+\input{plots/04-lab-loss-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\todo{calculate theoretical maximum throughput of managed impl based on latency}
+
+\begin{myFigure}{fig:04-lab-loss-latency}{Single stream latency measurements in simulated network}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-a}{\SI{25}{\milli\second} Lag, 0.004\% Loss}
+\footnotesize
+\input{plots/04-lab-loss-latency-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-b}{\SI{25}{\milli\second} Lag, 0.1\% Loss}
+\footnotesize
+\input{plots/04-lab-loss-latency-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+\todo{increased latency is caused by the fact that the message does not fit into a single packet,
+  the packet pacer spreads the packets out}

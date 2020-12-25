@@ -17,6 +17,7 @@ $dropZeroAmount =0.004
 $dropSmallAmount = 0.1
 
 $DataRoot = "$PSScriptRoot\..\measurements"
+$LabDataRoot = "$PSScriptRoot\..\measurements\lab"
 
 $bigMessageSize = 4096
 $smallMessageSize = 256

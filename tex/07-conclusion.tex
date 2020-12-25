@@ -44,7 +44,7 @@ runtimelab repository~\cite{runtimelabGithub} in the \texttt{feature/ManagedQuic
 The next big release --- \dotnet{}~6 --- will ship with production-ready QUIC implementation. In early
 2021, a decision will be made whether this QUIC support will be based on \libmsquic{} or our QUIC
 implementation. However, even if the more mature \libmsquic{} implementation is chosen for the
-\dotnet{}~6 release. Our implementatino will be considered as a managed replacement for subsequent
+\dotnet{}~6 release, our implementatino will be considered as a managed replacement for subsequent
 \dotnet{} releases.
 
 \subsection*{Future Work}
@@ -74,6 +74,7 @@ could be built. Following list outlines the next development steps for the imple
         processing architecture include allowing parallel sending and receiving on a single
         connection, and using a single thread to process multiple connections, like done in
         \libmsquic{}.
+        \todo{check this after replacing measurements}
 
   \item \textit{More realistic performance measurements.} This thesis performed all performance
         measurements over the loopback network interface and, therefore, do not represent the
