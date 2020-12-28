@@ -8,6 +8,15 @@ When using RunAll and RunAllDistributed functions, the output is both displayed 
 output (using Format-Table) and saved in a CSV file. The name of the file is separate for each type
 of test and is configured in this script (search for OutFile property in GetAllRuns function).
 
+Important note for running with simulated loss:
+
+    Measurements in lossy environments are supported only on Linux via the Traffic Control
+    capabilities of the Linux kernel itself. This script manually calls the `tc` utility to set
+    desired values. However, this requires administrator privileges, so the session must be logged
+    in as root in order to simulate loss.
+
+Usage:
+
 To start running the tests, first source this file using following statement. This is needed only
 once at the beginning.
 PS> . ./run.ps1
@@ -38,6 +47,9 @@ PS> Run -ServerSession $serverSession -ClientSession $clientSession -Impl manage
 
 # address (or hostname) on which the server can be contacted from the client if run distributed
 $RemoteServerAddress = "10.10.50.21"
+
+# The network interface that should set
+$networkInterface = "eth0"
 
 # port on which to contact client, note that TCP+SSL always uses $serverPort + 1
 $serverPort = 5000
@@ -84,77 +96,84 @@ function GetAllRuns
     $lossSets = @{
         Impl = "tcp", "managed", 'msquic'
         Connections = 1
-        Streams = 32
         MessageSize = $smallMessageSize, $medMessageSize, $bigMessageSize
-        NetworkOpts = @(@{Lag=1; Drop=0.004}, @{Lag=25; Drop=0.004})
+        NetworkOpts = @(@{Lag=25; Drop=0.004}, @{Lag=25; Drop=0.1})
+    } | ProduceParameterSets
+
+    $multiLossSets = @{
+        Impl = "tcp", "managed", 'msquic'
+        Connections = 1
+        Streams = 32 # this will be set to 1 for tcp
+        MessageSize = $smallMessageSize, $medMessageSize, $bigMessageSize
+        NetworkOpts = @(@{Lag=25; Drop=0.004}, @{Lag=25; Drop=0.1})
     } | ProduceParameterSets
 
     # Individual runs can be disabled by commenting them out
 
     $cols = "Impl", "Connections", "Streams", "MessageSize"
     $Runs = [ordered]@{
-        "Single stream perf - latency" = @{
-            Parameters = $singleStreamSets
+        # "Single stream perf - latency" = @{
+        #     Parameters = $singleStreamSets
 
-            ExtraArgs = @{
-                Duration = $duration
-                WarmupTime = $warmup
-            }
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #     }
 
-            Columns = $cols + $extraColumnsLatency
+        #     Columns = $cols + $extraColumnsLatency
 
-            OutFile = "single-stream-latency.csv"
-        }
-        "Single stream perf - throughput" = @{
-            Parameters = $singleStreamSets
+        #     OutFile = "single-stream-latency.csv"
+        # }
+        # "Single stream perf - throughput" = @{
+        #     Parameters = $singleStreamSets
 
-            ExtraArgs = @{
-                Duration = $duration
-                WarmupTime = $warmup
-                Throughput = $true
-            }
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #         Throughput = $true
+        #     }
 
-            Columns = $cols + $extraColumns
+        #     Columns = $cols + $extraColumns
 
-            OutFile = "single-stream-throughput.csv"
-        }
-        "Multi stream perf - throughput" = @{
-            Parameters = $multiStreamSets
+        #     OutFile = "single-stream-throughput.csv"
+        # }
+        # "Multi stream perf - throughput" = @{
+        #     Parameters = $multiStreamSets
 
-            ExtraArgs = @{
-                Duration = $duration
-                WarmupTime = $warmup
-                Throughput = $true
-            }
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #         Throughput = $true
+        #     }
 
-            Columns = $cols + $extraColumns
+        #     Columns = $cols + $extraColumns
 
-            OutFile = "multi-stream-throughput.csv"
-        }
-        "Multi stream perf - latency" = @{
-            Parameters = $multiStreamSets
+        #     OutFile = "multi-stream-throughput.csv"
+        # }
+        # "Multi stream perf - latency" = @{
+        #     Parameters = $multiStreamSets
 
-            ExtraArgs = @{
-                Duration = $duration
-                WarmupTime = $warmup
-            }
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #     }
 
-            Columns = $cols + $extraColumnsLatency
+        #     Columns = $cols + $extraColumnsLatency
 
-            OutFile = "multi-stream-latency_append.csv"
-        }
-        "Loss - latency" = @{
-            Parameters = $lossSets
+        #     OutFile = "multi-stream-latency_append.csv"
+        # }
+        # "Loss - latency" = @{
+        #     Parameters = $lossSets
 
-            ExtraArgs = @{
-                Duration = $duration
-                WarmupTime = $warmup
-            }
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #     }
 
-            Columns = $cols + "Lag", "Drop" + $extraColumnsLatency
+        #     Columns = $cols + "Lag", "Drop" + $extraColumnsLatency
 
-            OutFile = "loss-latency.csv"
-        }
+        #     OutFile = "loss-latency.csv"
+        # }
         "Loss - Throughput" = @{
             Parameters = $lossSets
 
@@ -168,6 +187,19 @@ function GetAllRuns
 
             OutFile = "loss-throughput.csv"
         }
+        # "MultiLoss - Throughput" = @{
+        #     Parameters = $multiLossSets
+
+        #     ExtraArgs = @{
+        #         Duration = $duration
+        #         WarmupTime = $warmup
+        #         Throughput = $true
+        #     }
+
+        #     Columns = $cols + "Lag", "Drop" + $extraColumns
+
+        #     OutFile = "multi-loss-throughput.csv"
+        # }
     }
 
     $Runs
@@ -229,8 +261,13 @@ function Run
         [Parameter()]
         [switch] $Throughput,
 
-        # Additional network options, available only for Windows and only when run locally. Requires
-        # Clumsy to be installed.
+        # Sets the congestion control algorithm to be used by the managed implementation
+        # The default is New Reno. The CUBIC cc algorithm is not fully implemented.
+        [Parameter()]
+        [ValidateSet("NewReno", "Cubic")]
+        [string] $ManagedCCAlg = "NewReno",
+
+        # Additional network options, Supported only on Linux and requires root privileges
         [Parameter()]
         [Hashtable] $NetworkOpts,
 
@@ -281,40 +318,7 @@ function Run
         }
     }
 
-    if ($IsWindows -and $PSCmdlet.ParameterSetName -ne "Distributed" -and $NetworkOpts)
-    {
-        # init clumsy process
-        $clumsyArgs = @(
-            "--filter", "outbound and ip.DstAddr >= 127.0.0.1 and ip.DstAddr <= 127.255.255.255"
-        )
-
-        if ($NetworkOpts.Lag)
-        {
-            $clumsyArgs += "--lag", "on", "--lag-outbound", "on", "--lag-time", $NetworkOpts.Lag
-        }
-
-        if ($NetworkOpts.Drop)
-        {
-            $clumsyArgs += "--drop", "on", "--drop-outbound", "on", "--drop-chance", $NetworkOpts.Drop
-        }
-
-        if ($NetworkOpts.Ood)
-        {
-            $clumsyArgs += "--ood", "on", "--ood-outbound", "on", "--ood-chance", $NetworkOpts.Ood
-        }
-
-        $clumsy = clumsy $clumsyArgs &
-    }
-
-
-    $clientArgs = @(
-        "client",
-        "--connections", $Connections,
-        "--streams", $Streams,
-        "--message-size", $MessageSize,
-        "--reporting-interval", $Duration,
-        "--csv-output"
-    )
+    $clientArgs = @("client")
 
     if ($Throughput)
     {
@@ -325,11 +329,21 @@ function Run
     {
         $clientArgs += "--tcp"
         $clientArgs += "--endpoint","$($ServerHostName):$($serverPort + 1)"
+
+        # enforce valid number of streams for TCP
+        $Streams = 1
     }
     else
     {
         $clientArgs += "--endpoint","$($ServerHostName):$($serverPort)"
     }
+
+    $clientArgs +=
+        "--connections", $Connections,
+        "--streams", $Streams,
+        "--message-size", $MessageSize,
+        "--reporting-interval", $Duration,
+        "--csv-output"
 
     $serverArgs = @(
         "server",
@@ -344,100 +358,182 @@ function Run
         $provider = "msquic"
     }
 
-    # repeat until success
-    while ($true)
+    # helper function for starting process with redirected IO streams. Return ID of the process
+    function StartProcess
     {
-        # start server, return PID of the process
-        $serverPS = InvokeHelper `
-          -ArgumentList $provider, $WorkingDirectory, $binPath, $serverArgs `
-          -Session $ServerSession {
-              param($provider, $workdir, $binPath, $serverArgs)
+        param($bin, $workDir, $argumentList)
 
-              if (!$workDir)
+        $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+        $pinfo.FileName = Join-Path $workDir $bin
+        $pinfo.RedirectStandardOutput = $true
+        $pinfo.RedirectStandardError = $true
+        $pinfo.UseShellExecute = $false
+        $pinfo.WorkingDirectory = $workDir
+        $argumentList | ForEach-Object { $pinfo.ArgumentList.Add($_) }
+        $p = New-Object System.Diagnostics.Process
+        $p.StartInfo = $pinfo
+        $null = $p.Start()
+
+        return $p
+    }
+
+    function SetTrafficControl
+    {
+        param($device, $delay, $loss)
+
+        # remove any existing setting if present
+        $current = tc qdisc show dev $device
+        if ($current -match "(delay)|(loss)")
+        {
+            tc qdisc del dev $device root netem
+        }
+
+        $pars = "limit", "1000000"
+
+        if ($delay)
+        {
+            $pars += "delay", "$($delay / 2)ms"
+        }
+
+        if ($loss)
+        {
+            $pars += "loss", "$($loss)%"
+        }
+
+        tc qdisc add dev $device root netem @pars
+    }
+
+    function UnsetTrafficControl
+    {
+        param($device)
+
+        tc qdisc del dev $device root netem
+    }
+
+    # copy the function definition because we will be possibly executing the stuff on other machines
+    $envDef = $function:StartProcess, $function:SetTrafficControl, $function:UnsetTrafficControl |
+      ForEach-Object { $_.Ast.Extent.Text } | Out-String
+
+
+    if ($NetworkOpts)
+    {
+        InvokeHelper `
+          -Session $ServerSession, $ClientSession `
+          -ArgumentList $envDef, $networkInterface, $NetworkOpts `
+          {
+              param($env, $device, $netOpts)
+
+              # pull the definition of the functions into the scope
+              Invoke-Expression $env
+
+              if (!$IsLinux)
               {
-                  $workDir = Get-Location
-              }
-
-              # override QUIC provider if necessary
-              $ENV:DOTNETQUIC_PROVIDER=$provider
-
-              # this one is needed for Linux in order to properly load OpenSSL and MsQuic from the binary directory
-              $ENV:LD_LIBRARY_PATH=$workDir
-
-              # start the server process with redirected stdout
-              $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-              $pinfo.FileName = Join-Path $workDir $binPath
-              $pinfo.RedirectStandardOutput = $true
-              $pinfo.RedirectStandardError = $true
-              $pinfo.UseShellExecute = $false
-              $pinfo.WorkingDirectory = $workDir
-              $serverArgs | ForEach-Object { $pinfo.ArgumentList.Add($_) }
-              $p = New-Object System.Diagnostics.Process
-              $p.StartInfo = $pinfo
-              $null = $p.Start()
-
-              # wait until ready
-              $null = $p.StandardOutput.ReadLine()
-
-              $p.Id
-          }
-
-        # run client and collect output
-        $res = InvokeHelper `
-          -ArgumentList $provider, $WorkingDirectory, $binPath, $clientArgs, $Samples `
-          -Session $ClientSession {
-              param($provider, $workdir, $binPath, $clientArgs, $Samples)
-
-              if (!$workDir)
-              {
-                  $workDir = Get-Location
-              }
-
-              # override QUIC provider if necessary
-              $ENV:DOTNETQUIC_PROVIDER=$provider
-
-              # this one is needed for Linux in order to properly load OpenSSL and MsQuic from the binary directory
-              $ENV:LD_LIBRARY_PATH=$workDir
-
-              # start the client process with redirected stdout
-              $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-              $pinfo.FileName = Join-Path $workDir $binPath
-              $pinfo.RedirectStandardOutput = $true
-              $pinfo.UseShellExecute = $false
-              $pinfo.WorkingDirectory = $workDir
-              $clientArgs | ForEach-Object { $pinfo.ArgumentList.Add($_) }
-              $p = New-Object System.Diagnostics.Process
-              $p.StartInfo = $pinfo
-              $p.Start() | Out-Null
-
-              # we are interested only in the first $Samples + 1 lines (output includes header)
-              $out = @()
-              for ($i = 0; $i -le $Samples; $i++)
-              {
-                  $out += $p.StandardOutput.ReadLine()
-              }
-
-              Write-Debug "$res"
-
-              if ($p.HasExited)
-              {
-                  Write-Warning "Process exited prematurely, trying again"
-                  Write-Warning "$out"
+                  Write-Warning "Setting network opts is supported only on Linux"
                   return
               }
 
-              # we have what we need, kill the app now
-              # Normally, we would let the app close itself, but when running MsQuic, the CLR memory
-              # gets corrupted when large number of connections are used.
-              $p | Stop-Process
-
-              $out
+              SetTrafficControl $device $netOpts.Lag $netOpts.Drop
           }
+    }
 
-        # stop server
-        InvokeHelper -ArgumentList $serverPS -Session $ServerSession {
-            param($serverPS)
-            Stop-Process $serverPS
+    # repeat until success
+    while ($true)
+    {
+        try
+        {
+            # start server, return PID of the process
+            $serverPS = InvokeHelper `
+              -ArgumentList $envdef, $provider, $WorkingDirectory, $binPath, $serverArgs, $ManagedCCAlg `
+              -Session $ServerSession {
+                  param($env, $provider, $workdir, $binPath, $serverArgs, $cc)
+
+                  # pull the definition of the functions into the scope
+                  Invoke-Expression $env
+
+                  if (!$workDir)
+                  {
+                      $workDir = Get-Location
+                  }
+
+                  # set internal QUIC implementation switches
+                  $ENV:DOTNETQUIC_PROVIDER=$provider
+                  $ENV:DOTNETQUIC_CC=$cc
+
+                  # this one is needed for Linux in order to properly load OpenSSL and MsQuic from the binary directory
+                  $ENV:LD_LIBRARY_PATH=$workDir
+
+                  if ($netOps)
+                  {
+                      SetTrafficControl
+                  }
+
+                  $p = StartProcess $binPath $workdir $serverArgs
+
+                  # wait until ready
+                  $null = $p.StandardOutput.ReadLine()
+
+                  $p.Id
+              }
+
+            # run client and collect output
+            $res = InvokeHelper `
+              -ArgumentList $envdef, $provider, $WorkingDirectory, $binPath, $clientArgs, $Samples, $ManagedCCAlg `
+              -Session $ClientSession {
+                  param($env, $provider, $workdir, $binPath, $clientArgs, $Samples, $cc)
+
+                  # pull the definition of the functions into the scope
+                  Invoke-Expression $env
+
+                  if (!$workDir)
+                  {
+                      $workDir = Get-Location
+                  }
+
+                  # set internal QUIC implementation switches
+                  $ENV:DOTNETQUIC_PROVIDER=$provider
+                  $ENV:DOTNETQUIC_CC=$cc
+
+                  # this one is needed for Linux in order to properly load OpenSSL and MsQuic from the binary directory
+                  $ENV:LD_LIBRARY_PATH=$workDir
+
+                  $p = StartProcess $binPath $workdir $clientArgs
+
+                  # we are interested only in the first $Samples + 1 lines (output includes header)
+                  $out = @()
+                  for ($i = 0; $i -le $Samples; $i++)
+                  {
+                      $out += $p.StandardOutput.ReadLine()
+                  }
+
+                  Write-Debug "$res"
+
+                  if ($p.HasExited)
+                  {
+                      Write-Warning "Process exited prematurely, trying again"
+                      Write-Warning "$out"
+                      return
+                  }
+
+                  # we have what we need, kill the app now
+                  # Normally, we would let the app close itself, but when running MsQuic, the CLR memory
+                  # gets corrupted when large number of connections are used.
+                  $p | Stop-Process
+
+                  $out
+              }
+
+
+        }
+        finally
+        {
+            if ($serverPS)
+            {
+                # stop server
+                InvokeHelper -ArgumentList $serverPS -Session $ServerSession {
+                    param($serverPS)
+                    Stop-Process $serverPS
+                }
+            }
         }
 
         if (!$res)
@@ -469,6 +565,24 @@ function Run
     # add additional info about the environment
     if ($NetworkOpts)
     {
+        InvokeHelper `
+          -Session $ServerSession, $ClientSession `
+          -ArgumentList $envDef, $networkInterface `
+          {
+              param($env, $device)
+
+              # pull the definition of the functions into the scope
+              Invoke-Expression $env
+
+              if (!$IsLinux)
+              {
+                  # warning already reported
+                  return
+              }
+
+              UnsetTrafficControl $device
+          }
+
         foreach($key in $NetworkOpts.Keys)
         {
             $res = $res |

@@ -398,8 +398,6 @@ copied before they are sent. The semantics of the \method{Write} and \method{Wri
 the \Stream{} class is such that when the method completes, the provided memory can be reused for
 other purposes.
 
-\todo{check the explanation of why waiting for acks is inadequate}
-
 In this case, a single-copy implementation approach would require that the \method{Write} and
 \method{WriteAsync} methods complete after the peer acknowledges that the data were received. In the
 best-case scenario where no packet loss occurs, this approach implies a full round trip delay for
@@ -623,7 +621,7 @@ the connection logic.
 
 Another responsibility of the \RecoveryController{} class is maintaining the congestion window.
 Although the specification defines only a single algorithm for congestion control based on TCP
-NewReno~\cite[Section~7]{draft-ietf-quic-recovery}, there are already experiments with other
+NewReno~\autocite[Section~7]{draft-ietf-quic-recovery}, there are already experiments with other
 algorithms like HyStart++ and CUBIC~\cite{cloudflareCubic}. The ability to support multiple such
 algorithms could provide an opportunity for future experimentations. For that reason, the
 \RecoveryController{} will use the \gls{strategy-pattern}~\cite{wiki:strategy-pattern} to allow

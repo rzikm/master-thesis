@@ -31,9 +31,11 @@ echo application.}
   \item \textit{(optional) Compare the performance of the new implementation with the
 previous \libmsquic{}-based one and with TCP+TLS-based \class{SslStream}.}
 
-       In \autoref{sec:04-perf-results}, we presented the results of our performance measurements.
-
-       \todo{summarize the results}
+        In \autoref{sec:04-perf-results}, we presented the results of our performance measurements.
+        In small number of scenarios, our QUIC implementation outperforms the \libmsquic{}-based
+        one. However, in most cases and especially under heavy load. The \libmsquic{}-based QUIC
+        implementation performs better both in terms of throughput and latency. However, neither of
+        the QUIC implementations performs better than the combination of TCP+TLS\@.
 
 \end{enumerate}
 
@@ -59,9 +61,9 @@ could be built. Following list outlines the next development steps for the imple
 
   \item \textit{Update the implementation to match the latest QUIC specification.} QUIC
         specification drafts evolved both during the course of implementation and during writing of
-        this thesis. At the time of writing this conclusion, the 33rd version of the QUIC
-        specification draft is awaiting on a last-call before it becomes a valid RFC document. The
-        implementation presented in this document is based on draft version 26. Updating the
+        the text of this thesis. At the time of writing this conclusion, the 33rd version of the
+        QUIC specification draft is awaiting on a last-call before it becomes a valid RFC document.
+        The implementation presented in this document is based on draft version 26. Updating the
         implementation should be, therefore, the first future goal.
 
   \item \textit{Implement missing parts of the protocol.} This thesis implements only a subset of
@@ -74,11 +76,17 @@ could be built. Following list outlines the next development steps for the imple
         processing architecture include allowing parallel sending and receiving on a single
         connection, and using a single thread to process multiple connections, like done in
         \libmsquic{}.
-        \todo{check this after replacing measurements}
 
-  \item \textit{More realistic performance measurements.} This thesis performed all performance
-        measurements over the loopback network interface and, therefore, do not represent the
-        behavior on a real network.
+  \item \textit{Experiment with congestion control algorithms.} This thesis implemented only the
+        NewReno~\autocite[Section~7]{draft-ietf-quic-recovery} congestion control algorithm described in
+        the QUIC protocol specification. However, other algorithms such as CUBIC or
+        HyStart++~\cite{cloudflareCubic} have shown better performance in some scenarios.
+
+  \item \textit{More realistic performance measurements.} This thesis performed measurements using
+        \SI[per-mode=symbol]{1}{\giga\bit\per\second} Ethernet connection in LAN network. Such
+        connection was easily saturated by some implementations, and we had to extrapolate from
+        results measured over the software-based loopback network interface. It would be better to
+        confirm the measurements over \SI[per-mode=symbol]{10}{\giga\bit\per\second} connection.
 
   \item \textit{Interoperability tests with other QUIC implementations.} This thesis has done only a
         very superficial interoperability test with \libmsquic{}. There is an open source QUIC

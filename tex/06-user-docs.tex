@@ -324,12 +324,12 @@ In order to accept incoming QUIC connections, we need to create an instance of \
   \item listening endpoint;
 
   \item identifier of the application-layer protocol to be used\footnote{QUIC is designed not to be
-used standalone, but as a transport protocol for other application-layer protocols. Since servers
-can support multiple versions of the application protocol, QUIC uses \gls{alpn} extension to TLS to
-negotiate the application-layer protocol as part of the QUIC connection handshake.}, even though we
-are not implementing any standard protocol, we still need to provide one; for our example, we chose
-to use \texttt{"echo"} as the \gls{alpn} identifier; and \todo{emphasized that the ``echo'' choice
-was arbitrary by us}
+        used standalone, but as a transport protocol for other application-layer protocols. Since
+        servers can support multiple versions of the application protocol, QUIC uses \gls{alpn}
+        extension to TLS to negotiate the application-layer protocol as part of the QUIC connection
+        handshake.}, even though we are not implementing any standard protocol, we still need to
+        provide one; for our example, we chose to use \texttt{"echo"} as the \gls{alpn} identifier;
+        and
 
   \item paths to the X.509 certificate and private key file.
 

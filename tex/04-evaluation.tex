@@ -38,8 +38,8 @@ hardware parameters of the servers are:
 
         \litem{RAM} \SI{32}{\giga\byte} (\SI{2400}{\mega\hertz})
 
-        \litem{Network} \SI[per-mode=symbol]{1}{\giga\bit\per\second} Ethernet connection.
-        \todo{it's a shame we don't have 10Gbit}
+        \litem{Network Interface Card} Intel\textsuperscript{\textregistered{}} Ethernet Controller
+        I350 (\SI[per-mode=symbol]{1}{\giga\bit\per\second})
 
         \litem{OS} Fedora 32
 
@@ -133,30 +133,6 @@ introduced by the interop layer bridging the native library API to \dotnet{} QUI
 measured results, therefore, do not represent raw \libmsquic{} library performance, but the
 performance observed by \dotnet{} applications which use the \libmsquic{}-based implementation
 provider which can be validly compared to the performance of the our managed QUIC implementation.
-
-% \subsection{Simulating Non-Ideal Network}
-
-% \todo{this is relevant only if we use the desktop results as well, otherwise}
-
-% In order to measure how implementations behave in presence of lag and packet loss, we used the
-% Clumsy~\cite{clumsy} utility to simulate network problems. Clumsy is based on the
-% WinDivert~\cite{WinDivert} library for capturing packets from the Windows network stack.
-% \autoref{fig:04-clumsy-architecture} illustrates how Clumsy intercepts network traffic. The
-% \texttt{WinDivert.sys} kernel driver intercepts incoming packets and checks them against a set of
-% rules provided by Clumsy. Packets matching a rule are passed to Clumsy. Clumsy internally simulates
-% network issues and reinjects packets into the Windows network stack as necessary.
-
-% \begin{myFigure}{fig:04-clumsy-architecture}{Use of Clumsy to simulate network issues}
-
-%   \resizebox{0.8\linewidth}{!}{\input{img/04-clumsy-architecture.pdf_tex}}
-
-% \end{myFigure}
-
-% However, the implementation of Clumsy uses only a single thread to process packets. This means that
-% Clumsy becomes a bottleneck when processing large network load. \todo{mentioned that we could not
-%   find anything better than clumsy} Since we were unable to find a better tool which would work on
-% Windows, we will use Clumsy only in tests with a single connection where the single-threaded
-% implementation of Clumsy has the least effect on the measurements.
 
 \subsection{Benchmarking Application}\label{sec:04-benchmark-app}
 
@@ -264,6 +240,11 @@ Our expectation is that increasing the message size should increase the latency 
 need to be send to send both the message and the reply. Also, increasing the message should increase
 throughput because there are fewer calls for queueing the same amount of data into the stream.
 
+Running the benchmarking application for the purposes of tests in this section has been automated
+using a PowerShell~\cite{powershell} script. The script is located at
+\filename{src/supplementary/benchmark/ThroughputTests/run.ps1} in this thesis attachments. Comments
+at the top of the file explain the usage of the script.
+
 \subsection{Multiple Parallel Streams Performance}\label{sec:04-multi-stream-perf}
 
 The first set of tests compared the managed and \libmsquic{}-based QUIC implementations. These tests
@@ -282,20 +263,20 @@ implementation maintains almost the same throughput regardless of the number of 
 increases throughput both when increasing the message size and number of streams in a connection.
 
 \begin{myFigure}{fig:04-lab-multi-stream-throughput}{Multiple stream QUIC throughput measurements (LAN)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-a}{1 Stream, \SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-a}{1 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-throughput-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-b}{1 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-b}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-throughput-b.tex}
 \end{mySubfigure}
 
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-c}{32 Stream, \SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-c}{32 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-throughput-c.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-d}{32 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-d}{32 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-throughput-d.tex}
 \end{mySubfigure}
@@ -310,11 +291,11 @@ times greater than our implementation. Results of runs with \SI{256}{\byte} mess
 for brevity because they did not differ from the ones in LAN environment.
 
 \begin{myFigure}{fig:04-multi-stream-throughput}{Multiple stream QUIC throughput measurements (Loopback)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-b}{1 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-b}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-multi-stream-throughput-b.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-d}{32 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-d}{32 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-multi-stream-throughput-d.tex}
 \end{mySubfigure}
@@ -368,20 +349,20 @@ lower 99th percentile of latency, especially in test cases with high number of c
 measurement on Windows loopback did not yield significantly different results.
 
 \begin{myFigure}{fig:04-lab-multi-stream-latency}{Multiple stream QUIC latency measurements (LAN)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-a}{1 Stream, \SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-a}{1 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-b}{1 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-b}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-b.tex}
 \end{mySubfigure}
 
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-c}{32 Stream, \SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-c}{32 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-c.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-d}{32 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-d}{32 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-d.tex}
 \end{mySubfigure}
@@ -415,11 +396,11 @@ median measurements of the latency. For brevity, we include only the measurement
 lower than that of the \libmsquic{}-based one.
 
 \begin{myFigure}{fig:04-lab-multi-stream-latency-median}{Multiple stream QUIC latency median measurements (LAN)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-a}{1 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-a}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-median-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-b}{32 Stream, \SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-b}{32 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-median-b.tex}
 \end{mySubfigure}
@@ -461,11 +442,11 @@ implementations. Also, out of the three implementations, our QUIC implementation
 which is not bottlenecked by the \SI{1}{\giga\bit} LAN\@.
 
 \begin{myFigure}{fig:04-lab-single-stream-throughput}{Single stream throughput measurements (LAN)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-a}{\SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-throughput-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-b}{\SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-b}{\SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-throughput-b.tex}
 \end{mySubfigure}
@@ -480,11 +461,11 @@ greater throughput than the \libmsquic{}-based implementation\footnote{Without l
   to \SI[per-mode=symbol]{900}{\mebi\byte\per\second}.}
 
 \begin{myFigure}{fig:04-single-stream-throughput}{Single stream throughput measurements (Loopback)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-a}{\SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-single-stream-throughput-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-b}{\SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-b}{\SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-single-stream-throughput-b.tex}
 \end{mySubfigure}
@@ -499,11 +480,11 @@ environment. These results show that TCP exhibits substantially lower latencies 
 implementation. Very similar results were obtained also on the Windows workstation.
 
 \begin{myFigure}{fig:04-lab-single-stream-latency}{Single stream latency measurements (LAN)}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-a}{\SI{256}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-latency-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-b}{\SI{4096}{\byte} Messages}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-b}{\SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-latency-b.tex}
 \end{mySubfigure}
@@ -517,7 +498,10 @@ The results presented in this section suggest that neither QUIC implementation c
 \SslStream{} in neither local LAN networks or over the loopback interface (even with the MTU
 reduction we explained in \autoref{sec:04-localhost-mtu}). It is possible, however unlikely, that
 the performance over real \SI[per-mode=symbol]{10}{\giga\bit\per\second} network will yield
-different results.
+different results. A possible explanation for these results is that the TCP networking stack is far
+better optimized than UDP\@. An example of such optimization is \textit{TCP offload
+  engine}~\cite{wiki:tcp-offload-engine} which offloads the TCP/IP stack implementation onto the
+controller on the network interface card.
 
 \subsection{Performance in Simulated Cellular Network}
 
@@ -573,16 +557,18 @@ comparable in all tests.
 \end{mySubfigure}
 \end{myFigure}
 
-Upon closer inspection, it turns out that the managed QUIC implementation is actually bottlenecked
-by the stream buffering implementation. In \autoref{sec:03-send-stream}, we explained the design
-behind the sending part of the stream, namely the \SendStream{} class. The implementation uses up to
-8 buffers to store application data before blocking in the \method{Write} or \method{WriteAsync}
-method until some data are acknowledged. Each of these buffers is \SI{16}{\kibi\byte}. The
-application data must be buffered until they are acknowledged which takes at least one roundtrip,
-i.e., \SI{25}{\milli\second}. This implies that the theoretical maximum throughput on a network with
-\SI{25}{\milli\second} latency of our implementation is:
-$8 \cdot 16 \cdot 1024 \div 0.025 = 5 \si[per-mode=symbol]{\mebi\byte\per\second} $. This hypothesis can be
-easily tested by doubling the delay on the simulated network.
+Upon closer inspection, it turns out that the managed QUIC implementation is bottlenecked by the
+stream buffering implementation. In \autoref{sec:03-send-stream}, we explained the design behind the
+sending part of the stream, namely the \SendStream{} class. The implementation uses up to eight
+\SI{16}{\kibi\byte} buffers to store the application. Once these buffers are filled, subsequent
+calls to the \method{Write} or \method{WriteAsync} method will block until some data are
+acknowledged. The application data must be buffered until their reception is acknowledged by the
+other endpoint. This takes at least one roundtrip, i.e., \SI{25}{\milli\second} in our test. This
+implies that our implementation can send at most $8 \cdot 16 = 128 \si{\kibi\byte}$ on a single stream
+during each round trip. This sending rate implies a theoretical maximum throughput as
+$128\si{\kibi\byte} \div 0.025 = 5 \si[per-mode=symbol]{\mebi\byte\per\second} $.
+
+This hypothesis can be tested by doubling the delay on the simulated network.
 \autoref{fig:04-lab-loss-throughput-long} shows measurements with \SI{50}{\milli\second} latencies
 (\autoref{fig:04-lab-loss-throughput-a-50}) and \SI{100}{\milli\second} latencies
 (\autoref{fig:04-lab-loss-throughput-a-100}). In these variations of the test we see that the
@@ -611,11 +597,11 @@ exhibits the same latency for both 0.004\% (\autoref{fig:04-lab-loss-latency-a})
 affect the 99th percentile of latency.
 
 \begin{myFigure}{fig:04-lab-loss-latency}{Single stream latency measurements in simulated network}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-a}{\SI{25}{\milli\second} Lag, 0.004\% Loss}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-a}{\SI{25}{\milli\second} latency, 0.004\% loss}
 \footnotesize
 \input{plots/04-lab-loss-latency-a.tex}
 \end{mySubfigure}
-\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-b}{\SI{25}{\milli\second} Lag, 0.1\% Loss}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-b}{\SI{25}{\milli\second} latency, 0.1\% loss}
 \footnotesize
 \input{plots/04-lab-loss-latency-b.tex}
 \end{mySubfigure}
@@ -625,11 +611,48 @@ All implementations show almost the same latency in almost all tests. The single
 implementation, which exhibits greater latencies for \SI{4096}{\byte} messages. This is because this
 message size does not fit a single packet, our pacer implementation spaces out individual packet one
 by one. The \libmsquic{}-based implementation, on the other hand, sends small batches of packets for
-each pacer tick, and the small batches are enough to transmit entire \SI{4096}{\byte} messages.
+each pacer tick, and the small batches are enough to transmit the entire \SI{4096}{\byte} messages.
 
-By using only a single stream in a QUIC connection, we do not utilize one of the big advantages of
-QUIC over TCP\@. Because QUIC moves stream multiplexing to the transport layer, it significantly
-reduces the \gls{head-of-line-blocking} phenomenon.
+By using only a single stream in each QUIC connection in these tests, it could be argued that we did
+not utilize one of the big advantages of QUIC over TCP\@ --- the reduced \gls{head-of-line-blocking}.
+\autoref{fig:04-lab-multi-loss-throughput} shows the measurements of throughput similar to the one
+in \autoref{fig:04-lab-loss-throughput}, but with QUIC connections transmitting data in 32 parallel
+streams. Contrary to the expectation, the throughput of the QUIC implementation increases only
+slightly.
+
+\begin{myFigure}{fig:04-lab-multi-loss-throughput}{Multiple stream throughput measurements in simulated network}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-loss-throughput-a}{32 streams, \SI{25}{\milli\second} latency, 0.004\% loss}
+\footnotesize
+\input{plots/04-lab-multi-loss-throughput-a.tex}
+\end{mySubfigure}
+\begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-loss-throughput-b}{32 streams, \SI{25}{\milli\second} latency, 0.1\% loss}
+\footnotesize
+\input{plots/04-lab-multi-loss-throughput-b.tex}
+\end{mySubfigure}
+\end{myFigure}
+
+Because we were sending data using multiple streams, the managed QUIC implementation was no longer
+blocked by the limited buffering discused above. Instead, it was limited by the size of the
+congestion window. When investigated more closely, it turns out that the throughput of both QUIC
+implementation was very high at the beginning, possibly even higher than that of TCP\@. However,
+during the \SI{5}{\second} warmup period, The packet loss led to significant reduction of the
+congestion window and the throughput was reduced to the values we can see on the plot.
+
+We believe that this behavior was caused by the too uniform distribution of the packet loss we used
+in our testing environment. In environment with uniform packet loss, almost all lost packets induce
+a separate congestion event which leads to reducing the congestion window. When packets are lost in
+bursts --- as is more common in real-world networks --- loss of multiple consecutive packets is handled
+as a single congestion event, leading to less frequent reductions of the congestion window.
+
+In this case, the behavior of the entire implementation depends on the implementation of the
+congestion control algorithm. The managed QUIC implementation uses an adaptation of the NewReno
+algorithm described by the QUIC specification~\autocite[Section~7]{draft-ietf-quic-recovery}. The
+\libmsquic{}-based QUIC implementation uses CUBIC algorithm~\cite{rfc8312}. CUBIC was also used by
+TCP in our tests. Because of the substantial difference in performance, we consider it worthwhile to
+experiment with different congestion control algorithms for our implementation. Studying the
+behavior and implementation of TCP congestion control in the Linux kernel should also provide a
+useful insight for improving the behavior of our implementation. However, due to the complexity, we
+leave such experiments and investigation for future work.
 
 \section{Interop between QUIC Implementations}
 
@@ -644,23 +667,25 @@ and is subject for future work.
 
 \section{Summary}
 
-\todo{use different section name?}
-
 When compared to \libmsquic{}-based QUIC implementation provider, the managed QUIC implementation
-developed in this thesis can provide higher throughput when using small number of parallel
+developed as part of this thesis can provide higher throughput when using small number of parallel
 connection while maintaining comparable latencies. However, in the current state, the managed QUIC
-implementation does not scale very well and the throughput and observed latencies degrade when large
-number of connections is created.
+implementation does not scale very well and both throughput and observed latencies degrade when
+large number of connections is created. When under substantial load, the \libmsquic{}-based
+implementation was able to deliver throughput up to four times greater than our implementation.
 
-Both QUIC implementation providers have measured lower single-stream performance when compared with
-the TCP+TLS stack over the loopback interface. However, it should be noted that the implementations
-may behave differently when used over real network.
+However, in our tests, TCP+TLS stack has measured significantly larger throughput and lower
+latencies than either QUIC implementation in our LAN environment. This can be possibly attributed to
+various hardware optimizations for TCP stack on the network interface card.
 
-In case of simulated lossy environment, we measured significantly higher single-stream throughput
-using TCP+TLS stack than either QUIC implementation. For smaller messages, the measured latencies
-were similar in all implementations, but for larger messages, both QUIC implementations showed
-significantly lower latencies than the combination of TCP+TLS\@.
+We also compared the QUIC and TCP implementations in a simulated 4G network. In our tests, we again
+measured significantly higher throughput using TCP+TLS stack than either QUIC implementation, even
+if we used multiple streams in QUIC connections. As for latencies, all implementations exhibit
+almost identical latency, except for our implementation, which had larger latencies once the size of
+the messages exceeded the maximum size of a QUIC packet.
 
-We conclude from these measurements that while QUIC both implementations show some interesting
-results, there is still a lot of optimizations required before their performance is comparable to
-that of the TCP protocol.
+From our measurements, we conclude that our prototype QUIC implementation will need a lot of work in
+order to provide performance similar to that of \libmsquic{}. We have identified some of the
+underlying problems in the current managed implementation and proposed future improvements. However,
+both QUIC implementations will require significant amount of optimizations before reaching
+performance comparable to present TCP implementations.
