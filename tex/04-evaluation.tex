@@ -45,10 +45,11 @@ I350 (\SI[per-mode=symbol]{1}{\giga\bit\per\second})
 \end{itemize}
 
 Unfortunately, the two servers are connected only by \SI[per-mode=symbol]{1}{\giga\bit\per\second}
-Ethernet, which for TCP a theoretical upper limit for throughput at
-\SI[per-mode=symbol]{117.5}{\mega\byte\per\second}, which was easily reached in our measurements.
-Therefore, when appropriate, we also evaluated our implementation using a loopback network interface
-on a desktop workstation PC with the following specifications:
+Ethernet, which implies a theoretical upper limit for TCP's throughput at
+\SI[per-mode=symbol]{117.5}{\mega\byte\per\second} and similar limit for UDP\@. In some
+measurements, we reached values that approached this limit. Therefore, when appropriate, we also
+evaluated our implementation using a loopback network interface on a desktop workstation PC with the
+following specifications:
 
 \begin{itemize}
 
