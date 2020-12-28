@@ -48,6 +48,37 @@
  }
 \ExplSyntaxOff
 
+% define a macro \Autoref to allow multiple references to be passed to \autoref
+% src: https://tex.stackexchange.com/questions/15728/multiple-references-with-autoref
+\makeatletter
+
+\newcommand\Autoref[1]{\@first@ref#1,@}
+\def\@throw@dot#1.#2@{#1}% discard everything after the dot
+\def\@set@refname#1{%    % set \@refname to autoefname+s using \getrefbykeydefault
+    \edef\@tmp{\getrefbykeydefault{#1}{anchor}{}}%
+    \xdef\@tmp{\expandafter\@throw@dot\@tmp.@}%
+    \ltx@IfUndefined{\@tmp autorefnameplural}%
+         {\def\@refname{\@nameuse{\@tmp autorefname}s}}%
+         {\def\@refname{\@nameuse{\@tmp autorefnameplural}}}%
+}
+\def\@first@ref#1,#2{%
+  \ifx#2@\autoref{#1}\let\@nextref\@gobble% only one ref, revert to normal \autoref
+  \else%
+    \@set@refname{#1}%  set \@refname to autoref name
+    \@refname~\ref{#1}% add autoefname and first reference
+    \let\@nextref\@next@ref% push processing to \@next@ref
+  \fi%
+  \@nextref#2%
+}
+\def\@next@ref#1,#2{%
+   \ifx#2@ and~\ref{#1}\let\@nextref\@gobble% at end: print and+\ref and stop
+   \else, \ref{#1}% print  ,+\ref and continue
+   \fi%
+   \@nextref#2%
+}
+
+\makeatother
+
 %%% Functional foreach construct
 %%% (https://stackoverflow.com/questions/2402354/split-comma-separated-parameters-in-latex)
 
@@ -294,11 +325,8 @@
   basicstyle=\ttfamily\footnotesize
 }
 
-\newcommand{\lstsetcsharp}[5]{% [extra], label, caption, types, enums
-  \lstset{
-    caption={#3},
-    label={#2},
-    language=[Sharp]C,
+\newcommand{\lstsetcsharpsettings}{%
+  \lstset{language=[Sharp]C,
     keywords={
       abstract, event, new, struct, as, explicit, null, switch, base, extern,
       object, this, bool, false, operator, break, out, true, byte, fixed, override,
@@ -311,14 +339,22 @@
     morekeywords=[2]{% Execution control flow keywords
       throw, finally, try, for, foreach, goto, if, return, while, else,
     },
-    types={#4},
-    enums={#5},
     keywordstyle=\color{codecolorkeyword}\bfseries,
     keywordstyle=[2]{\color{codecolorkeywordcontrolflow}\bfseries},
     %morecomment=[s]{//}{},
     morestring=*[s]{\$"}{"},
     moredelim=*[s]{\{}{\}},
-    moredelim=[is][\color{codecolormethod}]{|}{|},
+    moredelim=[is][\color{codecolormethod}]{|}{|}
+  }
+}
+
+\newcommand{\lstsetcsharp}[5]{% [extra], label, caption, types, enums
+  \lstsetcsharpsettings{}
+  \lstset{
+    caption={#3},
+    label={#2},
+    types={#4},
+    enums={#5},
     #1
   }
 }
@@ -380,6 +416,18 @@
 }
 
 % general listing env
+
+\newenvironment{myListingFrame}{%
+  \begin{mdframed}[
+    hidealllines=true,
+    innerleftmargin=0,
+    innerrightmargin=0
+    ]
+  \hrule\medskip
+}{%
+  \medskip\hrule
+  \end{mdframed}
+}
 
 \newenvironment{myListing}[3][]{% [short caption], label, caption
   \begin{mdframed}[
