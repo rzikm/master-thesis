@@ -15,7 +15,7 @@
 %\let\openright=\clearpage
 
 %% Settings for two-sided (duplex) printing
-\documentclass[12pt,a4paper,twoside,openright]{report}
+\documentclass[american,12pt,a4paper,twoside,openright]{report}
 \setlength\textwidth{145mm}
 \setlength\textheight{247mm}
 \setlength\oddsidemargin{14.2mm}
@@ -38,14 +38,13 @@
 %% Prefer Latin Modern fonts
 \usepackage{lmodern}
 
-%% set language
-\usepackage[english]{babel}
+%% set language, english is our main language, so it goes last (so it stays active)
+\usepackage[czech,english]{babel}
 \usepackage{csquotes}
 
 %% Further useful packages (included in most LaTeX distributions)
 \usepackage{amsmath}        % extensions for typesetting of math
 \usepackage{amsfonts}       % math fonts
-\usepackage{amsthm}         % theorems, definitions, etc.
 \usepackage{bbding}         % various symbols (squares, asterisks, scissors, ...)
 \usepackage{bm}             % boldface symbols (\bm)
 \usepackage{graphicx}       % embedding of pictures
@@ -77,6 +76,7 @@
 \usepackage{epstopdf}       % render output from gnuplot to epslatex terminal
 \usepackage{enumitem}       % modifying list styles
 \usepackage{letterspace}    % adjusting spacing between letters
+\usepackage{catchfile}      % read contents of a file into a variable
 
 \addbibresource{bibliography.bib}
 
@@ -98,6 +98,7 @@
 
 % Thesis title in English (exactly as in the formal assignment)
 \def\ThesisTitle{QUIC Protocol Implementation for .NET}
+\def\ThesisTitleCZ{Implementace protokolu QUIC pro .NET}
 
 % Author of the thesis
 \def\ThesisAuthor{Bc. Radek Zikmund}
@@ -109,15 +110,18 @@
 % (according to the Organizational Structure of MFF UK in English,
 % or a full name of a department outside MFF)
 \def\Department{Department of Distributed and Dependable Systems}
+\def\DepartmentCZ{Katedra distribuovaných a spolehlivých systémů}
 
 % Is it a department (katedra), or an institute (ústav)?
 \def\DeptType{Department}
+\def\DeptTypeCZ{Katedra}
 
 % Thesis supervisor: name, surname and titles
 \def\Supervisor{Mgr. Pavel Ježek, Ph.D.}
 
 % Supervisor's department (again according to Organizational structure of MFF)
-\def\SupervisorsDepartment{Department of Distributed and Dependable Systems}
+\def\SupervisorsDepartment{\Department}
+\def\SupervisorsDepartmentCZ{\DepartmentCZ}
 
 % Study programme and specialization
 \def\StudyProgramme{Computer Science}
@@ -126,17 +130,20 @@
 % An optional dedication: you can thank whomever you wish (your supervisor,
 % consultant, a person who lent the software, etc.)
 \def\Dedication{%
-Dedication.
+TODO: Dedication.
 }
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
-\edef\Abstract{%
-TODO: do the abstract last%
-}
+% Abstracts are stored in separate files so that they can be included also in separate PDFs
+\CatchFileDef{\AbstractCZ}{abstractCZ.txt}{}
+\CatchFileDef{\Abstract}{abstract.txt}{}
 
 % 3 to 5 keywords (recommended), each enclosed in curly braces
 \def\Keywords{%
 {QUIC} {.NET} {network protocol}
+}
+\def\KeywordsCZ{%
+{QUIC} {.NET} {síťový protokol}
 }
 
 %% The hyperref package for clickable links in PDF and also for storing
@@ -149,10 +156,10 @@ TODO: do the abstract last%
 \let\subsectionautorefname\sectionautorefname
 \let\subsubsectionautorefname\sectionautorefname
 
-%% generate thesis.xmpdata file
-%% see https://tex.stackexchange.com/questions/534035/macros-commands-inside-a-filecontents-environment-does-not-expand
-%% for the \filecontentsspecials magic
-
+%% generate xmpdata files
+%%
+%% following piece of code allows expanding latex macros inside filecontents environment
+%% src: https://tex.stackexchange.com/questions/534035/macros-commands-inside-a-filecontents-environment-does-not-expand
 \def\filecontentsspecials#1#2#3{
   \global\let\ltxspecials\dospecials
   \gdef\dospecials{\ltxspecials
@@ -162,6 +169,8 @@ TODO: do the abstract last%
     \global\let\dospecials\ltxspecials
   }
 }
+\begingroup
+\def\par{^^J} % par macro must not appear in the Subject, so we have to replace it by newline
 \filecontentsspecials|[]
 \begin{filecontents}[overwrite]{\jobname.xmpdata}
 \Author{|ThesisAuthor}
@@ -170,12 +179,19 @@ TODO: do the abstract last%
 \Subject{|Abstract}
 \Publisher{Charles University}
 \end{filecontents}
-
-%% also generate abstract.txt so that it can be included from the abstract.tex file
 \filecontentsspecials|[]
-\begin{filecontents}[overwrite]{abstract.txt}
-|Abstract
+\begin{filecontents}[overwrite]{abstract.xmpdata}
+\Title{|ThesisTitle}
+\Keywords{QUIC\sep .NET\sep network protocol}
+\Publisher{Charles University}
 \end{filecontents}
+\filecontentsspecials|[]
+\begin{filecontents}[overwrite]{abstractCZ.xmpdata}
+\Title{|ThesisTitleCZ}
+\Keywords{QUIC\sep .NET\sep síťový protokol}
+\Publisher{Univerzita Karlova}
+\end{filecontents}
+\endgroup
 
 % Definitions of macros (see description inside)
 \include{macros}

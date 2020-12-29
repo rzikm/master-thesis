@@ -17,8 +17,9 @@ syntax: glob
 /tex/img/*.pdf_tex
 /tex/bibliography.bib.bak
 /tex/bibliography.bib.sav
-/tex/abstract.txt
 /tex/thesis.xmpdata
+/tex/abstract.xmpdata
+/tex/abstractCZ.xmpdata
 /tex/*.glg
 /tex/*.glo
 /tex/*.gls

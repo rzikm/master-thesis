@@ -134,51 +134,6 @@
   {\multicitedelim}
   {\usebibmacro{postnote}}
 
-%%% Macros for definitions, theorems, claims, examples, ... (requires amsthm package)
-
-\theoremstyle{plain}
-\newtheorem{thm}{Theorem}
-\newtheorem{lemma}[thm]{Lemma}
-\newtheorem{claim}[thm]{Claim}
-
-\theoremstyle{plain}
-\newtheorem{defn}{Definition}
-
-\theoremstyle{remark}
-\newtheorem*{cor}{Corollary}
-\newtheorem*{rem}{Remark}
-\newtheorem*{example}{Example}
-
-%%% An environment for proofs
-
-\newenvironment{myproof}{
-  \par\medskip\noindent
-  \textit{Proof}.
-}{
-\newline
-\rightline{$\qedsymbol$}
-}
-
-%%% The field of all real and natural numbers
-\newcommand{\R}{\mathbb{R}}
-\newcommand{\N}{\mathbb{N}}
-
-%%% Useful operators for statistics and probability
-\DeclareMathOperator{\pr}{\textsf{P}}
-\DeclareMathOperator{\E}{\textsf{E}\,}
-\DeclareMathOperator{\var}{\textrm{var}}
-\DeclareMathOperator{\sd}{\textrm{sd}}
-
-%%% Transposition of a vector/matrix
-\newcommand{\T}[1]{#1^\top}
-
-%%% Various math goodies
-\newcommand{\goto}{\rightarrow}
-\newcommand{\gotop}{\stackrel{P}{\longrightarrow}}
-\newcommand{\maon}[1]{o(n^{#1})}
-\newcommand{\abs}[1]{\left|{#1}\right|}
-\newcommand{\dint}{\int_0^\tau\!\!\int_0^\tau}
-\newcommand{\isqr}[1]{\frac{1}{\sqrt{#1}}}
 
 %%% Various table goodies
 \newcommand{\pulrad}[1]{\raisebox{1.5ex}[0pt]{#1}}
@@ -258,6 +213,26 @@
   \figureArgs{}
   \endsubfigure{}
 }
+
+%% Fix cmidrule and babel[czech] clash
+%% src: https://tex.stackexchange.com/questions/111999/slovak-and-czech-babel-gives-problems-with-cmidrule-and-cline
+\begingroup
+    \makeatletter
+    \catcode`\-=\active
+    \AtBeginDocument{
+    \def\@@@cmidrule[#1-#2]#3#4{\global\@cmidla#1\relax
+        \global\advance\@cmidla\m@ne
+        \ifnum\@cmidla>0\global\let\@gtempa\@cmidrulea\else
+        \global\let\@gtempa\@cmidruleb\fi
+        \global\@cmidlb#2\relax
+        \global\advance\@cmidlb-\@cmidla
+        \global\@thisrulewidth=#3
+        \@setrulekerning{#4}
+        \ifnum\@lastruleclass=\z@\vskip \aboverulesep\fi
+        \ifnum0=`{\fi}\@gtempa
+        \noalign{\ifnum0=`}\fi\futurenonspacelet\@tempa\@xcmidrule}
+    }
+\endgroup
 
 % environment setting common attributes of tables
 \newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]

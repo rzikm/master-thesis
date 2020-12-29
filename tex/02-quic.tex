@@ -482,6 +482,7 @@ ack-eliciting and which packets can carry them.
   {l@{\hskip -0.1in}ccccc}
   {                               &               & \multicolumn{4}{c}{Allowed in packet type} \\
     \cmidrule(lr){3-6} Frame type & Ack-eliciting & Initial & Handshake & 0-RTT & 1-RTT}
+    %Frame type & Ack-eliciting & Initial & Handshake & 0-RTT & 1-RTT}
   \PADDING{}                      &               & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
   \PING{}                         & \checkmark{}           & \checkmark{}     & \checkmark{}       & \checkmark{}   & \checkmark{}          \\
   \ACK{}                          &               & \checkmark{}     & \checkmark{}       &       & \checkmark{}          \\
@@ -999,9 +1000,9 @@ derived as follows:
 
 \begin{equation*}
   \begin{split}
-    key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic key"}, \texttt{""}, 32) \\
-    iv & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic iv"}, \texttt{""}, 12) \\
-    hp & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic hp"}, \texttt{""}, 32) \\
+    key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic key\dq}, \texttt{\dq\dq}, 32) \\
+    iv & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic iv\dq}, \texttt{\dq\dq}, 12) \\
+    hp & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic hp\dq}, \texttt{\dq\dq}, 32) \\
   \end{split}
 \end{equation*}
 
@@ -1124,9 +1125,9 @@ keys using the HKDF-Expand-Label function:
 
 \begin{equation*}
   \begin{split}
-    secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{"quic ku"}, \texttt{""}, 32) \\
-    key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic key"}, \texttt{""}, 32) \\
-    iv_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic iv"}, \texttt{""}, 12) \\
+    secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{\dq{}quic ku\dq{}}, \texttt{\dq{}\dq{}}, 32) \\
+    key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{\dq{}quic key\dq{}}, \texttt{\dq{}\dq{}}, 32) \\
+    iv_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{\dq{}quic iv\dq{}}, \texttt{\dq{}\dq{}}, 12) \\
   \end{split}
 \end{equation*}
 
