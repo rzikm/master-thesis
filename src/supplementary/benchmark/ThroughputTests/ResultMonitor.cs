@@ -72,6 +72,7 @@ namespace ThroughputTests
             double p50Latency = 0;
             double p95Latency = 0;
             double p99Latency = 0;
+            double pmaxLatency = 0;
             
             List<Column> columns = new List<Column>
             {
@@ -89,6 +90,7 @@ namespace ThroughputTests
                 columns.Add(new Column("Latency-p50 (ms)", 20, () => $"{p50Latency:0.000}"));
                 columns.Add(new Column("Latency-p95 (ms)", 20, () => $"{p95Latency:0.000}"));
                 columns.Add(new Column("Latency-p99 (ms)", 20, () => $"{p99Latency:0.000}"));
+                columns.Add(new Column("Latency-max (ms)", 20, () => $"{pmaxLatency:0.000}"));
             }
 
             PrintHeader(columns, options.CsvOutput);
@@ -105,7 +107,7 @@ namespace ThroughputTests
 
                 if (!options.NoWait)
                 {
-                    (avgLatency, p50Latency, p95Latency, p99Latency) = CalculateLatencies(clients, latencies);
+                    (avgLatency, p50Latency, p95Latency, p99Latency, pmaxLatency) = CalculateLatencies(clients, latencies);
                 }
 
                 previousElapsed = elapsed;
@@ -133,7 +135,7 @@ namespace ThroughputTests
         
         static List<double> gatheredLatencies = new List<double>();
 
-        private static (double avg, double p50, double p95, double p99) CalculateLatencies(Client[] clients, List<TimeSpan>[][] latencies)
+        private static (double avg, double p50, double p95, double p99, double pmax) CalculateLatencies(Client[] clients, List<TimeSpan>[][] latencies)
         {
             // swap latency measurements lists
             for (var i = 0; i < clients.Length; i++)
@@ -165,6 +167,7 @@ namespace ThroughputTests
             var p50 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.50f) : double.NaN;
             var p95 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.95f) : double.NaN;
             var p99 = gatheredLatencies.Count > 0 ? CalculatePercentile(0.99f) : double.NaN;
+            var pmax = gatheredLatencies.Count > 0 ? CalculatePercentile(0.9999999f) : double.NaN;
 
             // clean up the lists for future use
             foreach (var c in latencies)
@@ -175,7 +178,7 @@ namespace ThroughputTests
                 }
             }
 
-            return (avg, p50, p95, p99);
+            return (avg, p50, p95, p99, pmax);
         }
 
         private static void PrintColumns(List<Column> columns, bool csv)
