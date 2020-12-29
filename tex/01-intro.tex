@@ -7,38 +7,39 @@ e.g., microservices architecture. Finally, HTTP is also used as a transport medi
 APIs and technologies such as gRPC and GraphQL\@.
 
 The latest version of the HTTP protocol is HTTP/2, published in 2015~\cite{rfc7540}. HTTP/2 improved
-on its predecessor HTTP/1.1~\cite{rfc7230} by introducing request multiplexing over a single TCP
-connection, header compression, and server-push features. These features led to reduced loading
-times of web pages and generally improved the efficiency of the web~\cite{deSaxce2015}.
+on its predecessor HTTP/1.1~\cite{rfc7230} by introducing request header compression, request
+multiplexing over a single TCP connection, and server-push features. These features led to reduced
+loading times of web pages and generally improved the efficiency of the web~\cite{deSaxce2015}.
 
 \section{Remaining Performance Issues in HTTP/2}
 
-HTTP/2 does not solve all the performance issues HTTP/1.1 had. HTTP/2 introduced new features and
-changes only to the topmost layer of the HTTP stack, and these changes could not address the
-performance limiting phenomenons caused by the layers underneath. For the context of this thesis,
-the following two performance problems are the most relevant.
+HTTP/2, however, does not solve all the performance issues HTTP/1.1 had. HTTP/2 introduced new
+features and changes only to the topmost layer of the HTTP stack, and these changes could not
+address the performance limiting phenomenons caused by the layers underneath. For the context of
+this thesis, the following two performance problems are the most relevant.
 
 \subsection*{Head-of-Line Blocking}
 
 Request multiplexing was introduced in HTTP/2 to reduce the number of web servers' resources
 required to serve requests made by web browsers. Because modern web pages are composed of many parts
 (HTML, images, Javascript files, CSS style sheets), web browsers have to make multiple HTTP requests
-to load the page. HTTP/1.1 creates multiple independent HTTP connections to download individual
-parts of the webpage, one connection per HTTP request. HTTP/2, on the other hand, can make multiple
-HTTP requests in parallel in a single connection. Although this change improved HTTP's performance,
-its current design is limited by a phenomenon known as \textit{\gls{head-of-line-blocking}}.
+to load the entire page. HTTP/1.1 creates multiple independent HTTP connections to download
+individual parts of the webpage, one connection per HTTP request. HTTP/2, on the other hand, can
+make multiple HTTP requests in parallel in a single connection. Although this change improved HTTP's
+performance, its current design is limited by a phenomenon known as
+\textit{\gls{head-of-line-blocking}}.
 
-The individual HTTP frames which make up the HTTP requests are interleaved and transferred over TCP
-in a single stream of data. When a TCP packet carrying part of this stream is lost, delivery of all
-following packets is delayed until the lost packet is retransmitted. This will cause a delay in all
-HTTP requests currently in progress, even if the lost packet contained data belonging only to a
-single HTTP request. More information on head-of-line blocking can be found, e.g., on a dedicated
-Wikipedia page~\cite{wiki:head-of-line-blocking}.
+The individual HTTP frames which make up the HTTP requests and responses are interleaved and
+transferred over TCP as a single stream of data. When a TCP packet carrying a part of this stream is
+lost, delivery of the data in all following packets is delayed until the lost packet is
+retransmitted. This will cause a delay in all HTTP requests currently in progress, even those
+requests whose data were not carried by the lost packet. More information on head-of-line blocking
+can be found, e.g., on the dedicated Wikipedia page~\cite{wiki:head-of-line-blocking}.
 
 \subsection*{HTTPS Connection Establishment Latency}
 
 HTTPS~\cite{rfc2818} is an extension to HTTP, which makes the connection encrypted by inserting the
-TLS protocol layer between HTTP and TCP. Therefore, establishing an HTTPS connection requires
+TLS protocol layer between HTTP and TCP\@. Therefore, establishing an HTTPS connection requires
 establishing a TCP connection first --- performing the three-way handshake --- and then performing
 another separate handshake for the TLS layer. As can be seen on the illustration in
 \autoref{fig:https-packets}, three round trips are needed at minimum before the HTTP request can be
@@ -51,21 +52,21 @@ even sent.
 \end{myFigure}
 
 More and more websites enforce the use of HTTPS in order to protect the privacy of their users. In
-August 2020, 96 out of the top 100 viewed websites actively redirect to HTTPS, and more than 75\% of
-all network traffic from the Chrome web browser used HTTPS~\cite{googleTransparency}. Even server to
-server communication in the cloud is trending towards HTTPS to protect against partially compromised
-networks. With HTTPS becoming the norm, almost all connections suffer from the increased latency
-caused by the additional TLS handshake.
+August 2020, 96 out of the top 100 viewed websites actively redirected to HTTPS, and more than 75\%
+of all network traffic from the Chrome web browser used HTTPS~\cite{googleTransparency}. Even server
+to server communication in the cloud is trending towards HTTPS to protect against partially
+compromised networks. With HTTPS becoming the norm, almost all connections suffer from the increased
+latency caused by the additional TLS handshake.
 
 \section{HTTP/3 and QUIC}
 
 The next version of the HTTP protocol --- HTTP/3~\cite{draft-ietf-quic-http} --- addresses the issues
 mentioned above by replacing the TCP and TLS layers with a brand new UDP-based protocol named
-QUIC\footnote{Originally intended as the acronym for Quick UDP Internet Connection. However, it has
-been changed to be the protocol's actual name during the standardization process}. The QUIC protocol
-features allow moving multiplexing capability from the application layer into the transport layer of
-the HTTP protocol stack. The responsibilities and relationships between protocols on HTTP/2 and
-HTTP/3 stacks are illustrated in \autoref{fig:http2-vs-http3-stack}.
+QUIC\footnote{Originally intended as the acronym for Quick UDP Internet Connections. However, it has
+  been changed to be the protocol's actual name during the standardization process}. The QUIC
+protocol features allow moving multiplexing capability from the application layer into the transport
+layer of the HTTP protocol stack. The responsibilities and relationships between protocols on the
+HTTP/2 and HTTP/3 stacks are illustrated in \autoref{fig:http2-vs-http3-stack}.
 
 \begin{myFigure} {fig:http2-vs-http3-stack} {Comparison between HTTP/2 and HTTP/3 protocol stacks}
 
@@ -75,24 +76,24 @@ HTTP/3 stacks are illustrated in \autoref{fig:http2-vs-http3-stack}.
 
 Although QUIC development is tied with that of HTTP/3, it is designed as a general-purpose transport
 layer protocol that can be used for other application-layer protocols. The following points
-summarize the main improvements of QUIC over TCP+TLS:
+summarize the main improvements of QUIC over TCP+TLS\@:
 
 \begin{itemize}
 
     \litem{Stream multiplexing} QUIC provides an abstraction of multiple streams of data multiplexed
-on a single connection. Moreover, because QUIC itself also implements loss detection, packet loss
-can be managed in a way that reduces the scope of the \gls{head-of-line-blocking} problem described
-above to the single affected stream.
+on a single connection. Moreover, because QUIC itself also implements loss detection and recovery,
+packet loss can be managed in a way that reduces the scope of the \gls{head-of-line-blocking}
+problem described above to only the streams whose data need to be retransmitted.
 
-    \litem{Faster connection establishment} QUIC also performs TLS handshake, but it does so in
-parallel with the base protocol's handshake. The combined handshake requires fewer round-trips and
-is faster than the combination of TCP and TLS\@.
+    \litem{Faster connection establishment} Internally, QUIC also performs the TLS handshake, but it
+does so in parallel with the base protocol's handshake. The combined handshake requires fewer
+round-trips and is faster than the combination of TCP and TLS\@.
 
     QUIC also supports opt-in \gls{0rtt} from TLS 1.3. The 0-RTT mode of operation allows a client
 to cache some session information, allowing it to send application layer data with the first packet
-in future connections to the same server. 0-RTT effectively reduces the latency by another round
-trip but makes connections vulnerable to repeat attacks. A more detailed description of 0-RTT can be
-found online, e.g., on Cloudflare's blog~\cite{cloudflare-0rtt}.
+in future connections to the same server. 0-RTT effectively reduces the connection establishment
+latency by another round trip but makes applications vulnerable to repeat attacks. A more detailed
+description of 0-RTT can be found online, e.g., on Cloudflare's blog~\cite{cloudflare-0rtt}.
 
     \litem{Always encrypted} TLS handshake is a mandatory part of connection establishment, and
 encryption, therefore, cannot be turned off. This makes QUIC secure-by-default.
@@ -107,7 +108,7 @@ connection must be terminated, and a new connection established from the new IP 
 the other hand, can migrate the connections in a way that is transparent to the application layer.
 
     This feature also enables QUIC extensions like Multipath
-QUIC~\cite{draft-deconinck-quic-multipath-04}, which allows the simultaneous use of multiple network
+QUIC~\cite{draft-deconinck-quic-multipath-04}, which allows simultaneous use of multiple network
 interfaces for a single connection to achieve greater throughput.
 
 \end{itemize}
@@ -143,19 +144,19 @@ until \dotnet{}~6 release.
 
 \subsection*{Existing QUIC Implementation in \dotnet{}}
 
-The work-in-progress implementation of QUIC is still present in the master development branch of the
-\dotnet{} runtime repository~\cite{dotnetGithub} but has been made accessible only internally. This
-implementation is a wrapper around the \libmsquic{} library~\cite{msquicGithub}, which is a C
-implementation of QUIC developed by Microsoft. The \libmsquic{} library is designed for
-high-performance scenarios and has been recently made open-source.
+The current work-in-progress support for QUIC in \dotnet{}~5 is a wrapper around the \libmsquic{}
+library~\cite{msquicGithub}, which is a C implementation of QUIC developed by Microsoft. The
+\libmsquic{} library was designed for high-performance scenarios and has been recently made
+open-source.
 
 The decision to use \libmsquic{} as the QUIC protocol implementation is not final. There are
 compelling arguments for implementing the QUIC protocol in managed \dotnet{} code --- and, more
 specifically, in \csharp{} --- for the production release.
 
 The existing QUIC implementation in \dotnet{} uses a layer of indirection which allows multiple
-implementations to exist side by side. In theory, this makes it possible to switch between QUIC
-implementations at runtime, allowing performance comparisons between candidate QUIC implementations.
+implementations to exist side by side. Furthermore, it is even possible to choose which QUIC
+implementation should be used at runtime. This fact can be used to implement benchmarks comparing
+the performance of available QUIC implementations.
 
 \subsection*{Motivation for Implementing QUIC in Managed Code}
 
@@ -174,10 +175,10 @@ platforms, introducing more complexity into the codebase and possible incompatib
 platforms.
 
     \litem{Support for different library versions} Currently, no native libraries that managed
-\dotnet{} libraries depend on are part of the \dotnet{} distribution. Instead, \dotnet{} runtime
-expects that the library is already installed on the target machine and can be dynamically loaded.
-There is no way to enforce a specific version of the library, which means that the \dotnet{} code
-must work correctly with multiple versions of the native library.
+\dotnet{} libraries depend on are part of the \dotnet{} distribution itself. Instead, \dotnet{}
+runtime expects that the library is already installed on the target machine and can be dynamically
+loaded. There is no way to enforce a specific version of the library, which means that the \dotnet{}
+code must work correctly with multiple versions of the native library.
 
     \litem{Maintainability} Maintenance of the interop code requires the developer to read and
 understand the language in which the native library is written. Debugging the code around the
@@ -205,21 +206,21 @@ so-called managed-to-native transition is relatively small. However, it may be n
 transition occurs very frequently.
 
     \litem{Future development} Exposing new features from newer versions of the native library can
-be problematic because the code needs to work with older versions of the library.
+be problematic because the code needs to work with older versions of the library as well.
 
 \end{itemize}
 
 In the past, the \dotnet{} development team has encountered multiple problems with the
-\libcurl~\cite{curlGithub} library, which was used to implement HTTP request handling on macOS and
+\libcurl{}~\cite{curlGithub} library, which was used to implement HTTP request handling on macOS and
 Linux. Different Linux distributions contained different versions of the \libcurl{} library and,
 therefore, supported different features and had different bugs. The \dotnet{} development team had
 to expend many resources to make sure the \gls{managed-code} written by other \dotnet{} developers
-behaved consistently on all platforms.
+behaved consistently regardless of which \libcurl{} version was present.
 
 Starting with \dotnet{} Core~2.1, the default implementation of HTTP request handling does not rely
 on native libraries like \libcurl{}. Instead, the functionality has been rewritten in pure managed
-code on top of sockets. This implementation offered better performance and consistent behavior
-across all \dotnet{} platforms~\cite{SocketsHttpHandlerDocs}.
+code on top of \Socket{} API\@. This implementation offered better performance and consistent
+behavior across all \dotnet{} platforms~\cite{SocketsHttpHandlerDocs}.
 
 \section{Goals of this Thesis}\label{sec:01-goals}
 
@@ -232,17 +233,18 @@ the basis of the production QUIC implementation in future \dotnet{} versions.
 
 Because this thesis's work can potentially become part of future \dotnet{}~6 release, the QUIC
 implementation development will occur inside a development branch of the \dotnet{} runtime
-repository. The result should be a compilable branch of the runtime, which exposes the QUIC API for
-other \dotnet{} developers to use.
+repository~\cite{dotnetGithub}. The result should be a compilable branch of the runtime, which uses
+the managed QUIC implementation instead of the \libmsquic{}-based one.
 
-We have mentioned that the design of the QUIC API was interrupted early. Although the current
-version does not expose all the QUIC protocol features, it is sufficient for evaluating our
+We have mentioned that the \dotnet{} QUIC API design was interrupted early. Although the current
+version does not expose all QUIC protocol features, it is sufficient for evaluating our
 implementation. This thesis will, therefore, avoid making any modifications to the API\@.
 
 Implementing the full QUIC specification is outside the scope of a master thesis. Fortunately, to
 evaluate the managed QUIC implementation's performance, many parts of the specification can be
-omitted from our prototype. Therefore, this thesis will focus on the functionality needed to fully
-support simple scenarios and leave out advanced features such as connection migration.
+omitted without affecting the core transport functionality. Therefore, this thesis will focus mainly
+on the functionality needed to reliably transport data between two endpoints and leave out advanced
+features such as connection migration.
 
 Because we do not expect readers to be thoroughly familiar with the QUIC protocol specification and
 all its features, we will present an overview of the protocol in \autoref{chap:02-quic} and defer
@@ -251,15 +253,15 @@ analysis in \autoref{chap:03-analysis}. However, the implementation design shoul
 rest of the specification can be implemented in the future.
 
 It would make sense to evaluate our QUIC implementation's functionality by providing a partial
-implementation of HTTP/3. However, even supporting the most straightforward GET requests would be
-too complicated. Instead, we will implement a simple application in which the server will echo all
-data back to the client.
+implementation of HTTP/3 as well. However, even supporting the most straightforward GET requests
+would be too complicated. Instead, we will implement a testing application in which the server will
+simply echo all data back to the client.
 
-Because the indirect nature of the existing QUIC API could be used to alternate between
-\libmsquic{}-based QUIC and our QUIC implementation at runtime. This would allow us to create a
-benchmarking application to compare the performance of the two QUIC implementations. A small step
-from there would allow us to compare the two QUIC implementations' performance with that of
-TCP+TLS-based \class{SslStream}. This benchmarking will be an optional goal of this thesis.
+We briefly mentioned that the current QUIC implementation in \dotnet{} uses a layer of indirection
+which allows runtime selection of the QUIC implementation to be used. As an optional goal, this
+thesis will create a small benchmarking application and use it to to compare the performance of the
+two QUIC implementations. A small step from there would allow us to also compare the two QUIC
+implementations' performance with that of TCP+TLS-based \class{SslStream}.
 
 \subsection*{Summary of the Goals}
 
