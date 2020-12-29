@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Quic;
 
 namespace hello_net6._0
 {
@@ -12,7 +13,8 @@ namespace hello_net6._0
             string assemblyDir = Path.GetDirectoryName(assemblyPath);
             var info = FileVersionInfo.GetVersionInfo(assemblyPath);
             Console.WriteLine($"Hello World from .NET {info.ProductVersion}");
-            Console.WriteLine($"Corelib location: {assemblyDir}");
+            Console.WriteLine($"Runtime location: {assemblyDir}");
+            Console.WriteLine($"QUIC: {QuicImplementationProviders.Default}");
         }
     }
 }

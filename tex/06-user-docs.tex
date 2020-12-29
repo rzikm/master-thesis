@@ -45,7 +45,7 @@ Once you have installed all prerequisities, you can build the entire \dotnet{} r
 \filename{build.cmd} or \filename{build.sh} script:
 
 \begin{myVerbatim}
-> build.cmd -subset clr+libs -configuration release
+> ./build.cmd -subset clr+libs -configuration release
 \end{myVerbatim}
 
 The above command will build the Common Language Runtime (CLR) and all libraries in Release
@@ -239,9 +239,11 @@ from the webpage from which the \dotnet{}~6 SDK was downloaded~\cite{dotnetSdkGi
 To check that the development environment is configured correctly, the program in
 \autoref{lst:06-hello-net6} can be used.
 
-\begin{myListingCsharp}{lst:06-hello-net6}{\csharp{} program for testing the SDK installation.}{Program,FileVersionInfo,Console,Path}{}
+\begin{myListingCsharp}{lst:06-hello-net6}{\csharp{} program for testing the SDK installation.}{Program,FileVersionInfo,Console,Path,QuicImplementationProviders}{}
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Quic;
 
 namespace hello_net6._0
 {
@@ -254,6 +256,7 @@ namespace hello_net6._0
             var info = FileVersionInfo.|GetVersionInfo|(assemblyPath);
             Console.|WriteLine|($"Hello from .NET {info.ProductVersion}");
             Console.|WriteLine|($"Runtime location: {assemblyDir}");
+            Console.|WriteLine|($"QUIC: {QuicImplementationProviders.Default}");
         }
     }
 }
@@ -266,8 +269,13 @@ Running the program should produce output similar to the following:
 > dotnet run
 Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
 Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
+QUIC: System.Net.Quic.Implementations.Managed.ManagedQuicImplementationProvider
 \end{myVerbatim}
-\end{minipage}
+\end{minipage}\medskip
+
+If the output lists different runtime location, verify that the environment variables have been set
+correctly. If the QUIC provider is different, it means that the \SystemNetQuicDll{} with our managed
+QUIC implementation was not copied to the correct directory.
 
 \subsection{Deploying \dotnet{} Applications}
 
@@ -313,7 +321,7 @@ machine, you can use the binary which was built locally together with the librar
 \filename{apps} subdirectory of the \libopenssl{} repository.
 
 \begin{myVerbatim}
-> openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365
+> openssl req -x509 -newkey rsa -keyout key.pem -out cert.pem -days 365 -nodes
 \end{myVerbatim}
 
 In order to accept incoming QUIC connections, we need to create an instance of \QuicListener{}.

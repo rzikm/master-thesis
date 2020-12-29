@@ -87,8 +87,8 @@ following statement:
 
 \lstsetcsharpsettings{}
 \begin{lstlisting}[numbers=none,enums={SocketOptionLevel,SocketOptionName}]
-socket.|SetSocketOption|(SocketOptionLevel.IP, (SocketOptionName)76 /* IP_USER_MTU */, 1500 /* size
-*/);
+socket.|SetSocketOption|(SocketOptionLevel.IP,
+  (SocketOptionName)76 /* IP_USER_MTU */, 1500 /* size */);
 \end{lstlisting}
 
 However, the \texttt{IP_USER_MTU} option is only available on Windows 10 version 20H2 or newer. On
@@ -243,8 +243,8 @@ because there are fewer calls to the \method{Write} and \method{WriteAsync} meth
 amount of data.
 
 Running the benchmarking application for tests in this section has been automated using a
-PowerShell~\cite{powershell} script. The script is located at
-\filename{src/supplementary/benchmark/ThroughputTests/run.ps1} in this thesis attachments. Comments
+PowerShell~\cite{powershell} script. The script can be found at
+\filename{src/supplementary/benchmark/ThroughputTests/run.ps1} in this thesis' attachments. Comments
 at the top of the file explain the usage of the script.
 
 \subsection{Multiple Parallel Streams Performance}\label{sec:04-multi-stream-perf}
