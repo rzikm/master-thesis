@@ -62,6 +62,7 @@ namespace ThroughputTests
             
             var cert = Helpers.LoadCertificate(certPath, keyPath);
             TcpListener listener = new TcpListener(endpoint.Address, endpoint.Port);
+            // listener.Server.SetSocketOption(SocketOptionLevel.IP, (SocketOptionName)76 /*IP_USER_MTU*/, 1500);
             listener.Start();
             
             List<Task> currentConnectionTasks = new List<Task>();

@@ -165,6 +165,7 @@ namespace ThroughputTests
         {
             _endPoint = (IPEndPoint) endPoint;
             _client = new TcpClient();
+            // _client.Client.SetSocketOption(SocketOptionLevel.IP, (SocketOptionName)76 /*IP_USER_MTU*/, 1500);
         }
 
         public override async ValueTask ConnectAsync()
