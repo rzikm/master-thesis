@@ -1009,9 +1009,29 @@ The programming interface for \gls{aead} provides the following operations:
 
 \subsubsection{Deriving QUIC Protection Keys}\label{sec:02-encryption-key-derivation}
 
-QUIC derives multiple distinct keys from the secrets negotiated by TLS handshake. The derivation
-uses the HKDF-Expand-Label function~\cite{rfc5869} to derive keys of desired length. The keys are
-derived as follows:
+QUIC derives multiple distinct keys that are used in different parts of the packet protection
+procedure. Furthermore, each packet type uses a different set of such keys. This allows QUIC to
+provide confidentiality and integrity protection even for Initial and Handshake packets, which are
+sent before the TLS handshake negotiates the application-level encryption.
+
+Each set of encryption keys is derived from a \textit{secret} --- a sequence of bytes known only to
+the two endpoints. Secrets for deriving the Handshake and 1-RTT keys are produced by the TLS
+handshake. Secrets for Initial keys are derived using the \gls{dcid} of the client's first Initial
+packet and a version-specific \textit{initial salt} which ensures that newer versions of QUIC derive
+different protection keys. The derivation process uses the HKDF-Extract and HKDF-Expand-Label
+functions from RFC 5869~\cite{rfc5869} to derive secrets of the desired length. The following
+equations show how QUIC derives distinct secrets for client and server.
+
+\begin{equation*}
+  \begin{split}
+    initial\_secret & = \operatorname{HKDF-Extract}(dcid, initial\_salt) \\
+    client\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{\dq{}client in\dq}, \texttt{\dq\dq}, 32) \\
+    server\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{\dq{}server in\dq}, \texttt{\dq\dq}, 32) \\
+  \end{split}
+\end{equation*}
+
+Once the necessary secrets are obtained, a total of three keys are derived using the following
+equations.
 
 \begin{equation*}
   \begin{split}

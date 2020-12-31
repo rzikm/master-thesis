@@ -664,9 +664,35 @@ the \libmsquic{}-based implementation. This can be done by starting one applicat
 \texttt{server} mode using one implementation provider and another instance of the application in
 \texttt{client} mode using the other provider.
 
-More exhaustive interop tests could be achieved using the open-source QUIC Interop Test
-Runner~\cite{QuicInteropRunner}. However, this level of testing is outside of the scope of this
-thesis and is subject to future work.
+We have tested both combination with following results:
+
+\begin{itemize}
+
+  \litem{Managed client and \libmsquic{} server} With small number of connections, the two
+implementations interoperated without any noticeable problems. However, starting the benchmarking
+application with large number of parallel connection sometimes made \libmsquic{} server to respond
+with a Retry packet for some connections. In such cases, our implementation terminated the
+connection immediately because we did not implement support for client address validation via Retry
+packets.
+
+  \litem{Managed server and \libmsquic{} client} The version of the \libmsquic{} library we used in
+our tests started all connections using the draft 29 version of the protocol, while our
+implementation supports only the draft 27 version. Because we did not implement Version Negotiation,
+the server did not attempt negotiating the draft 27 protocol version, and the \libmsquic{} client
+connections eventually closed due to idle timeout. Even if we decided to ignore the protocol version
+in our implementation, these two versions use a different \textit{initial salt} for deriving Initial
+packet protection keys (see \autoref{sec:02-encryption-key-derivation}). Therefore, our server would
+drop all incoming packets because they could not be decrypted.
+
+\end{itemize}
+
+Because the only problems with interop between the two QUIC implementations were due to features we
+explicitly decided to omit from our prototype implementation, we are satisfied with these results.
+
+Our benchmarking application did not perform an exhaustive interop test. A better interop tests
+could be achieved using the open-source QUIC Interop Test Runner project~\cite{QuicInteropRunner}
+which tests interoperabilty of popular QUIC implementations in various scenarios. However, this
+level of testing is outside of the scope of this thesis and is subject to future work.
 
 \section{Summary}
 
