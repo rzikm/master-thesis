@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$LabDataRoot\loss-latency.csv" `
+  -DataFile "$LinuxLabDataRoot\loss-latency.csv" `
   -Query @{Drop=$dropSmallAmount} `
   -XAxis MessageSize `
   -YAxis $latencyColumn `

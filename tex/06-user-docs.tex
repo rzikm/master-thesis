@@ -297,7 +297,8 @@ the official \dotnet{} documentation~\cite{dotnetRIDs}.
 
 Unfortunately, the packaged application contains the unmodified \SystemNetQuicDll{} without managed
 QUIC support. Therefore, the last step is manually overwriting the \SystemNetQuicDll{} with the one
-locally built from the \dotnet{} runtime sources in \autoref{sec:06-build-runtime}.
+locally built from the \dotnet{} runtime sources in \autoref{sec:06-build-runtime}. The modified
+\libopenssl{} libraries also need to be copied over to the application directory.
 
 \section{Simple Echo Server using QUIC}\label{sec:06tutorial}
 
@@ -316,10 +317,7 @@ certificate on the server's side. The current QUIC API requires that the certifi
 key be saved in separate files in the PEM format. Certificate files that can be used in this example
 are provided in the attachments. The public certificate file is at \filename{certs/cert.crt} and the
 private key is at \filename{certs/cert.key}. Alternatively, a new certificate can be created using
-the \texttt{openssl} command-line utility. In case \libopenssl{} was not previously installed on the
-machine, you can use the binary which was built locally together with the libraries in
-\autoref{sec:06openssl}. The locally built \texttt{openssl} binary can be located under the
-\filename{apps/} subdirectory of the \libopenssl{} repository.
+the \texttt{openssl} command-line utility using the following commands.
 
 \begin{myVerbatim}
 > openssl req -x509 -newkey rsa -keyout key.pem -out cert.pem -days 365 -nodes

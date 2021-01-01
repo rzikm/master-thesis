@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$DataRoot\multi-stream-throughput.csv" `
+  -DataFile "$WindowsLoopbackDataRoot\multi-stream-throughput.csv" `
   -Query @{Streams=1;MessageSize=$smallMessageSize} `
   -XAxis Connections `
   -YAxis $throughputColumn `

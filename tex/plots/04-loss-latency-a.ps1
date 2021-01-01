@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$DataRoot\loss-latency.csv" `
+  -DataFile "$WindowsLoopbackDataRoot\loss-latency.csv" `
   -Query @{Drop=$dropZeroAmount} `
   -XAxis MessageSize `
   -YAxis $latencyColumn `

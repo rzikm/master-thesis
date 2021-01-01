@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$LabDataRoot\single-stream-throughput.csv" `
+  -DataFile "$LinuxLabDataRoot\single-stream-throughput.csv" `
   -Query @{MessageSize=256} `
   -XAxis Connections `
   -YAxis $throughputColumn `

@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$LabDataRoot\single-stream-latency.csv" `
+  -DataFile "$LinuxLabDataRoot\single-stream-latency.csv" `
   -Query @{MessageSize=$bigMessageSize} `
   -XAxis Connections `
   -YAxis $latencyColumn `

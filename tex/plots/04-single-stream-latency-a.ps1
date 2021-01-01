@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$DataRoot\single-stream-latency.csv" `
+  -DataFile "$WindowsLoopbackDataRoot\single-stream-latency.csv" `
   -Query @{MessageSize=$smallMessageSize} `
   -XAxis Connections `
   -YAxis $latencyColumn `

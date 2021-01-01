@@ -1,7 +1,7 @@
 . $PSScriptRoot\..\utils\plot.ps1
 
 CreateTexPlot `
-  -DataFile "$LabDataRoot\loss-throughput.csv" `
+  -DataFile "$LinuxLabDataRoot\loss-throughput.csv" `
   -Query @{Drop=$dropZeroAmount;Lag=25;Streams=1} `
   -XAxis MessageSize `
   -YAxis $throughputColumn `

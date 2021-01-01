@@ -12,12 +12,21 @@
 \appendix
 \chapter{Attachments}
 
-\todo{builds of dotnet runtime for linux and windows, if they fit the 850 limit}
-
 Contents of the attachment archive:
 
 \dirtree{%
   .1 {/}.
+  .2 {bin}\mydtcomment{Prepared built binaries}.
+  .3 {linux-x64}\mydtcomment{Built binaries for Linux}.
+  .4 {dotnet}\mydtcomment{Patched \dotnet{}~6 SDK with managed QUIC implementation}.
+  .4 {msquic}\mydtcomment{\libmsquic{} binaries used for performance comparison in \autoref{chap:04-evaluation}}.
+  .4 {openssl}\mydtcomment{Modified \libopenssl{} binaries with QUIC-enabling API}.
+  .4 {ThroughputTests}\mydtcomment{Self-contained build of benchmarking application from \autoref{chap:04-evaluation}}.
+  .3 {win-x64}\mydtcomment{Built binaries for Windows}.
+  .4 {dotnet}\mydtcomment{Patched \dotnet{}~6 SDK with managed QUIC implementation}.
+  .4 {msquic}\mydtcomment{\libmsquic{} binaries used for performance comparison in \autoref{chap:04-evaluation}}.
+  .4 {openssl}\mydtcomment{Modified \libopenssl{} binaries with QUIC-enabling API}.
+  .4 {ThroughputTests}\mydtcomment{Self-contained build of benchmarking application from \autoref{chap:04-evaluation}}.
   .2 {certs}\mydtcomment{Certificates for use in tests and attached samples}.
   .3 {cert.crt}\mydtcomment{Public certificate file}.
   .3 {cert.key}\mydtcomment{Private key file}.
