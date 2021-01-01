@@ -1,96 +1,96 @@
-\chapter*{Conclusion}
-\addcontentsline{toc}{chapter}{Conclusion}
+\chapter*{Conclusion} \addcontentsline{toc}{chapter}{Conclusion}
 
 To conclude our thesis, we will revisit the goals we set in the introduction chapter in
 \autoref{sec:01-goals}.
 
 \begin{enumerate}
 
-  \item \textit{Select a sufficient subset of QUIC specification needed to support the most basic data
-        transfer and implement it inside \dotnet{} runtime codebase.}
+  \item \textit{Select a sufficient subset of QUIC specification needed to support the most basic
+data transfer and implement it inside \dotnet{} runtime codebase.}
 
         In \autoref{sec:03-feature-selection}, we analyzed parts of the QUIC protocol and selected
-        the necessary parts for our prototype implementation. All features selected in this section
-        were implemented to the extent that the implementation can successfully and reliably
-        transfer data over network.
+the necessary parts for our prototype implementation. All features selected in this section were
+implemented to the extent that the implementation can successfully and reliably transfer data over
+the network.
 
-  \item \textit{Allow switching between the new managed implementation and the existing \libmsquic{}-based one.}
+  \item \textit{Allow switching between the new managed implementation and the existing
+\libmsquic{}-based one.}
 
         Our implementation integrates into the pre-existing implementation indirection layer, which
-        allows explicitly selecting the QUIC implementation provider for newly created
-        \QuicListener{} and \QuicConnection{} instances. Additionally, the default provider can be
-        influenced by the \texttt{DOTNETQUIC_PROVIDER} environment variable.
+allows explicitly selecting the QUIC implementation provider for newly created \QuicListener{} and
+\QuicConnection{} instances. Additionally, the default provider can be selected using the
+\texttt{DOTNETQUIC_PROVIDER} environment variable.
 
-  \item \textit{Evaluate the managed QUIC implementation by using it to implement a simple client-server
-echo application.}
+  \item \textit{Evaluate the managed QUIC implementation by using it to implement a simple
+client-server echo application.}
 
-        In \autoref{sec:06tutorial}, we provided directions on how to implement a simple echo
-        server and client. Additionally, we implemented a benchmarking application for use in
-        performance measurements in \autoref{chap:04-evaluation}.
+        In \autoref{sec:06tutorial}, we provided directions on implementing a simple echo server and
+client. Additionally, we implemented a benchmarking application for use in performance measurements
+in \autoref{chap:04-evaluation}.
 
-  \item \textit{(optional) Compare the performance of the new implementation with the
-previous \libmsquic{}-based one and with TCP+TLS-based \class{SslStream}.}
+  \item \textit{(optional) Compare the performance of the new implementation with the previous
+\libmsquic{}-based one and with TCP+TLS-based \class{SslStream}.}
 
         In \autoref{sec:04-perf-results}, we presented the results of our performance measurements.
-        In small number of scenarios, our QUIC implementation outperforms the \libmsquic{}-based
-        one. However, in most cases and especially under heavy load. The \libmsquic{}-based QUIC
-        implementation performs better both in terms of throughput and latency. However, neither of
-        the QUIC implementations performs better than the combination of TCP+TLS\@.
+Our QUIC implementation outperforms the \libmsquic{}-based one in a small number of scenarios.
+However, in most cases and especially under heavy load, the \libmsquic{}-based QUIC implementation
+performs better both in terms of throughput and latency. However, neither of the QUIC
+implementations performed better in our tests than the combination of TCP+TLS\@.
 
 \end{enumerate}
 
-At the time of writing this conclusion, our managed QUIC implementation has caught attention of the
-\dotnet{} development team, and this implementation will be added to the list of experiments in the
-runtimelab repository~\cite{runtimelabGithub} in the \texttt{feature/ManagedQuic} branch.
+At the time of writing this conclusion, our managed QUIC implementation has caught the attention of
+the \dotnet{} development team, and this implementation will be added to the list of experiments in
+the runtimelab repository~\cite{runtimelabGithub} in the \texttt{feature/ManagedQuic} branch.
 
 The next big release --- \dotnet{}~6 --- will ship with production-ready QUIC implementation. In early
 2021, a decision will be made whether this QUIC support will be based on \libmsquic{} or our QUIC
 implementation. However, even if the more mature \libmsquic{} implementation is chosen for the
-\dotnet{}~6 release, our implementatino will be considered as a managed replacement for subsequent
+\dotnet{}~6 release, our implementation will be considered as a managed replacement for subsequent
 \dotnet{} releases.
 
 \subsection*{Future Work}
 
-The prototype QUIC implementation developed in this thesis will require large amount of work before
-becoming production-ready. Some parts of the QUIC specification were left unimplemented, other parts
-were simplified in order to fit into the scope of this master thesis. However, the core part of the
-implementation should provide a solid foundation on which a fully conformant QUIC implementation
-could be built. Following list outlines the next development steps for the implementation.
+The prototype QUIC implementation developed in this thesis will require more development and
+substantial performance tuning before becoming production-ready. Some parts of the QUIC
+specification were left unimplemented, and other parts were simplified to fit into the scope of this
+master thesis. However, the core part of the implementation should provide a solid foundation upon
+which a fully conformant QUIC implementation could be built. The following list outlines the next
+development steps for the implementation.
 
 \begin{itemize}
 
   \item \textit{Update the implementation to match the latest QUIC specification.} QUIC
-        specification drafts evolved both during the course of implementation and during writing of
-        the text of this thesis. At the time of writing this conclusion, the 33rd version of the
-        QUIC specification draft is awaiting on a last-call before it becomes a valid RFC document.
-        The implementation presented in this document is based on draft version 26. Updating the
-        implementation should be, therefore, the first future goal.
+specification drafts evolved both during implementation and writing of the text of this thesis. At
+the time of writing this conclusion, the 33rd version of the QUIC specification draft is awaiting a
+last-call before it becomes a valid RFC document. The implementation presented in this document is
+based on draft version 27. Updating the implementation should be, therefore, the first future goal.
 
   \item \textit{Implement missing parts of the protocol.} This thesis implements only a subset of
-        the QUIC specification. Many features like connection migration, stateless reset and path
-        validation have not been implemented.
+the QUIC specification. Many features like connection migration, stateless reset, and path
+validation have been omitted from the prototype but should be implemented to make the implementation
+fully conform to the QUIC specification.
 
   \item \textit{Performance improvements for scalability.} The performance measurements done in
-        \autoref{sec:04-multi-stream-perf} show that our implementation does not scale very well in
-        face of large amounts of parallel connections. Possible improvements to the backend
-        processing architecture include allowing parallel sending and receiving on a single
-        connection, and using a single thread to process multiple connections, like done in
-        \libmsquic{}.
+\autoref{sec:04-multi-stream-perf} show that our implementation does not scale very well in the face
+of large amounts of parallel connections. Possible improvements to the backend processing
+architecture include allowing parallel sending and receiving on a single connection and using a
+single thread to process multiple connections like done in \libmsquic{}.
 
   \item \textit{Experiment with congestion control algorithms.} This thesis implemented only the
-        NewReno~\autocite[Section~7]{draft-ietf-quic-recovery} congestion control algorithm described in
-        the QUIC protocol specification. However, other algorithms such as CUBIC or
-        HyStart++~\cite{cloudflareCubic} have shown better performance in some scenarios.
+NewReno~\autocite[Section~7]{draft-ietf-quic-recovery} congestion control algorithm described in the
+QUIC protocol specification. However, other algorithms such as CUBIC or
+HyStart++~\cite{cloudflareCubic} have shown better performance in some scenarios.
 
   \item \textit{More realistic performance measurements.} This thesis performed measurements using
-        \SI[per-mode=symbol]{1}{\giga\bit\per\second} Ethernet connection in LAN network. Such
-        connection was easily saturated by some implementations, and we had to extrapolate from
-        results measured over the software-based loopback network interface. It would be better to
-        confirm the measurements over \SI[per-mode=symbol]{10}{\giga\bit\per\second} connection.
+\SI[per-mode=symbol]{1}{\giga\bit\per\second} Ethernet connection in LAN network. Some
+implementations easily saturated such a network, and we had to extrapolate from results measured
+over the software-based loopback network interface. It would be better to confirm the measurements
+over \SI[per-mode=symbol]{10}{\giga\bit\per\second} connection.
 
   \item \textit{Interoperability tests with other QUIC implementations.} This thesis has done only a
-        very superficial interoperability test with \libmsquic{}. There is an open source QUIC
-        Interop Test Runner~\cite{QuicInteropRunner} which repeatedly tests compatibility between
-        latest versions of popular QUIC implementations.
+straightforward interoperability test with \libmsquic{}. There is an open-source QUIC Interop Test
+Runner~\cite{QuicInteropRunner} which repeatedly tests compatibility between the latest versions of
+popular QUIC implementations.
 
 \end{itemize}

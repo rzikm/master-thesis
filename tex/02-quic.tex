@@ -1025,8 +1025,8 @@ equations show how QUIC derives distinct secrets for client and server.
 \begin{equation*}
   \begin{split}
     initial\_secret & = \operatorname{HKDF-Extract}(dcid, initial\_salt) \\
-    client\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{\dq{}client in\dq}, \texttt{\dq\dq}, 32) \\
-    server\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{\dq{}server in\dq}, \texttt{\dq\dq}, 32) \\
+    client\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{"client in"}, \texttt{""}, 32) \\
+    server\_secret & = \operatorname{HKDF-Expand-Label}(initial\_secret, \texttt{"server in"}, \texttt{""}, 32) \\
   \end{split}
 \end{equation*}
 
@@ -1035,9 +1035,9 @@ equations.
 
 \begin{equation*}
   \begin{split}
-    key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic key\dq}, \texttt{\dq\dq}, 32) \\
-    iv & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic iv\dq}, \texttt{\dq\dq}, 12) \\
-    hp & = \operatorname{HKDF-Expand-Label}(secret, \texttt{\dq{}quic hp\dq}, \texttt{\dq\dq}, 32) \\
+    key & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic key"}, \texttt{""}, 32) \\
+    iv & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic iv"}, \texttt{""}, 12) \\
+    hp & = \operatorname{HKDF-Expand-Label}(secret, \texttt{"quic hp"}, \texttt{""}, 32) \\
   \end{split}
 \end{equation*}
 
@@ -1162,9 +1162,9 @@ using the HKDF-Expand-Label function:
 
 \begin{equation*}
   \begin{split}
-    secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{\dq{}quic ku\dq{}}, \texttt{\dq{}\dq{}}, 32) \\
-    key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{\dq{}quic key\dq{}}, \texttt{\dq{}\dq{}}, 32) \\
-    iv_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{\dq{}quic iv\dq{}}, \texttt{\dq{}\dq{}}, 12) \\
+    secret_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n}, \texttt{"quic ku"}, \texttt{""}, 32) \\
+    key_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic key"}, \texttt{""}, 32) \\
+    iv_{n+1} & = \operatorname{HKDF-Expand-Label}(secret_{n+1}, \texttt{"quic iv"}, \texttt{""}, 12) \\
   \end{split}
 \end{equation*}
 

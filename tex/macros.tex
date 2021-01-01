@@ -214,26 +214,6 @@
   \endsubfigure{}
 }
 
-%% Fix cmidrule and babel[czech] clash
-%% src: https://tex.stackexchange.com/questions/111999/slovak-and-czech-babel-gives-problems-with-cmidrule-and-cline
-\begingroup
-    \makeatletter
-    \catcode`\-=\active
-    \AtBeginDocument{
-    \def\@@@cmidrule[#1-#2]#3#4{\global\@cmidla#1\relax
-        \global\advance\@cmidla\m@ne
-        \ifnum\@cmidla>0\global\let\@gtempa\@cmidrulea\else
-        \global\let\@gtempa\@cmidruleb\fi
-        \global\@cmidlb#2\relax
-        \global\advance\@cmidlb-\@cmidla
-        \global\@thisrulewidth=#3
-        \@setrulekerning{#4}
-        \ifnum\@lastruleclass=\z@\vskip \aboverulesep\fi
-        \ifnum0=`{\fi}\@gtempa
-        \noalign{\ifnum0=`}\fi\futurenonspacelet\@tempa\@xcmidrule}
-    }
-\endgroup
-
 % environment setting common attributes of tables
 \newenvironment{myTable}[5][\normalsize]{% [fontsize, label, caption, columnspec, header]
   \table[H]

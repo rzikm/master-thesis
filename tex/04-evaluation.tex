@@ -26,8 +26,9 @@ negatively affect the total page load time for a significant number of users~\ci
 \section{Evaluation Environment}
 
 We have evaluated our implementation in two different environments. Our primary evaluation
-environment consists of two blade servers on the same LAN network. The relevant software and
-hardware parameters of the servers are:
+environment consists of two blade servers on the same LAN network. For short, we will reffer to this
+environment as the \textit{Linux LAN} environment. The relevant software and hardware parameters of
+the servers are:
 
 \begin{itemize}
 
@@ -48,8 +49,9 @@ Unfortunately, the two servers are connected only by \SI[per-mode=symbol]{1}{\gi
 Ethernet, which implies a theoretical upper limit for TCP's throughput at
 \SI[per-mode=symbol]{117.5}{\mega\byte\per\second} and similar limit for UDP\@. In some
 measurements, we reached values that approached this limit. Therefore, when appropriate, we also
-evaluated our implementation using a loopback network interface on a desktop workstation PC with the
-following specifications:
+evaluated our implementation using a loopback network interface on a desktop workstation PC\@. For
+short, we will reffer to this environment as \textit{Win loopback}. The machine has following
+specifications:
 
 \begin{itemize}
 
@@ -71,19 +73,23 @@ In both environments, the testing application was run in a a 64-bit process on p
 
 Measuring over the loopback interface removes any upper limit on bandwidth because the loopback
 interface is implemented purely in software inside the operating system. It also minimizes the
-transport latency and guarantees zero packet loss. The software-based implementation of the loopback
-interface allows optimizations that are not possible on real networks. As an example, on Windows
-operating system, loopback connections can send \SI{64}{\kibi\byte} IP packets --- which is the
-maximum size allowed by the IP protocol --- without any link-layer fragmentation. On the other hand,
-Ethernet connections can carry only up to \SI{1500}{\byte} IP datagrams without fragmentation. The
-greater size of datagrams on the loopback interface reduces overhead when TCP is used for
-inter-process communication on the same machine.
+transport latency and guarantees zero packet loss during transport. The software-based
+implementation of the loopback interface allows optimizations that are not feasible on Ethernet
+networks. As an example, on Windows operating system, loopback connections can send
+\SI{64}{\kibi\byte} IP packets --- which is the maximum size allowed by the IP protocol --- without any
+link-layer fragmentation. On the other hand, Ethernet connections can carry only up to
+\SI{1500}{\byte} IP datagrams without fragmentation. The greater size of datagrams on the loopback
+interface reduces overhead when TCP is used for inter-process communication on the same machine.
 
 Both managed and \libmsquic{}-based QUIC implementations send IP datagrams which are at most
-\SI{1500}{\byte} even on loopback, because of the hardcoded limits in the codebase. In order to make
-the loopback comparison more fair, we leveraged the ability to limit the maximum outbound IP packet
-size to \SI{1500}{\byte} on Windows sockets API\@. From \csharp{}, this can be achieved using
-following statement:
+\SI{1500}{\byte} even on loopback connections, because of a hardcoded upper limit on UDP datagram
+size in both implementations\footnote{QUIC does not impose an upper limit on the UDP datagram size.
+However, it requires that the UDP datagrams be small enough to avoid fragmentation. The hardcoded
+limit has been chosen to simplify the implementation and to work well on Ethernet connections. This
+limit may be removed in future versions of the libraries}. In order to make the loopback connection
+measurements more comparable to those done on Ethernet connections, we leveraged the ability to limit
+the maximum outbound IP packet size to \SI{1500}{\byte} on Windows sockets API for all loopback TCP
+connections in our tests. From \csharp{}, this can be achieved using following statement:
 
 \lstsetcsharpsettings{}
 \begin{lstlisting}[numbers=none,enums={SocketOptionLevel,SocketOptionName}]
@@ -93,13 +99,13 @@ socket.|SetSocketOption|(SocketOptionLevel.IP,
 
 However, the \texttt{IP_USER_MTU} option is only available on Windows 10 version 20H2 or newer. On
 other platforms, the \method{SetSocketOption} call above would throw an exception. In order to keep
-cross-platform compatibility, the attached source code does not contain this statement. However, it
-was used to obtain the results presented in this chapter.
+cross-platform compatibility, the relevant lines have been commented out in the attached version of
+the source code. However, they was used to obtain the results presented in this chapter.
 
 \subsection{Running with MsQuic Support}
 
 \libmsquic{}-based QUIC implementation does not work in the default installation of \dotnet{}
-because \dotnet{} does not distribute the \libmsquic{} binary. Programs that want to use the
+because \dotnet{} does not distribute the \libmsquic{} binary. Applications that wish to use the
 \libmsquic{}-based QUIC implementation should reference the
 \texttt{System.Net\allowbreak{}.Experimental.MsQuic} NuGet
 package~\cite{SystemNetQuicExperimentalMsquic} which provides the necessary \libmsquic{} binary.
@@ -137,7 +143,7 @@ provider which can be validly compared to the performance of our managed QUIC im
 
 The actual throughput and latency measurements are done using a dedicated benchmarking \dotnet{}
 application whose source code can be found in the
-\filename{src/supplementary/benchmark/ThroughputTests} directory in the attachments of this thesis.
+\filename{src/supplementary/benchmark/ThroughputTests/} directory in the attachments of this thesis.
 The application implements a trivial echo server and clients which exchange messages of the
 specified size. The first parameter to the application selects one of the following modes:
 
@@ -153,46 +159,45 @@ communication is done over the loopback network interface.
 
 \end{description}
 
-The benchmarking application accepts multiple parameters. A list of the most important follows.
+The benchmarking application accepts multiple parameters. A list of the most important follows. The
+full list of parameters can be found in the \filename{Program.cs} file, or by running the program
+with the \texttt{--help} parameter.
 
 \begin{description}
 
     \ditem{\texttt{-e, --endpoint}} The endpoint on which to listen (server) or to which to connect
 (client). Not applicable for \texttt{inproc} mode.
 
-    \ditem{\texttt{--certificate-file}} Path to the X.509 certificate file.
+    % \ditem{\texttt{--certificate-file}} Path to the X.509 certificate file.
 
-    \ditem{\texttt{--key-file}} Path to the X.509 certificate private key file.
+    % \ditem{\texttt{--key-file}} Path to the X.509 certificate private key file.
 
     \ditem{\texttt{-t, --tcp}} Use TCP instead of QUIC\@.
 
     \ditem{\texttt{-c, --connections}} The number of connetions to create.
 
-    \ditem{\texttt{-s, --streams}} The number of streams to create in each connection. Applicable
-only when QUIC is used.
+    \ditem{\texttt{-s, --streams}} The number of streams to create in each connection. Only for QUIC.
 
     \ditem{\texttt{-m, --message-size}} The size of sent messages in bytes.
 
-    \ditem{\texttt{-w, --warmup-time}} Time before starting to take measurements.
+    \ditem{\texttt{-w, --warmup-time}} Time before starting to take measurements. This can be used to give the application time to JIT all methods used on the hot path.
 
-    \ditem{\texttt{-d, --test-duration}} Time after which the measurement should stop.
+    \ditem{\texttt{-d, --test-duration}} Time after which the measurement should stop and the application exit.
 
     \ditem{\texttt{-i, --reporting-interval}} Delay between reports of intermediate measurements.
 
-    \ditem{\texttt{-n --no-wait}} Whether clients wait for a reply before sending another message.
+    \ditem{\texttt{-n, --no-wait}} Whether clients wait for a reply before sending another message.
 
 \end{description}
 
-The full list of parameters can be found in the \filename{Program.cs} file, or by running the
-program with the \texttt{--help} parameter. By default, the implementation uses managed QUIC
-implementation. Switching to \libmsquic{}-based implementation can be achieved by defining the
-\texttt{DOTNETQUIC_PROVIDER} environment variable to \texttt{msquic}.
+By default, the implementation uses managed QUIC implementation. Switching to \libmsquic{}-based
+implementation is achieved by defining the \texttt{DOTNETQUIC_PROVIDER} environment variable to
+\texttt{msquic}.
 
-The client mode of the application switches between two behaviors. By default, clients do not wait
-for a reply from the server before sending another message. This lets us measure the total
-throughput of the system. When using the \texttt{-n} switch, clients wait until a response from the
-server is received and measure the latency as the delay between sending the message and receiving
-the reply.
+The client mode of the application switches between two behaviors. By default, clients wait for a
+reply from the server and measure the delay until a reply is received. When using the \texttt{-n}
+switch, clients send as many messages as possible without waiting for the server and only count the
+number of replies. This lets us measure the total throughput of the system.
 
 \section{Measurement Results}\label{sec:04-perf-results}
 
@@ -202,11 +207,11 @@ throughput and latencies were measured as follows:
 \begin{itemize}
 
   \litem{Throughput} Throughput of the entire server. This is the total amount of application data
-echoed back to clients across all connections.
+echoed back to clients across all connections. The throughput measurements were taken with the use
+of \texttt{-n} flag in the benchmark application.
 
   \litem{Latency} The delay between client writing the message to the \Stream{} and reading back the
-full reply. In our tests, we will measure the 99th percentile of latency. The latency measurements
-will be taken with the use of \texttt{-n} flag in the benchmark application.
+full reply. In our tests, we will measure the 99th percentile of latency.
 
 \end{itemize}
 
@@ -223,8 +228,8 @@ These tests should allow us to compare the performance between QUIC implementati
 TCP+TLS-based \SslStream{}.
 
         \litem{Performance in Simulated Cellular Network} In these tests, we will try to approximate
-the characteristics of a real-world cellular network by increasing lag and packet loss in the LAN
-environment.
+the characteristics of a real-world cellular network by increasing lag and packet loss in the Linux
+LAN environment.
 
 \end{itemize}
 
@@ -254,7 +259,7 @@ were run with increasingly larger messages and with a greater number of parallel
 streams to see how the two implementations scale.
 
 \autoref{fig:04-lab-multi-stream-throughput} shows the measured throughput.
-\autoref{fig:04-lab-multi-stream-throughput-a} shows the base-line performance when \SI{256}{\byte}
+\autoref{fig:04-lab-multi-stream-throughput-a} shows the baseline performance when \SI{256}{\byte}
 messages are sent using a single stream per connection. The other figures show measurements after
 increasing message size to \SI{4096}{\byte} (\autoref{fig:04-lab-multi-stream-throughput-b}),
 increasing number of streams to 32 (\autoref{fig:04-lab-multi-stream-throughput-c}), or both
@@ -264,7 +269,7 @@ throughput at 4 parallel connections and then decreasing. On the other hand, the
 implementation maintains almost the same throughput regardless of the number of connections, but
 increases throughput both when increasing the message size and number of streams in a connection.
 
-\begin{myFigure}{fig:04-lab-multi-stream-throughput}{Multiple stream QUIC throughput measurements (LAN)}
+\begin{myFigure}{fig:04-lab-multi-stream-throughput}{Multiple stream QUIC throughput measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-throughput-a}{1 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-throughput-a.tex}
@@ -290,9 +295,9 @@ the relative performance between the two implementations, \autoref{fig:04-multi-
 shows results of the two test runs on the Windows workstation over the loopback interface. Depending
 on the number of connections, the throughput of the \libmsquic{}-based implementation was up to four
 times greater than our implementation. Results of runs with \SI{256}{\byte} messages were left out
-for brevity because they did not differ from the ones in the LAN environment.
+for brevity because they did not differ from the ones in the Linux LAN environment.
 
-\begin{myFigure}{fig:04-multi-stream-throughput}{Multiple stream QUIC throughput measurements (Loopback)}
+\begin{myFigure}{fig:04-multi-stream-throughput}{Multiple stream QUIC throughput measurements (Win loopback)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-multi-stream-throughput-b}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-multi-stream-throughput-b.tex}
@@ -317,40 +322,42 @@ the rate at which data were sent. This points to the fact that even though we ca
 needless allocations in our implementation, there are still enough sources of allocation left to
 degrade a server's performance under heavy load.
 
-An example of a large source of allocations in the managed QUIC implementation is pooling the
-buffers for sending or receiving QUIC packets. Even though the implementation uses
+An example of a large allocation source in the managed QUIC implementation is pooling the buffers
+for sending or receiving QUIC packets. Even though the implementation uses
 \ArrayPoolOf{\Byte}\texttt{.Shared} to reuse allocated buffers, this does not work well with a large
-number of connections. This is because \ArrayPoolOf{\Byte}\texttt{.Shared} retains only a small
-number of \ArrayOf{\Byte} instances for pooling and lets GC collect the rest\footnote{In
-\dotnet{}~5, the implementation of \ArrayPoolOf{\Byte}\texttt{.Shared} maintains a separate pool for
-each CPU core. Each per-CPU core pool organizes pooled arrays into 17 buckets with array sizes
-ranging from \SI{16}{\byte} to \SI{1}{\mebi\byte}. Each bucket retains up to 8 array instances of
-similar size.}. With a large number of connections, the buffers are often rented and returned in
-large bursts, leading to a lot of large arrays being discarded upon return to the
-\ArrayPoolOf{\Byte}\texttt{.Shared} and subsequently allocated anew.
+number of connections. This is because \ArrayPoolOf{\Byte}\texttt{.Shared} pools only a small number
+of \ArrayOf{\Byte} instances and lets GC collect the rest\footnote{In \dotnet{}~5, the
+implementation of \ArrayPoolOf{\Byte}\texttt{.Shared} maintains a separate pool for each CPU core.
+Each per-CPU core pool organizes pooled arrays into 17 buckets with array sizes ranging from
+\SI{16}{\byte} to \SI{1}{\mebi\byte}. Each bucket retains up to 8 array instances of similar size.}.
+With a large number of connections, the buffers are rented and returned in large bursts, leading to
+a lot of large arrays being discarded upon return to the \ArrayPoolOf{\Byte}\texttt{.Shared} and
+subsequently allocated anew.
 
 Another source of allocations are \Socket{}\texttt{.\method{SendTo}} and
 \Socket{}\texttt{.\method{ReceiveFrom}} methods which allocate of a new \class{EndPoint} instance
 for each call. In order to remove this particular source of allocations, an allocation-free API for
-sending or receiving UDP datagrams needs to be designed and implemented on the \Socket{} class.
+sending or receiving UDP datagrams needs to be designed and implemented on the \Socket{} class. Such
+API has already been proposed in the past~\cite{dotnetGithubZeroUdp} but has not been prioritized to
+be implemented.
 
 \libmsquic{}-based implementation shows similar throughput regardless of the number of parallel
 connections. Instead, it dramatically increases with message size and only slightly with the number
 of streams in the connections. When we tried sending messages larger than \SI{4096}{\byte}, the
 total throughput did not increase significantly anymore. Upon closer inspection of the \libmsquic{}
-network traffic using Wireshark, it turns out that in tests with \SI{256}{\byte} messages, many of
-the sent packets were very small, possibly containing only \ACK{} frames. Thus, the total available
-network bandwidth was mostly unutilized. When \SI{4096}{\byte} messages are used, more space in QUIC
-packets is utilized, which increases the throughput. Our investigation, however, did not uncover why
-the total throughput of \libmsquic{} does not increase with the number of connections in the tests
-with \SI{256}{\byte} messages.
+network traffic using Wireshark~\cite{web:wireshark}, it turns out that in tests with
+\SI{256}{\byte} messages, many of the sent packets were very small, possibly containing only \ACK{}
+frames. Thus, the total available network bandwidth was mostly unutilized. When \SI{4096}{\byte}
+messages are used, more space in QUIC packets is utilized, which increases the throughput. Our
+investigation, however, did not uncover why the total throughput of \libmsquic{} does not increase
+with the number of connections in the tests with \SI{256}{\byte} message.
 
-\autoref{fig:04-lab-multi-stream-latency} shows the latencies measured in the LAN environment for
-the same four test cases as above. In all tests, the \libmsquic{}-based implementation exhibits a
-lower 99th percentile of latency, especially in test cases with a high number of connections. The
+\autoref{fig:04-lab-multi-stream-latency} shows the latencies measured in the Linux LAN environment
+for the same four test cases as above. In all tests, the \libmsquic{}-based implementation exhibits
+a lower 99th percentile of latency, especially in test cases with a high number of connections. The
 same measurement on Windows loopback did not yield significantly different results.
 
-\begin{myFigure}{fig:04-lab-multi-stream-latency}{Multiple stream QUIC latency measurements (LAN)}
+\begin{myFigure}{fig:04-lab-multi-stream-latency}{Multiple stream QUIC latency measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-a}{1 stream, \SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-a.tex}
@@ -385,9 +392,10 @@ the missing part is retransmitted. This explains why increasing the message size
 the latency with a large number of parallel connections.
 
 Increasing the number of streams also increases network traffic, making our implementation
-susceptible to the increased GC pauses. However, after a certain threshold, increasing the number of
-streams does not increase the throughput of the implementation anymore. Instead, it leads to an
-increase in latency because it still increases the number of outstanding parallel requests.
+susceptible to the increased GC pauses. Also, after a certain threshold, increasing the number of
+streams does not increase the traffic because the maximum throughput of the implementation has been
+reached. Instead, it leads to an increase in latency because it still increases the number of
+outstanding parallel requests.
 
 Lastly, we would like to remind the reader that we measured the 99th percentile of the latency,
 which considers only the slowest 1\% of requests. To give more perspective on the latency
@@ -396,7 +404,7 @@ median measurements of the latency. For brevity, we include only the measurement
 \SI{4096}{\byte} messages. The median measurements of latencies of our implementation are similar or
 lower than that of the \libmsquic{}-based one.
 
-\begin{myFigure}{fig:04-lab-multi-stream-latency-median}{Multiple stream QUIC latency median measurements (LAN)}
+\begin{myFigure}{fig:04-lab-multi-stream-latency-median}{Multiple stream QUIC latency median measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-median-a}{1 stream, \SI{4096}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-multi-stream-latency-median-a.tex}
@@ -407,7 +415,7 @@ lower than that of the \libmsquic{}-based one.
 \end{mySubfigure}
 \end{myFigure}
 
-We believe that this difference in the latency distributions between the two implementations is due
+We believe that the difference in the latency distributions between the two implementations is due
 to their different architectures. \libmsquic{} spawns several worker threads (depending on the
 number of CPU cores) which process events for individual connections from an event queue. The event
 queue ensures that the connections are serviced evenly and at regular intervals. When the load on
@@ -417,9 +425,9 @@ slightly lower than its 99th percentile from \autoref{fig:04-lab-multi-stream-la
 
 Our implementation, on the other hand, relies solely on the \dotnet{} \class{Task} scheduler, which
 schedules all background tasks independently and without any priority information. This allows for
-greater variance in the latency of our QUIC implementation. In the future, our implementation's
-architecture should be improved to reduce the scheduling variance and, therefore, the 99th
-percentile of the latency.
+greater variance in the latency of our QUIC implementation as replies can be delayed due to
+unfortunate scheduling. In the future, our implementation's architecture should be improved to
+reduce the scheduling variance and, therefore, the 99th percentile of the latency.
 
 In summary, our QUIC implementation outperforms the \libmsquic{}-based one in scenarios where small
 messages are exchanged between client and server using a small number of streams. However, our
@@ -442,7 +450,7 @@ messages (\autoref{fig:04-lab-single-stream-throughput-a}) and \SI{4096}{\byte} 
 implementations. Also, out of the three implementations, our QUIC implementation is the only one
 which is not bottlenecked by the \SI{1}{\giga\bit} LAN\@.
 
-\begin{myFigure}{fig:04-lab-single-stream-throughput}{Single stream throughput measurements (LAN)}
+\begin{myFigure}{fig:04-lab-single-stream-throughput}{Single stream throughput measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-throughput-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-throughput-a.tex}
@@ -456,12 +464,12 @@ which is not bottlenecked by the \SI{1}{\giga\bit} LAN\@.
 Because the throughput of some implementations in the previous figure was limited by the
 \SI{1}{\giga\bit} network, \autoref{fig:04-single-stream-throughput} shows the results measured over
 the loopback interface on the Windows workstation. We can see clearly that TCP still provides
-greater throughput than the \libmsquic{}-based implementation\footnote{Without limiting the loopback
-IP packet size by setting the \texttt{IP_USER_MTU} option to 1500 (see
-\autoref{sec:04-localhost-mtu}), the TCP throughput with \SI{4096}{\byte} messages would reach up to
-\SI[per-mode=symbol]{900}{\mebi\byte\per\second}.}
+greater throughput than the \libmsquic{}-based implementation. We would like to remind the reader
+that these measurements were taken with the size of the IP datagram limited to \SI{1500}{\byte} (see
+\autoref{sec:04-localhost-mtu}). Otherwise TCP would send the maximum \SI{64}{\kibi\byte} packets
+and would reach throughput up to \SI[per-mode=symbol]{900}{\mebi\byte\per\second}.
 
-\begin{myFigure}{fig:04-single-stream-throughput}{Single stream throughput measurements (Loopback)}
+\begin{myFigure}{fig:04-single-stream-throughput}{Single stream throughput measurements (Win loopback)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-single-stream-throughput-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-single-stream-throughput-a.tex}
@@ -476,11 +484,11 @@ By comparing the numbers in \autoref{fig:04-single-stream-throughput-b} to that 
 \autoref{fig:04-multi-stream-throughput-d}, we see that the performance of TCP is also greater than
 that of \libmsquic{}-based implementation when using 32 parallel streams per connection streams.
 
-\autoref{fig:04-lab-single-stream-latency} shows the latency measurement results in the LAN
+\autoref{fig:04-lab-single-stream-latency} shows the latency measurement results in the Linux LAN
 environment. These results show that TCP exhibits substantially lower latencies than either QUIC
 implementation. Very similar results were also obtained on the Windows workstation.
 
-\begin{myFigure}{fig:04-lab-single-stream-latency}{Single stream latency measurements (LAN)}
+\begin{myFigure}{fig:04-lab-single-stream-latency}{Single stream latency measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-single-stream-latency-a}{\SI{256}{\byte} messages}
 \footnotesize
 \input{plots/04-lab-single-stream-latency-a.tex}
@@ -500,9 +508,9 @@ The results presented in this section suggest that neither QUIC implementation c
 reduction we explained in \autoref{sec:04-localhost-mtu}). It is possible, however unlikely, that
 the performance over real \SI[per-mode=symbol]{10}{\giga\bit\per\second} network will yield
 different results. A possible explanation for these results is that the TCP networking stack is far
-better optimized than UDP\@. An example of such optimization is \textit{TCP offload
-engine}~\cite{wiki:tcp-offload-engine} which offloads the TCP/IP stack implementation onto the
-controller on the network interface card.
+better optimized than UDP\@. Also, in the Linux LAN environment, some hardware optimizations may
+have been in place for TCP, such as \textit{TCP offload engine}~\cite{wiki:tcp-offload-engine} which
+offloads the TCP/IP stack implementation onto the controller on the network interface card.
 
 \subsection{Performance in Simulated Cellular Network}
 
@@ -529,13 +537,13 @@ were unable to find enough data to compute appropriate parameters for such model
 
 To simulate the 4G network, we used the \textit{Traffic Control} capabilities of the Linux kernel.
 The necessary configuration can be set using the \texttt{tc} utility. For example, the following
-command was issued on both machines to configure \SI{25}{\milli\second} lag and 0.004\% packet loss:
+command issued on both machines will simulate \SI{25}{\milli\second} lag and 0.004\% packet loss:
 
 \begin{myVerbatim}
-tc qdisc change dev eth0 root netem delay 12ms loss 0.004%
+tc qdisc change dev eth0 root netem delay 12.5ms loss 0.004%
 \end{myVerbatim}
 
-Note that the set delay is half of the desired latency because the traffic shaping done by
+Note that the set delay parameter is half of the desired latency because the traffic shaping done by
 \texttt{tc} applies only to outbound traffic. Each endpoint, therefore, adds half of the total
 latency.
 
@@ -561,19 +569,20 @@ is comparable in all tests.
 Upon closer inspection, it turns out that the managed QUIC implementation is bottlenecked by the
 stream buffering implementation. In \autoref{sec:03-send-stream}, we explained the design behind the
 sending part of the stream, namely the \SendStream{} class. The implementation uses up to eight
-\SI{16}{\kibi\byte} buffers to store the application. Once these buffers are filled, subsequent
+\SI{16}{\kibi\byte} buffers to store the application data. Once these buffers are filled, subsequent
 calls to the \method{Write} or \method{WriteAsync} method will block until some data are
 acknowledged. The application data must be buffered until the other endpoint acknowledges their
 reception. This takes at least one roundtrip, i.e., \SI{25}{\milli\second} in our test. Our
 implementation can, therefore, send at most $8 \cdot 16 = 128 \si{\kibi\byte}$ on a single stream during
-each round trip. This sending rate implies a theoretical maximum throughput as
+a round trip period. This sending rate implies a theoretical maximum throughput as
 $128\si{\kibi\byte} \div 0.025 = 5 \si[per-mode=symbol]{\mebi\byte\per\second}$.
 
 This hypothesis can be tested by doubling the delay on the simulated network.
 \autoref{fig:04-lab-loss-throughput-long} shows measurements with \SI{50}{\milli\second} latencies
 (\autoref{fig:04-lab-loss-throughput-a-50}) and \SI{100}{\milli\second} latencies
 (\autoref{fig:04-lab-loss-throughput-a-100}). In these variations of the test we see that the
-throughput of the managed implementation halves everytime the latency is doubled.
+throughput of the managed implementation is highly correlated with the network latency as it halves
+everytime the latency is doubled.
 
 \begin{myFigure}{fig:04-lab-loss-throughput-long}{Single stream throughput measurements in simulated network with long delays}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-throughput-a-50}{\SI{50}{\milli\second} latency, 0.004\% loss}
@@ -588,15 +597,15 @@ throughput of the managed implementation halves everytime the latency is doubled
 
 This performance limitation could be fixed simply by increasing the number of buffers used to buffer
 application data. However, a large number of such buffers would lead to inefficient memory
-utilization in low-latency networks. Instead, the amount of data buffered should be changed
-dynamically based on information such as the congestion window's size or the flow control limit
-advertised by the other endpoint. We leave the implementation of such dynamic buffering for future
-work.
+utilization in low-latency environments like a LAN network. Instead, the amount of data buffered
+should be changed dynamically based on information such as the congestion window's size or the flow
+control limit advertised by the other endpoint. We leave the implementation of such dynamic
+buffering for future work.
 
-\autoref{fig:04-lab-loss-throughput} shows the latency measurements results. Each implementation
+\autoref{fig:04-lab-loss-latency} shows the latency measurements results. Each implementation
 exhibits the same latency for both 0.004\% (\autoref{fig:04-lab-loss-latency-a}) and 0.1\%
-(\autoref{fig:04-lab-loss-latency-b}) packet loss. This means that 0.1\% is still low enough to not
-affect the 99th percentile of latency.
+(\autoref{fig:04-lab-loss-latency-b}) packet loss. This means that even 0.1\% packet loss rate is
+still low enough to not affect the 99th percentile of latency.
 
 \begin{myFigure}{fig:04-lab-loss-latency}{Single stream latency measurements in simulated network}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-a}{\SI{25}{\milli\second} latency, 0.004\% loss}
@@ -611,17 +620,18 @@ affect the 99th percentile of latency.
 
 All implementations show almost the same latency in almost all tests. The single exception is our
 implementation, which exhibits greater latencies for \SI{4096}{\byte} messages. This is because this
-message size does not fit a single packet, our pacer implementation spaces out individual packets
-one by one. The \libmsquic{}-based implementation, on the other hand, sends small batches of packets
-for each tick of the pacer and the small batches are enough to transmit the entire \SI{4096}{\byte}
-message.
+message size does not fit a single packet and our \gls{packet-pacing} implementation (see
+\autoref{sec:05-recovery}) spaces out individual packets one by one and thus increases the delay
+between sending the first and last QUIC packet carrying the \SI{4096}{\byte} message. The
+\libmsquic{}-based implementation, on the other hand, sends small batches of packets for each tick
+of the pacer and the small batches are enough to transmit the entire \SI{4096}{\byte} message.
 
 By using only a single stream in each QUIC connection in these tests, it could be argued that we did
 not utilize one of the big advantages of QUIC over TCP\@ --- the reduced \gls{head-of-line-blocking}.
-\autoref{fig:04-lab-multi-loss-throughput} shows the measurements of throughput similar to the one
-in \autoref{fig:04-lab-loss-throughput}, but with QUIC connections transmitting data in 32 parallel
-streams. Contrary to the expectation, the throughput of the QUIC implementation increases only
-slightly.
+\autoref{fig:04-lab-multi-loss-throughput} shows the measurements of throughput like we did
+previously (for \autoref{fig:04-lab-loss-throughput}), but with QUIC connections transmitting data
+using 32 parallel streams. Contrary to the expectation, the throughput of the QUIC implementations
+increases only slightly.
 
 \begin{myFigure}{fig:04-lab-multi-loss-throughput}{Multiple stream throughput measurements in simulated network}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-loss-throughput-a}{32 streams, \SI{25}{\milli\second} latency, 0.004\% loss}
@@ -635,11 +645,11 @@ slightly.
 \end{myFigure}
 
 Because we were sending data using multiple streams, the managed QUIC implementation was no longer
-blocked by the limited buffering discussed above. Instead, it was limited by the size of the
-congestion window. When investigated more closely, it turns out that the throughput of both QUIC
-implementation was very high at the beginning, possibly even higher than that of TCP\@. However,
-during the \SI{5}{\second} warmup period, The packet loss led to a significant reduction of the
-congestion window, and the throughput was reduced to the values we can see on the plot.
+blocked by the limited buffering discussed above. Instead, investigation shows that it was limited
+by the size of the congestion window. After more investigation, it turned out that the throughput of
+both QUIC implementation was very high at the beginning, possibly even higher than that of TCP\@.
+However, during the \SI{5}{\second} warmup period, the packet loss led to a significant reduction of
+the congestion window, and the throughput was reduced to the values we can see on the plot.
 
 We believe that this behavior was caused by the too uniform distribution of the packet loss we used
 in our testing environment. In an environment with uniform packet loss, almost all lost packets
@@ -668,16 +678,17 @@ We have tested both combination with following results:
 
 \begin{itemize}
 
-  \litem{Managed client and \libmsquic{} server} With small number of connections, the two
+  \litem{Managed client and \libmsquic{} server} With a small number of connections, the two
 implementations interoperated without any noticeable problems. However, starting the benchmarking
-application with large number of parallel connection sometimes made \libmsquic{} server to respond
-with a Retry packet for some connections. In such cases, our implementation terminated the
-connection immediately because we did not implement support for client address validation via Retry
-packets.
+application with a very large number of parallel connection sometimes made \libmsquic{} server
+respond with a Retry packet for some connections. This is because \libmsquic{} engages client
+address validation (see \autoref{sec:02-address-validation}) if there are too many simultaneous
+connections attempts. Our implementation does not implement support for client address validation
+via Retry packets, and, therefore, the connection was terminated immediately.
 
   \litem{Managed server and \libmsquic{} client} The version of the \libmsquic{} library we used in
-our tests started all connections using the draft 29 version of the protocol, while our
-implementation supports only the draft 27 version. Because we did not implement Version Negotiation,
+our tests started all client connections using the draft 29 version of the protocol, while our
+implementation supports only the draft 27 version. Because we did not implement version negotiation,
 the server did not attempt negotiating the draft 27 protocol version, and the \libmsquic{} client
 connections eventually closed due to idle timeout. Even if we decided to ignore the protocol version
 in our implementation, these two versions use a different \textit{initial salt} for deriving Initial
@@ -699,13 +710,13 @@ level of testing is outside of the scope of this thesis and is subject to future
 Compared to \libmsquic{}-based QUIC implementation provider, the managed QUIC implementation
 developed as part of this thesis can provide higher throughput when using a small number of parallel
 connections while maintaining comparable latencies. However, in the current state, the managed QUIC
-implementation does not scale very well, and both throughput and observed latencies degrade when a
+implementation does not scale very well, and both throughput and observed latencies degrade when
 large number of connections are created. When under substantial load, the \libmsquic{}-based
 implementation delivered throughput up to four times greater than our implementation.
 
 However, in our tests, the TCP+TLS stack has significantly larger throughput and lower latencies
-than either QUIC implementation in our LAN environment. A possible explanation of this is the
-presence of hardware optimizations for the TCP stack on the network interface card.
+than either QUIC implementation in our LAN evaluation environment. A possible explanation of this is
+the presence of hardware optimizations for the TCP stack on the network interface card.
 
 We also compared the QUIC and TCP implementations in a simulated 4G network. In our tests, we again
 measured significantly higher throughput using TCP+TLS stack than either QUIC implementation, even
@@ -713,8 +724,8 @@ if we used multiple streams in QUIC connections. As for latencies, all implement
 almost identical latency, except for our implementation, which had larger latencies once the
 messages exceeded the maximum size of a QUIC packet.
 
-From our measurements, we conclude that our prototype QUIC implementation will need much work in
-order to provide performance similar to that of \libmsquic{}. We have identified some of the
-underlying problems in the current managed implementation and proposed future improvements. However,
-both QUIC implementations will require a significant amount of optimizations before reaching
-performance comparable to present TCP implementations.
+From our measurements, we conclude that our prototype QUIC implementation will need further
+development and performance tuning in order to provide performance similar to that of \libmsquic{}.
+We have identified some of the underlying problems in the current managed implementation and
+proposed future improvements. However, both QUIC implementations will require a significant amount
+of optimizations before reaching performance comparable to present TCP implementations.
