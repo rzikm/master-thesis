@@ -92,10 +92,10 @@ the maximum outbound IP packet size to \SI{1500}{\byte} on Windows sockets API f
 connections in our tests. From \csharp{}, this can be achieved using following statement:
 
 \lstsetcsharpsettings{}
-\begin{lstlisting}[numbers=none,enums={SocketOptionLevel,SocketOptionName}]
+\smallskip\begin{lstlisting}[numbers=none,enums={SocketOptionLevel,SocketOptionName}]
 socket.|SetSocketOption|(SocketOptionLevel.IP,
   (SocketOptionName)76 /* IP_USER_MTU */, 1500 /* size */);
-\end{lstlisting}
+\end{lstlisting}\smallskip
 
 However, the \texttt{IP_USER_MTU} option is only available on Windows 10 version 20H2 or newer. On
 other platforms, the \method{SetSocketOption} call above would throw an exception. In order to keep
@@ -131,7 +131,9 @@ complicate the build process because the package would have to be referenced onl
 Therefore, we have decided to compile the Linux build of \libmsquic{} locally as well. Like the
 Windows build, the Linux build of \libmsquic{} used in our tests was compiled from commit
 \texttt{dc2a6cf0dd12e27} but did not require changes to build configuration, as it uses the modified
-\libopenssl{} library by default.
+\libopenssl{} library by default. Built \libmsquic{} binaries for both Windows and Linux operating
+systems which were used in tests can be found in the \filename{bin/{platform}/msquic/} directory of
+this thesis attachments.
 
 All measurements of the \libmsquic{}-based QUIC support for \dotnet{} include any overhead
 introduced by the interop layer bridging the native library API to \dotnet{} QUIC API\@. The
@@ -144,6 +146,11 @@ provider which can be validly compared to the performance of our managed QUIC im
 The actual throughput and latency measurements are done using a dedicated benchmarking \dotnet{}
 application whose source code can be found in the
 \filename{src/supplementary/benchmark/ThroughputTests/} directory in the attachments of this thesis.
+The attachments also include a self-contained build of the application for both Windows and Linux
+operating systems in the \filename{bin/{platform}/ThroughputTests/} directory. Note that on Linux,
+the \texttt{LD_LIBRARY_PATH} must be defined to the directory with the compiled binary for
+\libmsquic{} to be loaded correctly.
+
 The application implements a trivial echo server and clients which exchange messages of the
 specified size. The first parameter to the application selects one of the following modes:
 
@@ -184,7 +191,7 @@ with the \texttt{--help} parameter.
 
     \ditem{\texttt{-d, --test-duration}} Time after which the measurement should stop and the application exit.
 
-    \ditem{\texttt{-i, --reporting-interval}} Delay between reports of intermediate measurements.
+    % \ditem{\texttt{-i, --reporting-interval}} Delay between reports of intermediate measurements.
 
     \ditem{\texttt{-n, --no-wait}} Whether clients wait for a reply before sending another message.
 
@@ -357,6 +364,20 @@ for the same four test cases as above. In all tests, the \libmsquic{}-based impl
 a lower 99th percentile of latency, especially in test cases with a high number of connections. The
 same measurement on Windows loopback did not yield significantly different results.
 
+When measuring latency, the benchmarking application waits for the server to respond before sending
+another message. However, with many parallel connections and streams, the total network traffic
+becomes similar to that produced when measuring throughput. This was the case, especially when we
+see significant differences between the latencies of the two implementations. Therefore, the change
+in latency can be attributed to the frequent and long pauses introduced by the GC that we have
+described above. On the other hand, in the test runs where the managed implementation is close to
+that of \libmsquic{}, the GC activity was under 5\% and did not cause long frequent pauses.
+
+By increasing the message size, we increased the probability that the application message will be
+affected by the packet loss introduced by the GC pauses. This happens because the message is spread
+over multiple QUIC packets, and the loss of any of those packets will delay the entire message until
+the missing part is retransmitted. This explains why increasing the message size drastically affects
+the latency with a large number of parallel connections.
+
 \begin{myFigure}{fig:04-lab-multi-stream-latency}{Multiple stream QUIC latency measurements (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-stream-latency-a}{1 stream, \SI{256}{\byte} messages}
 \footnotesize
@@ -376,20 +397,6 @@ same measurement on Windows loopback did not yield significantly different resul
 \input{plots/04-lab-multi-stream-latency-d.tex}
 \end{mySubfigure}
 \end{myFigure}
-
-When measuring latency, the benchmarking application waits for the server to respond before sending
-another message. However, with many parallel connections and streams, the total network traffic
-becomes similar to that produced when measuring throughput. This was the case, especially when we
-see significant differences between the latencies of the two implementations. Therefore, the change
-in latency can be attributed to the frequent and long pauses introduced by the GC that we have
-described above. On the other hand, in the test runs where the managed implementation is close to
-that of \libmsquic{}, the GC activity was under 5\% and did not cause long frequent pauses.
-
-By increasing the message size, we increased the probability that the application message will be
-affected by the packet loss introduced by the GC pauses. This happens because the message is spread
-over multiple QUIC packets, and the loss of any of those packets will delay the entire message until
-the missing part is retransmitted. This explains why increasing the message size drastically affects
-the latency with a large number of parallel connections.
 
 Increasing the number of streams also increases network traffic, making our implementation
 susceptible to the increased GC pauses. Also, after a certain threshold, increasing the number of

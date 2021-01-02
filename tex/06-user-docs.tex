@@ -31,6 +31,12 @@ and running user applications.
 
 \end{enumerate}
 
+Because the setup process is complex and compiling the necessary binaries requires a lot of
+prerequisite tools to be installed on the machine, this thesis attachments include binaries and
+\dotnet{}~6 SDK built and prepared according the instructions in this section. The files can be
+found in the \filename{bin/win-x64/} directory for Windows and \filename{bin/linux-x64/} directory
+for Linux.
+
 \subsection{Building the System.Net.Quic Library from Source}\label{sec:06-build-runtime}
 
 The source code for the \dotnet{} runtime with managed QUIC implementation is part of this thesis'
@@ -54,8 +60,8 @@ directory. The important artifacts from this directory are:
 
 \begin{itemize}
 
-  \item \filename{ref/net6.0-Release/System.Net.Quic.dll}: The so-called reference
-assembly~\cite{ReferenceAssemblyDocs} that specifies the public API of the library.
+  \item \filename{ref/net6.0-Release/System.Net.Quic.dll}: The so-called \textit{reference
+assembly}~\cite{ReferenceAssemblyDocs} that specifies the public API of the library.
 
   \item \filename{net6.0-{OS}-Release/System.Net.Quic.dll}: Where \verb|{OS}| is the identifier for
 the operating system running on the machine. This is the \dotnet{} assembly with the actual QUIC
@@ -65,11 +71,12 @@ implementation.
 
 \subsection{Creating a Local Installation of \dotnet{}}\label{sec:06localdotnet}
 
-Now we need to download the latest \dotnet{}~6 SDK\@. A zip archive containing the SDK can be
-downloaded from a link listed in the official SDK installer GitHub
-repository~\cite{dotnetSdkGithub}. Download the ``Master (6.0.x Runtime)'' build for your platform
-and extract it to a convenient location. In the remainder of this guide, the directory containing
-the extracted contents will be referred to as \filename{DOTNET_ROOT}.
+Now we need to download the latest \dotnet{}~6 SDK\@ and patch it with the locally built
+\SystemNetQuicDll{}. A zip archive containing the SDK can be downloaded from a link listed in the
+official SDK installer GitHub repository~\cite{dotnetSdkGithub}. Download the ``Master (6.0.x
+Runtime)'' build for your platform and extract it to a convenient location. In the remainder of this
+guide, the directory containing the extracted contents will be referred to as
+\filename{DOTNET_ROOT}.
 
 The \SystemNetQuicDll{} produced in the previous subsection must be copied to appropriate locations
 in the \filename{DOTNET_ROOT}. The reference \SystemNetQuicDll{} assembly should be copied over the
@@ -79,14 +86,17 @@ the implementation assembly to should be copied to the
 \filename{DOTNET_ROOT/shared/Microsoft.NETCore.App/6.0.0-{version}/} directory, overwriting the
 existing files.
 
-\subsection{Adding the OpenSSL Library}\label{sec:06openssl}
+\subsection{Building the OpenSSL Library}\label{sec:06openssl}
 
 The implementation requires a QUIC-supporting \libopenssl{} library build from a development branch
-maintained by Akamai. The appropriate source codes can be found in the \filename{extern/openssl}
-directory in the thesis attachments. The source code is also available online on Akamai's
-GitHub~\cite{AkamaiOpensslGithub}. The implementation has been developed and tested with the
-\texttt{OpenSSL_1_1_1g-quic} branch of the code, but other QUIC-enabled branches of \libopenssl{}
-version 1.1.1 should work as well.
+maintained by Akamai. Because this branch does not offer official builds for downloading, the
+library must be compiled from source. Alternatively, a built version of the library is attached in
+the \filename{bin/{platform}/openssl/} directory.
+
+The appropriate source codes can be found in the \filename{extern/openssl} directory in the thesis
+attachments. The source code is also available online on Akamai's GitHub~\cite{AkamaiOpensslGithub}.
+The implementation has been developed and tested with the \texttt{OpenSSL_1_1_1g-quic} branch of the
+code, but other QUIC-enabled branches of \libopenssl{} version 1.1.1 should work as well.
 
 Before building the \libopenssl{} library form source, check the \filename{NOTES.{OS}} file in the
 repository and make sure all prerequisites are installed on the machine. After that, the
@@ -265,14 +275,12 @@ namespace hello_net6._0
 
 Running the program should produce output similar to the following:
 
-\noindent\begin{minipage}{\textwidth}
 \begin{myVerbatim}
 > dotnet run
 Hello from .NET 6.0.0-alpha.1.20560.10+72b7d236ad634c2280c73499ebfc2b594995ec06
 Runtime location: C:\dotnet\shared\Microsoft.NETCore.App\6.0.0-alpha.1.20560.10
 QUIC: System.Net.Quic.Implementations.Managed.ManagedQuicImplementationProvider
 \end{myVerbatim}
-\end{minipage}\medskip
 
 If the output lists a different runtime location, verify that the environment variables have been
 set correctly. If the QUIC provider is different, it means that the \SystemNetQuicDll{} with our
@@ -405,7 +413,7 @@ does the actual echoing of the incoming data. The \QuicStream{} is accepted usin
 stream, we can use it to send the data back to the client. Lastly, once all data is sent, we
 gracefully close the connection using the \method{CloseAsync} method.
 
-\begin{myListingCsharp}{lst:06-echo-server-loop}{Echo server reading and writing data to \QuicStream{}}{Task,QuicConnection,CancellationToken,QuicStream}{}
+\begin{myListingCsharpNoPageBreak}{lst:06-echo-server-loop}{Echo server reading and writing data to \QuicStream{}}{Task,QuicConnection,CancellationToken,QuicStream}{}
 public static async Task |HandleServerConnection|(QuicConnection connection,
     CancellationToken token)
 {
@@ -413,9 +421,8 @@ public static async Task |HandleServerConnection|(QuicConnection connection,
     {
         QuicStream stream = await connection.|AcceptStreamAsync|(token);
 
-        byte[] buffer = new byte[4 * 1024];
-
         int read;
+        byte[] buffer = new byte[4 * 1024];
         while ((read = await stream.|ReadAsync|(buffer, token)) > 0)
         {
             await stream.|WriteAsync|(buffer, 0, read, token);
@@ -428,7 +435,7 @@ public static async Task |HandleServerConnection|(QuicConnection connection,
         await connection.|CloseAsync|(0);
     }
 }
-\end{myListingCsharp}
+\end{myListingCsharpNoPageBreak}
 
 \subsection{Echo Client Implementation}
 
