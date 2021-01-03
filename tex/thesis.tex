@@ -104,24 +104,21 @@
 \def\ThesisAuthor{Bc. Radek Zikmund}
 
 % Year when the thesis is submitted
-\def\YearSubmitted{2020}
+\def\YearSubmitted{2021}
 
 % Name of the department or institute, where the work was officially assigned
 % (according to the Organizational Structure of MFF UK in English,
 % or a full name of a department outside MFF)
 \def\Department{Department of Distributed and Dependable Systems}
-\def\DepartmentCZ{Katedra distribuovaných a spolehlivých systémů}
 
 % Is it a department (katedra), or an institute (ústav)?
 \def\DeptType{Department}
-\def\DeptTypeCZ{Katedra}
 
 % Thesis supervisor: name, surname and titles
 \def\Supervisor{Mgr. Pavel Ježek, Ph.D.}
 
 % Supervisor's department (again according to Organizational structure of MFF)
 \def\SupervisorsDepartment{\Department}
-\def\SupervisorsDepartmentCZ{\DepartmentCZ}
 
 % Study programme and specialization
 \def\StudyProgramme{Computer Science}
@@ -129,22 +126,20 @@
 
 % An optional dedication: you can thank whomever you wish (your supervisor,
 % consultant, a person who lent the software, etc.)
-\def\Dedication{I would like to thank my family, friends, and everybody who supported me and helped
-  me during my studies. Especially, I would like to thank my supervisor \Supervisor{} for his time,
-  patience, and the advice he gave me. Without his guidance, this thesis would not reach the quality
-  I believe it has.}
+\def\Dedication{I want to thank my family, friends, and everyone who supported me and helped me
+  during my studies. Especially, I would like to thank my supervisor Pavel Ježek for his time,
+  patience, and advice he gave me. Without his guidance, this thesis would not reach the level of
+  quality I believe it has. I also greatly appreciate the support from the Microsoft .NET team and
+  would like to explicitly thank Karel Zikmund for his counseling, insight, and help with tuning the
+  thesis topic, and Marie Píchová and Geoffery Kizer for their valuable help and feedback.}
 
 
 % Abstract (recommended length around 80-200 words; this is not a copy of your thesis assignment!)
-\CatchFileDef{\AbstractCZ}{abstractCZ.txt}{}
 \CatchFileDef{\Abstract}{abstract.txt}{}
 
 % 3 to 5 keywords (recommended), each enclosed in curly braces
 \def\Keywords{%
 {QUIC} {.NET} {network protocol}
-}
-\def\KeywordsCZ{%
-{QUIC} {.NET} {síťový protokol}
 }
 
 %% The hyperref package for clickable links in PDF and also for storing
@@ -184,6 +179,7 @@ This thesis's result is a fork of the official .NET runtime repository with part
 \end{filecontents}
 \filecontentsspecials|[]
 \begin{filecontents}[overwrite]{abstract.xmpdata}
+\Author{|ThesisAuthor}
 \Title{|ThesisTitle}
 \Keywords{QUIC\sep .NET\sep network protocol}
 \Publisher{Charles University}

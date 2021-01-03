@@ -5,11 +5,11 @@ congestion control flexibility, and a solution to head-of-line blocking occurrin
 HTTP/2 connections.
 
 The latest release of \dotnet{} --- \dotnet{}~5 --- has shipped with experimental support for QUIC
-based on the MsQuic C library. However, when implementing new features in standard .NET libraries,
-purely managed implementations are preferable to adding dependencies on native libraries because
-managed code offers better maintainability and --- in some cases --- even better performance. This
-thesis explores the viability of a purely \csharp{} QUIC implementation as a future replacement for
-\dotnet{}~6 or further release.
+based on the MsQuic C library. However, when implementing new features in standard \dotnet{}
+libraries, purely \dotnet{} implementations are preferable to adding dependencies on native
+libraries because \dotnet{} implementations offer better maintainability and --- in some cases ---
+even better performance. This thesis explores the viability of a purely \csharp{} QUIC
+implementation as a future replacement for \dotnet{}~6 or later release.
 
 This thesis's result is a fork of the official .NET runtime repository with partial \csharp{}
 implementation of the QUIC protocol. We implemented a subset of the QUIC specification, which is

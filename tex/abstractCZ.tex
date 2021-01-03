@@ -1,0 +1,42 @@
+%%% A template for a simple PDF/A file like a stand-alone abstract of the thesis.
+
+\documentclass[12pt]{report}
+
+\usepackage[czech]{babel}
+\usepackage[a4paper, hmargin=1in, vmargin=1in]{geometry}
+\usepackage[a-2u]{pdfx}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{textcomp}
+\usepackage{tikz}           % for drawing (checkmark etc)
+
+\newcommand{\csharp}{%
+  {\settoheight{\dimen0}{C}C\kern-.05em \resizebox{!}{\dimen0}{\raisebox{\depth}{\#}}}}
+\newcommand{\dotnet}{.NET\@}
+
+\begin{document}
+
+QUIC je general-purpose síťový protokol transportní vrstvy, který byl navržen jako náhrada TCP a TLS
+pro HTTP/3. QUIC je postaven nad UDP a poskytuje vždy zašifrované spojení schopné paraleního přenosu
+vícero proudů dat. V porovnání s TCP, QUIC slibuje nižší dobu odezvy, větší flexibilitu congestion
+control a řešení head-of-line blocking problému, který se vyskytuje v multiplexovaných HTTP/2
+spojeních.
+
+Nejnovější verze \dotnet{} --- \dotnet{}~5 --- byla vydána s experimentální podporou pro QUIC, která je
+založena na knihovně MsQuic napsané v jazyce C. Nicméně, při implementování nových feature ve
+standartních knihovnách v \dotnet{} jsou preferovány vlastní implementace přímo v \dotnet{} místo
+přidávání závislostí na nativních knihovnách, protože implementace v \dotnet{} jsou snáze
+udržovatelné a v některých případech dokonce i více výkonné. Tato práce zkoumá proveditelnost
+implementace QUIC protokolu v jazyce \csharp{} jakožto budoucí náhrady stávajícího řešení pro vydání
+v \dotnet{}~6 nebo pozdější verzi.
+
+Výsledkem této práce je fork oficiálního repozitáře \dotnet{} runtime s částečnou implementací QUIC
+protokolu v jazyce \csharp{}. Tato práce implementovala podmnožinu QUIC specifikace dostačující pro
+základní zhodnocení výkonu. Jako součást práce jsme provedli měření propustnosti a odezvy naší
+implementace a předchozí implementace založené na knihovně MsQuic a porovnali jsme je s výkonem TCP
+ve dvou prostředích: LAN síť a simulovaná mobilní síť. Přestože měření ukázalo že naše implementace
+je pomalejší než ta založená na MsQuic, identifikovali jsme hlavní faktory limitující výkon naší
+implementace a navrhli jsme směr pro její budoucí vývoj.
+
+\end{document}

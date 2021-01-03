@@ -147,7 +147,8 @@ The actual throughput and latency measurements are done using a dedicated benchm
 application whose source code can be found in the
 \filename{src/supplementary/benchmark/ThroughputTests/} directory in the attachments of this thesis.
 The attachments also include a self-contained build of the application for both Windows and Linux
-operating systems in the \filename{bin/{platform}/ThroughputTests/} directory. Note that on Linux,
+operating systems in the \filename{bin/{platform}/ThroughputTests/} directory. The self-contained
+application does not require \dotnet{} to be installed on the target machine. Note that on Linux,
 the \texttt{LD_LIBRARY_PATH} must be defined to the directory with the compiled binary for
 \libmsquic{} to be loaded correctly.
 
@@ -330,16 +331,15 @@ needless allocations in our implementation, there are still enough sources of al
 degrade a server's performance under heavy load.
 
 An example of a large allocation source in the managed QUIC implementation is pooling the buffers
-for sending or receiving QUIC packets. Even though the implementation uses
-\ArrayPoolOf{\Byte}\texttt{.Shared} to reuse allocated buffers, this does not work well with a large
-number of connections. This is because \ArrayPoolOf{\Byte}\texttt{.Shared} pools only a small number
-of \ArrayOf{\Byte} instances and lets GC collect the rest\footnote{In \dotnet{}~5, the
-implementation of \ArrayPoolOf{\Byte}\texttt{.Shared} maintains a separate pool for each CPU core.
-Each per-CPU core pool organizes pooled arrays into 17 buckets with array sizes ranging from
-\SI{16}{\byte} to \SI{1}{\mebi\byte}. Each bucket retains up to 8 array instances of similar size.}.
-With a large number of connections, the buffers are rented and returned in large bursts, leading to
-a lot of large arrays being discarded upon return to the \ArrayPoolOf{\Byte}\texttt{.Shared} and
-subsequently allocated anew.
+for sending or receiving QUIC packets. Our implementation uses \ArrayPoolOf{\Byte}\texttt{.Shared}
+to reuse allocated buffers. However, it does not work well with a large number of connections
+because \ArrayPoolOf{\Byte}\texttt{.Shared} pools only a few \ArrayOf{\Byte} instances and lets GC
+collect the rest\footnote{In \dotnet{}~5, the implementation of \ArrayPoolOf{\Byte}\texttt{.Shared}
+  maintains a separate pool for each CPU core. Each per-CPU core pool organizes pooled arrays into
+  17 buckets with array sizes ranging from \SI{16}{\byte} to \SI{1}{\mebi\byte}. Each bucket retains
+  up to 8 array instances of similar size.}. With a large number of connections, the buffers are
+rented and returned in large bursts, leading to a lot of large arrays being discarded upon return to
+the \ArrayPoolOf{\Byte}\texttt{.Shared} and subsequently allocated anew.
 
 Another source of allocations are \Socket{}\texttt{.\method{SendTo}} and
 \Socket{}\texttt{.\method{ReceiveFrom}} methods which allocate of a new \class{EndPoint} instance
@@ -542,9 +542,10 @@ independently. Instead, packets are often lost in bursts. There are multiple mod
 more realistic packet loss, such as the Gilbert-Elliot model~\cite{wiki:burst-error}. However, we
 were unable to find enough data to compute appropriate parameters for such models.
 
-To simulate the 4G network, we used the \textit{Traffic Control} capabilities of the Linux kernel.
-The necessary configuration can be set using the \texttt{tc} utility. For example, the following
-command issued on both machines will simulate \SI{25}{\milli\second} lag and 0.004\% packet loss:
+To simulate the 4G network, we used the \textit{Traffic Control} capabilities of the Linux kernel on
+the two blade servers in the Linux LAN evaluation environment. The necessary configuration can be
+set using the \texttt{tc} utility. For example, the following command issued on both machines would
+simulate \SI{25}{\milli\second} lag and 0.004\% packet loss:
 
 \begin{myVerbatim}
 tc qdisc change dev eth0 root netem delay 12.5ms loss 0.004%
@@ -562,7 +563,7 @@ order of magnitude greater throughput. However, the throughput of the TCP protoc
 greater rate than that of the two QUIC implementation. The throughput of the two QUIC implementation
 is comparable in all tests.
 
-\begin{myFigure}{fig:04-lab-loss-throughput}{Single stream throughput measurements in simulated network}
+\begin{myFigure}{fig:04-lab-loss-throughput}{Single stream throughput measurements in simulated network (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-throughput-a}{\SI{25}{\milli\second} latency, 0.004\% loss}
 \footnotesize
 \input{plots/04-lab-loss-throughput-a.tex}
@@ -591,7 +592,7 @@ This hypothesis can be tested by doubling the delay on the simulated network.
 throughput of the managed implementation is highly correlated with the network latency as it halves
 everytime the latency is doubled.
 
-\begin{myFigure}{fig:04-lab-loss-throughput-long}{Single stream throughput measurements in simulated network with long delays}
+\begin{myFigure}{fig:04-lab-loss-throughput-long}{Single stream throughput measurements in simulated network with long delays (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-throughput-a-50}{\SI{50}{\milli\second} latency, 0.004\% loss}
 \footnotesize
 \input{plots/04-lab-loss-throughput-a-50.tex}
@@ -614,7 +615,7 @@ exhibits the same latency for both 0.004\% (\autoref{fig:04-lab-loss-latency-a})
 (\autoref{fig:04-lab-loss-latency-b}) packet loss. This means that even 0.1\% packet loss rate is
 still low enough to not affect the 99th percentile of latency.
 
-\begin{myFigure}{fig:04-lab-loss-latency}{Single stream latency measurements in simulated network}
+\begin{myFigure}{fig:04-lab-loss-latency}{Single stream latency measurements in simulated network (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-loss-latency-a}{\SI{25}{\milli\second} latency, 0.004\% loss}
 \footnotesize
 \input{plots/04-lab-loss-latency-a.tex}
@@ -640,7 +641,14 @@ previously (for \autoref{fig:04-lab-loss-throughput}), but with QUIC connections
 using 32 parallel streams. Contrary to the expectation, the throughput of the QUIC implementations
 increases only slightly.
 
-\begin{myFigure}{fig:04-lab-multi-loss-throughput}{Multiple stream throughput measurements in simulated network}
+Because we were sending data using multiple streams, the managed QUIC implementation was no longer
+blocked by the limited buffering discussed above. Instead, investigation shows that it was limited
+by the size of the congestion window. After more investigation, it turned out that the throughput of
+both QUIC implementation was very high at the beginning, possibly even higher than that of TCP\@.
+However, during the \SI{5}{\second} warmup period, the packet loss led to a significant reduction of
+the congestion window, and the throughput was reduced to the values we can see on the plot.
+
+\begin{myFigure}{fig:04-lab-multi-loss-throughput}{Multiple stream throughput measurements in simulated network (Linux LAN)}
 \begin{mySubfigure}{0.49\linewidth}{fig:04-lab-multi-loss-throughput-a}{32 streams, \SI{25}{\milli\second} latency, 0.004\% loss}
 \footnotesize
 \input{plots/04-lab-multi-loss-throughput-a.tex}
@@ -650,13 +658,6 @@ increases only slightly.
 \input{plots/04-lab-multi-loss-throughput-b.tex}
 \end{mySubfigure}
 \end{myFigure}
-
-Because we were sending data using multiple streams, the managed QUIC implementation was no longer
-blocked by the limited buffering discussed above. Instead, investigation shows that it was limited
-by the size of the congestion window. After more investigation, it turned out that the throughput of
-both QUIC implementation was very high at the beginning, possibly even higher than that of TCP\@.
-However, during the \SI{5}{\second} warmup period, the packet loss led to a significant reduction of
-the congestion window, and the throughput was reduced to the values we can see on the plot.
 
 We believe that this behavior was caused by the too uniform distribution of the packet loss we used
 in our testing environment. In an environment with uniform packet loss, almost all lost packets
@@ -693,7 +694,7 @@ address validation (see \autoref{sec:02-address-validation}) if there are too ma
 connections attempts. Our implementation does not implement support for client address validation
 via Retry packets, and, therefore, the connection was terminated immediately.
 
-  \litem{Managed server and \libmsquic{} client} The version of the \libmsquic{} library we used in
+  \litem{\libmsquic{} client and Managed server} The version of the \libmsquic{} library we used in
 our tests started all client connections using the draft 29 version of the protocol, while our
 implementation supports only the draft 27 version. Because we did not implement version negotiation,
 the server did not attempt negotiating the draft 27 protocol version, and the \libmsquic{} client
@@ -705,7 +706,8 @@ drop all incoming packets because they could not be decrypted.
 \end{itemize}
 
 Because the only problems with interop between the two QUIC implementations were due to features we
-explicitly decided to omit from our prototype implementation, we are satisfied with these results.
+explicitly decided to omit from our prototype implementation during our analysis in
+\autoref{sec:03-feature-selection}, we are satisfied with these results.
 
 Our benchmarking application did not perform an exhaustive interop test. A better interop tests
 could be achieved using the open-source QUIC Interop Test Runner project~\cite{QuicInteropRunner}
